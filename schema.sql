@@ -452,6 +452,17 @@ language sql security definer set search_path = public as
 $$ select coalesce((select counted_cents from register_closeouts
      where work_date < p_date order by work_date desc limit 1), 0) $$;
 
+-- 직원용 "오늘의 정산" 조회 (관리자 토큰 불필요; 정산 금액만 반환, 개인정보 없음)
+create or replace function staff_day_closeouts(p_date date)
+returns json language plpgsql security definer set search_path = public as $$
+begin
+  return (select coalesce(json_agg(row_to_json(x)), '[]'::json) from (
+    select c.*, json_build_object('id', e.id, 'name', e.name) as employees
+    from register_closeouts c left join employees e on e.id = c.employee_id
+    where c.work_date = p_date
+    order by e.name) x);
+end $$;
+
 -- RPC 실행 권한 (anon)
 grant execute on function mgr_role(text) to anon;
 grant execute on function check_screen_password(text) to anon;
@@ -479,6 +490,7 @@ grant execute on function emp_history(uuid, text, date, date) to anon;
 grant execute on function admin_shifts(text, date, date) to anon;
 grant execute on function admin_closeouts(text, date, date) to anon;
 grant execute on function prev_closeout_counted(date) to anon;
+grant execute on function staff_day_closeouts(date) to anon;
 
 -- ---------- RLS 정책 ----------
 create policy "anon read" on employees for select using (true);

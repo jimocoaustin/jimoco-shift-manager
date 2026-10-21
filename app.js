@@ -33,6 +33,8 @@
   ];
   var coPrevCounted = 0;
   var closeoutCache = { rows: [], month: '' };
+  var todayCoCache = { rows: [] };
+  var coReturnToToday = false;
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -282,6 +284,8 @@
       coSummary: '월간 합계',
       coMismatch: '차이 건수',
       coNoData: '정산 기록이 없습니다.',
+      todayCo: '오늘의 정산',
+      todayCoEmpty: '오늘 입력된 정산이 아직 없습니다.',
       coSaveFail: '마감 정산 저장 실패: ',
       setupTitle: '설정이 필요합니다',
       setupBody: 'config.js 파일에 Supabase URL과 anon key를 입력한 뒤 다시 열어주세요.<br>자세한 순서는 README.md를 참고하세요.'
@@ -530,6 +534,8 @@
       coSummary: 'Monthly totals',
       coMismatch: 'Mismatches',
       coNoData: 'No close-out records.',
+      todayCo: "Today's close-out",
+      todayCoEmpty: 'No close-out entered today yet.',
       coSaveFail: 'Close-out save failed: ',
       setupTitle: 'Setup required',
       setupBody: 'Enter your Supabase URL and anon key in config.js, then reload.<br>See README.md for the steps.'
@@ -797,6 +803,7 @@
 
     $('shiftSave').addEventListener('click', saveShift);
     $('openCloseout').addEventListener('click', openCloseoutModal);
+    $('openTodayCo').addEventListener('click', openTodayCoModal);
     $('coSave').addEventListener('click', saveCloseoutModal);
     $('openEmpModal').addEventListener('click', openEmpModal);
     $('openEmpPendingBtn').addEventListener('click', openEmpModal);
@@ -1459,6 +1466,7 @@
 
   /* ---------- 마감 정산 (별도 모달) ---------- */
   function openCloseoutModal() {
+    coReturnToToday = false;
     var sv = servers();
     $('coEmp').innerHTML = sv.map(function (e) {
       return '<option value="' + e.id + '">' + esc(e.name) + '</option>';
@@ -1498,6 +1506,80 @@
     msg.textContent = '';
     closeModal('closeoutModal');
     toast(t('toastSaved'));
+    if (coReturnToToday) { coReturnToToday = false; openTodayCoModal(); }
+  }
+
+  /* ---------- 오늘의 정산 (직원용 목록·수정) ---------- */
+  async function openTodayCoModal() {
+    $('todayCoDate').textContent = fmtDateV(todayStr());
+    $('todayCoList').innerHTML = '';
+    openModal('todayCoModal');
+    try {
+      var rows = await rpc('staff_day_closeouts', { p_date: todayStr() });
+      todayCoCache = { rows: rows || [] };
+    } catch (e) {
+      todayCoCache = { rows: [] };
+    }
+    renderTodayCloseouts();
+  }
+
+  function renderTodayCloseouts() {
+    var rows = todayCoCache.rows;
+    if (!rows.length) {
+      $('todayCoList').innerHTML = '<p class="view-desc">' + esc(t('todayCoEmpty')) + '</p>';
+      return;
+    }
+    var html = '<table class="pay"><tr><th>' + esc(t('thEmployee')) + '</th><th>' + esc(t('coThTotalSales')) +
+      '</th><th>' + esc(t('coThCash')) + '</th><th>' + esc(t('coThTips')) + '</th><th>' +
+      esc(t('coThCounted')) + '</th><th>' + esc(t('coThDiff')) + '</th><th></th></tr>';
+    rows.forEach(function (r) {
+      var d = r.diff_cents || 0;
+      var dHtml = Math.abs(d) <= 200
+        ? '<span class="diff-ok">' + esc(t('coMatch')) + '</span>'
+        : '<span class="diff-bad">' + (d > 0 ? '+' : '') + '$' + dollars(d) + '</span>';
+      html += '<tr><td>' + esc((r.employees && r.employees.name) || '?') + '</td><td>$' + dollars(r.total_sales_cents) +
+        '</td><td>$' + dollars(r.cash_sales_cents) + '</td><td>$' + dollars(r.tips_cents) +
+        '</td><td>$' + dollars(r.counted_cents) + '</td><td>' + dHtml + '</td>' +
+        '<td class="row-actions"><button class="btn btn-chip" data-edit-today-co="' + r.id + '">' + esc(t('edit')) +
+        '</button></td></tr>';
+    });
+    html += '</table>';
+    $('todayCoList').innerHTML = html;
+    $('todayCoList').querySelectorAll('[data-edit-today-co]').forEach(function (b) {
+      b.addEventListener('click', function () { editTodayCloseout(b.getAttribute('data-edit-today-co')); });
+    });
+  }
+
+  /* 정산 입력 폼에 기존 정산 행 채우기 (관리자 수정·오늘의 정산 수정 공용) */
+  function fillCloseoutForm(r) {
+    var sv = servers();
+    var opts = sv.map(function (e) {
+      return '<option value="' + e.id + '">' + esc(e.name) + '</option>';
+    }).join('');
+    if (r.employee_id && !sv.some(function (e) { return e.id === r.employee_id; })) {
+      opts += '<option value="' + r.employee_id + '">' + esc((r.employees && r.employees.name) || '?') + '</option>';
+    }
+    $('coEmp').innerHTML = opts;
+    $('coEmp').value = r.employee_id || '';
+    $('coDate').value = r.work_date || '';
+    $('coTotalSales').value = r.total_sales_cents != null ? (r.total_sales_cents / 100) : '';
+    $('coCashSales').value = r.cash_sales_cents != null ? (r.cash_sales_cents / 100) : '';
+    $('coTips').value = r.tips_cents != null ? (r.tips_cents / 100) : '';
+    DENOMS.forEach(function (d) {
+      $(d.id).value = r[d.key] != null ? r[d.key] : '';
+    });
+    $('coMsg').textContent = '';
+    $('coMsg').className = 'msg';
+    fetchPrevCounted($('coDate').value);
+  }
+
+  function editTodayCloseout(id) {
+    var r = (todayCoCache.rows || []).find(function (x) { return x.id === id; });
+    if (!r) return;
+    fillCloseoutForm(r);
+    coReturnToToday = true;
+    closeModal('todayCoModal');
+    openModal('closeoutModal');
   }
 
   /* ---------- 마감 정산 (서버 전용) ---------- */
@@ -2543,17 +2625,8 @@
   function editCloseout(id) {
     var r = (closeoutCache.rows || []).find(function (x) { return x.id === id; });
     if (!r) return;
-    $('coEmp').value = r.employee_id || '';
-    $('coDate').value = r.work_date || '';
-    $('coTotalSales').value = r.total_sales_cents != null ? (r.total_sales_cents / 100) : '';
-    $('coCashSales').value = r.cash_sales_cents != null ? (r.cash_sales_cents / 100) : '';
-    $('coTips').value = r.tips_cents != null ? (r.tips_cents / 100) : '';
-    DENOMS.forEach(function (d) {
-      $(d.id).value = r[d.key] != null ? r[d.key] : '';
-    });
-    $('coMsg').textContent = '';
-    $('coMsg').className = 'msg';
-    fetchPrevCounted($('coDate').value);
+    fillCloseoutForm(r);
+    coReturnToToday = false;
     openModal('closeoutModal');
   }
 
