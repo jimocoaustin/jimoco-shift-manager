@@ -364,6 +364,7 @@ table.pay tr.tip-section td { font-weight: 700; background: #e8f0fe; color: #1a5
 .denom-grid label { margin: 0; font-size: 14px; font-weight: 600; }
 .denom-grid input { margin-top: 4px; }
 #coPrevNote { font-size: 13px; margin: 6px 0 0; }
+.co-server-tip { font-size: 14px; margin: 2px 0 8px; }
 .diff-ok { color: #1a7f37; }
 .diff-bad { color: var(--red); }
 .co-stat-grid { display: flex; gap: 12px; flex-wrap: wrap; }
