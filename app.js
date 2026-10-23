@@ -268,6 +268,8 @@
       coWorkedHours: '근무 시간',
       coTotalSales: '총매출 ($)',
       coCashSales: '현금 매출 ($) (팁 포함)',
+      coTotalTip: '팁 ($) · Total Tip',
+      coServerTip: '서버 팁 (70%)',
       coTillCount: '돈통 세기',
       coCounted: '실제 돈통 금액',
       coExpected: '예상 금액',
@@ -518,6 +520,8 @@
       coWorkedHours: 'Hours worked',
       coTotalSales: 'Total sales ($)',
       coCashSales: 'Cash sales ($) (incl. tips)',
+      coTotalTip: 'Tip ($) · Total Tip',
+      coServerTip: 'Server tip (70%)',
       coTillCount: 'Till count',
       coCounted: 'Counted till',
       coExpected: 'Expected',
@@ -1606,6 +1610,8 @@
       counted += (parseInt($(d.id).value, 10) || 0) * d.cents;
     });
     $('coCounted').textContent = '$' + dollars(counted);
+    var totalTips = parseCents($('coTips').value);
+    $('coServerTipAmt').textContent = '$' + dollars(Math.round(totalTips * 0.7));
     var cash = parseCents($('coCashSales').value);
     var expected = coPrevCounted + cash;
     $('coExpected').textContent = '$' + dollars(expected);
