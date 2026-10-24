@@ -18,7 +18,7 @@
   var tipServer1Id = null, tipServer2Id = null, tipShowServer2 = false;
   var payrollRoleFilter = 'all';
   var showBonusDetail = true;
-  var lang = 'ko';
+  var lang = 'en';
 
   /* 마감 정산: 권종 정의 (id, DB 컬럼, 센트 가치) */
   var DENOMS = [
@@ -747,7 +747,7 @@
   }
 
   async function init() {
-    try { lang = localStorage.getItem('jimoco_lang') === 'en' ? 'en' : 'ko'; } catch (e) { lang = 'ko'; }
+    try { lang = localStorage.getItem('jimoco_lang') === 'ko' ? 'ko' : 'en'; } catch (e) { lang = 'en'; }
     bindStatic();
     applyI18n();
     startClock();
