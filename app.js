@@ -270,6 +270,9 @@
       coCashSales: '현금 매출 ($) (팁 포함)',
       coTotalTip: '팁 ($) · Total Tip',
       coServerTip: '서버 팁 (70%)',
+      coEmp2: '두 번째 서버 (선택)',
+      coNone: '없음',
+      coEach: '1인당',
       coTillCount: '돈통 세기',
       coCounted: '실제 돈통 금액',
       coExpected: '예상 금액',
@@ -522,6 +525,9 @@
       coCashSales: 'Cash sales ($) (incl. tips)',
       coTotalTip: 'Tip ($) · Total Tip',
       coServerTip: 'Server tip (70%)',
+      coEmp2: 'Second server (optional)',
+      coNone: 'None',
+      coEach: 'each',
       coTillCount: 'Till count',
       coCounted: 'Counted till',
       coExpected: 'Expected',
@@ -919,6 +925,8 @@
     DENOMS.forEach(function (d) {
       $(d.id).addEventListener('input', recalcCloseout);
     });
+    $('coEmp').addEventListener('change', function () { syncCoEmp2($('coEmp2').value); recalcCloseout(); });
+    $('coEmp2').addEventListener('change', recalcCloseout);
   }
 
   function goHome() {
@@ -1306,7 +1314,14 @@
       if (s.work_date === dateStr && s.tips_cents) byEmp[s.employee_id] = (byEmp[s.employee_id] || 0) + s.tips_cents;
     });
     calData.closeouts.forEach(function (c) {
-      if (c.work_date === dateStr && c.tips_cents && !byEmp[c.employee_id]) byEmp[c.employee_id] = (byEmp[c.employee_id] || 0) + c.tips_cents;
+      if (c.work_date !== dateStr || !c.tips_cents) return;
+      /* 두 번째 서버가 있으면 정산 팁을 반반 분배 (Jay Kim 2026-10-23) */
+      var targets = (c.employee_id2 && c.employee_id2 !== c.employee_id)
+        ? [c.employee_id, c.employee_id2] : [c.employee_id];
+      var half = Math.round(c.tips_cents / 2);
+      targets.forEach(function (eid, i) {
+        if (!byEmp[eid]) byEmp[eid] = (byEmp[eid] || 0) + (targets.length === 2 ? (i === 0 ? c.tips_cents - half : half) : c.tips_cents);
+      });
     });
     return byEmp;
   }
@@ -1469,12 +1484,24 @@
   }
 
   /* ---------- 마감 정산 (별도 모달) ---------- */
+  /* 두 번째 서버 선택지: 첫 번째 서버를 제외한 서버 목록 + "없음" */
+  function syncCoEmp2(sel) {
+    var first = $('coEmp').value;
+    var opts = '<option value="">' + esc(t('coNone')) + '</option>';
+    servers().forEach(function (e) {
+      if (e.id !== first) opts += '<option value="' + e.id + '">' + esc(e.name) + '</option>';
+    });
+    $('coEmp2').innerHTML = opts;
+    $('coEmp2').value = (sel && sel !== first) ? sel : '';
+  }
+
   function openCloseoutModal() {
     coReturnToToday = false;
     var sv = servers();
     $('coEmp').innerHTML = sv.map(function (e) {
       return '<option value="' + e.id + '">' + esc(e.name) + '</option>';
     }).join('');
+    syncCoEmp2('');
     $('coDate').value = todayStr();
     $('coTips').value = '';
     $('coMsg').textContent = '';
@@ -1493,6 +1520,7 @@
     var r = recalcCloseout();
     var row = {
       employee_id: empId,
+      employee_id2: $('coEmp2').value || null,
       work_date: date,
       total_sales_cents: parseCents($('coTotalSales').value),
       cash_sales_cents: parseCents($('coCashSales').value),
@@ -1541,7 +1569,8 @@
       var dHtml = Math.abs(d) <= 200
         ? '<span class="diff-ok">' + esc(t('coMatch')) + '</span>'
         : '<span class="diff-bad">' + (d > 0 ? '+' : '') + '$' + dollars(d) + '</span>';
-      html += '<tr><td>' + esc((r.employees && r.employees.name) || '?') + '</td><td>$' + dollars(r.total_sales_cents) +
+      html += '<tr><td>' + esc((r.employees && r.employees.name) || '?') +
+        (r.employees2 ? ' · ' + esc(r.employees2.name) : '') + '</td><td>$' + dollars(r.total_sales_cents) +
         '</td><td>$' + dollars(r.cash_sales_cents) + '</td><td>$' + dollars(r.tips_cents) +
         '</td><td>$' + dollars(r.counted_cents) + '</td><td>' + dHtml + '</td>' +
         '<td class="row-actions"><button class="btn btn-chip" data-edit-today-co="' + r.id + '">' + esc(t('edit')) +
@@ -1565,6 +1594,7 @@
     }
     $('coEmp').innerHTML = opts;
     $('coEmp').value = r.employee_id || '';
+    syncCoEmp2(r.employee_id2 || '');
     $('coDate').value = r.work_date || '';
     $('coTotalSales').value = r.total_sales_cents != null ? (r.total_sales_cents / 100) : '';
     $('coCashSales').value = r.cash_sales_cents != null ? (r.cash_sales_cents / 100) : '';
@@ -1611,7 +1641,14 @@
     });
     $('coCounted').textContent = '$' + dollars(counted);
     var totalTips = parseCents($('coTips').value);
-    $('coServerTipAmt').textContent = '$' + dollars(Math.round(totalTips * 0.7));
+    var serverTip = Math.round(totalTips * 0.7);
+    if ($('coEmp2').value) {
+      var eachTip = Math.round(serverTip / 2);
+      $('coServerTipAmt').textContent = '$' + dollars(serverTip) +
+        ' (' + t('coEach') + ' $' + dollars(eachTip) + ' × 2)';
+    } else {
+      $('coServerTipAmt').textContent = '$' + dollars(serverTip);
+    }
     var cash = parseCents($('coCashSales').value);
     var expected = coPrevCounted + cash;
     $('coExpected').textContent = '$' + dollars(expected);
@@ -2298,8 +2335,15 @@
       }
     });
     (closeouts || []).forEach(function (c) {
-      var kk = c.employee_id + '|' + c.work_date;
-      if (c.tips_cents && !tipByKey[kk]) tipByKey[kk] = c.tips_cents;
+      if (!c.tips_cents) return;
+      /* 두 번째 서버가 있으면 정산 팁을 반반 분배 (Jay Kim 2026-10-23) */
+      var targets = (c.employee_id2 && c.employee_id2 !== c.employee_id)
+        ? [c.employee_id, c.employee_id2] : [c.employee_id];
+      var half = Math.round(c.tips_cents / 2);
+      targets.forEach(function (eid, i) {
+        var kk = eid + '|' + c.work_date;
+        if (!tipByKey[kk]) tipByKey[kk] = targets.length === 2 ? (i === 0 ? c.tips_cents - half : half) : c.tips_cents;
+      });
     });
     shifts.forEach(function (s) {
       var emp = s.employees;
