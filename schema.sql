@@ -106,6 +106,7 @@ alter table security_events enable row level security;
 create table if not exists register_closeouts (
   id uuid primary key default gen_random_uuid(),
   employee_id uuid references employees(id) on delete cascade,
+  employee_id2 uuid references employees(id) on delete set null,
   work_date date not null,
   total_sales_cents int default 0,
   cash_sales_cents int default 0,
