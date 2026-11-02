@@ -32,6 +32,8 @@
     { id: 'coC25',  key: 'count_25c', cents: 25 }
   ];
   var coPrevCounted = 0;
+  var coOpeningFromRecord = null;
+  var coEditingId = null;
   var closeoutCache = { rows: [], month: '' };
   var todayCoCache = { rows: [] };
   var coReturnToToday = false;
@@ -268,6 +270,7 @@
       coWorkedHours: '근무 시간',
       coTotalSales: '총매출 ($)',
       coCashSales: '현금 매출 ($) (팁 포함)',
+      coOpening: '오늘 시작 캐쉬 ($)',
       coTotalTip: '팁 ($) · Total Tip',
       coServerTip: '서버 팁 (70%)',
       coEmp2: '두 번째 서버 (선택)',
@@ -276,12 +279,13 @@
       coTillCount: '돈통 세기',
       coCounted: '실제 돈통 금액',
       coExpected: '예상 금액',
-      coPrevNote: '전날 돈통',
+      coPrevNote: '시작 캐쉬',
       coDiff: '차이',
       coMatch: '일치',
       coThDate: '날짜',
       coThTotalSales: '총매출',
       coThCash: '현금매출',
+      coThOpening: '시작캐쉬',
       coThTips: '팁',
       coThCounted: '실제',
       coThExpected: '예상',
@@ -523,6 +527,7 @@
       coWorkedHours: 'Hours worked',
       coTotalSales: 'Total sales ($)',
       coCashSales: 'Cash sales ($) (incl. tips)',
+      coOpening: 'Opening cash today ($)',
       coTotalTip: 'Tip ($) · Total Tip',
       coServerTip: 'Server tip (70%)',
       coEmp2: 'Second server (optional)',
@@ -531,12 +536,13 @@
       coTillCount: 'Till count',
       coCounted: 'Counted till',
       coExpected: 'Expected',
-      coPrevNote: 'Prev. till',
+      coPrevNote: 'Opening cash',
       coDiff: 'Difference',
       coMatch: 'Match',
       coThDate: 'Date',
       coThTotalSales: 'Total sales',
       coThCash: 'Cash sales',
+      coThOpening: 'Opening',
       coThTips: 'Tips',
       coThCounted: 'Counted',
       coThExpected: 'Expected',
@@ -916,7 +922,7 @@
         recalcCloseout();
       });
     });
-    ['coTotalSales', 'coCashSales', 'coTips', 'coDate'].forEach(function (id) {
+    ['coTotalSales', 'coCashSales', 'coOpening', 'coTips', 'coDate'].forEach(function (id) {
       $(id).addEventListener('input', function () {
         if (id === 'coDate') fetchPrevCounted($('coDate').value);
         recalcCloseout();
@@ -1307,9 +1313,10 @@
     renderCalendar();
   }
 
-  /* 그날 직원별 팁: 근무 기록 팁 우선, 없는 직원만 마감 정산 팁 사용 (이중 계산 방지) */
+  /* 그날 직원별 팁: 근무 기록 팁 우선, 없는 직원만 마감 정산 팁 사용 (이중 계산 방지)
+     마감 정산이 하루 2건 이상이면 정산끼리는 먼저 합산한 뒤 근무 기록 없는 직원에게만 적용 */
   function calTipsByEmp(dateStr) {
-    var byEmp = {};
+    var byEmp = {}, coByEmp = {};
     calData.shifts.forEach(function (s) {
       if (s.work_date === dateStr && s.tips_cents) byEmp[s.employee_id] = (byEmp[s.employee_id] || 0) + s.tips_cents;
     });
@@ -1320,8 +1327,11 @@
         ? [c.employee_id, c.employee_id2] : [c.employee_id];
       var half = Math.round(c.tips_cents / 2);
       targets.forEach(function (eid, i) {
-        if (!byEmp[eid]) byEmp[eid] = (byEmp[eid] || 0) + (targets.length === 2 ? (i === 0 ? c.tips_cents - half : half) : c.tips_cents);
+        coByEmp[eid] = (coByEmp[eid] || 0) + (targets.length === 2 ? (i === 0 ? c.tips_cents - half : half) : c.tips_cents);
       });
+    });
+    Object.keys(coByEmp).forEach(function (eid) {
+      if (!byEmp[eid]) byEmp[eid] = coByEmp[eid];
     });
     return byEmp;
   }
@@ -1519,11 +1529,13 @@
     var tipsCents = Math.round((parseFloat($('coTips').value) || 0) * 100);
     var r = recalcCloseout();
     var row = {
+      id: coEditingId || '',
       employee_id: empId,
       employee_id2: $('coEmp2').value || null,
       work_date: date,
       total_sales_cents: parseCents($('coTotalSales').value),
       cash_sales_cents: parseCents($('coCashSales').value),
+      opening_cents: r.opening,
       tips_cents: tipsCents,
       counted_cents: r.counted,
       expected_cents: r.expected,
@@ -1604,6 +1616,8 @@
     });
     $('coMsg').textContent = '';
     $('coMsg').className = 'msg';
+    coOpeningFromRecord = r.opening_cents != null ? r.opening_cents : null;
+    coEditingId = r.id || null;
     fetchPrevCounted($('coDate').value);
   }
 
@@ -1620,6 +1634,9 @@
   function resetCloseout() {
     $('coTotalSales').value = '';
     $('coCashSales').value = '';
+    $('coOpening').value = '';
+    coOpeningFromRecord = null;
+    coEditingId = null;
     DENOMS.forEach(function (d) { $(d.id).value = ''; });
     coPrevCounted = 0;
     recalcCloseout();
@@ -1628,9 +1645,15 @@
   async function fetchPrevCounted(date) {
     coPrevCounted = 0;
     try {
-      var v = await rpc('prev_closeout_counted', { p_date: date });
+      /* 같은 날 먼저 저장된 정산이 있으면 그 실사 금액이 기본 시작 캐쉬 (하루 2회 정산 대응) */
+      var v = await rpc('prev_closeout_counted2', { p_date: date, p_exclude_id: coEditingId || null });
       coPrevCounted = v || 0;
-    } catch (e) { /* 테이블이 없으면 0으로 처리 */ }
+    } catch (e) {
+      try { coPrevCounted = (await rpc('prev_closeout_counted', { p_date: date })) || 0; } catch (e2) {}
+    }
+    /* 시작 캐쉬 기본값: 수정 중인 기록에 저장된 시작 캐쉬가 있으면 그것, 없으면 전날 실사 금액 */
+    var oc = coOpeningFromRecord != null ? coOpeningFromRecord : coPrevCounted;
+    $('coOpening').value = oc ? (oc / 100) : '';
     recalcCloseout();
   }
 
@@ -1650,9 +1673,10 @@
       $('coServerTipAmt').textContent = '$' + dollars(serverTip);
     }
     var cash = parseCents($('coCashSales').value);
-    var expected = coPrevCounted + cash;
+    var opening = parseCents($('coOpening').value);
+    var expected = opening + cash;
     $('coExpected').textContent = '$' + dollars(expected);
-    $('coPrevNote').textContent = t('coPrevNote') + ' $' + dollars(coPrevCounted) +
+    $('coPrevNote').textContent = t('coPrevNote') + ' $' + dollars(opening) +
       ' + ' + t('coCashSales') + ' $' + dollars(cash);
     var diff = counted - expected;
     var dEl = $('coDiff');
@@ -1663,7 +1687,7 @@
       dEl.textContent = (diff > 0 ? '+' : '') + '$' + dollars(diff);
       dEl.className = 'diff-bad';
     }
-    return { counted: counted, expected: expected, diff: diff };
+    return { counted: counted, expected: expected, diff: diff, opening: opening };
   }
 
   async function saveShift() {
@@ -2334,6 +2358,8 @@
         tipByKey[kk] = (tipByKey[kk] || 0) + s.tips_cents;
       }
     });
+    /* 마감 정산 팁은 정산끼리 먼저 합산 (하루 2회 정산 대응), 근무 기록 팁이 없는 직원·날짜에만 적용 */
+    var coTipByKey = {};
     (closeouts || []).forEach(function (c) {
       if (!c.tips_cents) return;
       /* 두 번째 서버가 있으면 정산 팁을 반반 분배 (Jay Kim 2026-10-23) */
@@ -2342,8 +2368,11 @@
       var half = Math.round(c.tips_cents / 2);
       targets.forEach(function (eid, i) {
         var kk = eid + '|' + c.work_date;
-        if (!tipByKey[kk]) tipByKey[kk] = targets.length === 2 ? (i === 0 ? c.tips_cents - half : half) : c.tips_cents;
+        coTipByKey[kk] = (coTipByKey[kk] || 0) + (targets.length === 2 ? (i === 0 ? c.tips_cents - half : half) : c.tips_cents);
       });
+    });
+    Object.keys(coTipByKey).forEach(function (kk) {
+      if (!tipByKey[kk]) tipByKey[kk] = coTipByKey[kk];
     });
     shifts.forEach(function (s) {
       var emp = s.employees;
@@ -2634,6 +2663,7 @@
     var tSales = 0, tCash = 0, tTips = 0, mism = 0;
     var html = '<table class="pay"><tr><th>' + esc(t('coThDate')) + '</th><th>' + esc(t('thEmployee')) +
       '</th><th>' + esc(t('coThTotalSales')) + '</th><th>' + esc(t('coThCash')) + '</th><th>' +
+      esc(t('coThOpening')) + '</th><th>' +
       esc(t('coThTips')) + '</th><th>' + esc(t('coThExpected')) + '</th><th>' + esc(t('coThCounted')) +
       '</th><th>' + esc(t('coThDiff')) + '</th><th></th></tr>';
     rows.forEach(function (r) {
@@ -2647,7 +2677,9 @@
         : '<span class="diff-bad">' + (d > 0 ? '+' : '') + '$' + dollars(d) + '</span>';
       html += '<tr><td>' + esc(fmtDateV(r.work_date)) + '</td><td>' +
         esc((r.employees && r.employees.name) || '?') + '</td><td>$' + dollars(r.total_sales_cents) +
-        '</td><td>$' + dollars(r.cash_sales_cents) + '</td><td>$' + dollars(r.tips_cents) +
+        '</td><td>$' + dollars(r.cash_sales_cents) + '</td><td>' +
+        (r.opening_cents != null ? '$' + dollars(r.opening_cents) : '–') +
+        '</td><td>$' + dollars(r.tips_cents) +
         '</td><td>$' + dollars(r.expected_cents) + '</td><td>$' + dollars(r.counted_cents) +
         '</td><td>' + dHtml + '</td>' +
         '<td class="row-actions"><button class="btn btn-chip" data-edit-co="' + r.id + '">' + esc(t('edit')) +
