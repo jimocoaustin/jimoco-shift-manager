@@ -117,6 +117,8 @@ body {
   font-size: 15px;
 }
 .hist-row .hist-h { font-weight: 700; }
+.hist-row { align-items: center; }
+.hist-row .hist-edit { padding: 4px 10px; font-size: 13px; }
 .hist-row.boost { color: #d70015; font-weight: 600; }
 .hist-row .boost-tag {
   color: #d70015; font-weight: 700; font-size: 12px;
