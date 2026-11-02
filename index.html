@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jimoco 직원 관리</title>
-<link rel="stylesheet" href="styles.css?v=16">
+<link rel="stylesheet" href="styles.css?v=17">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -84,6 +84,7 @@
     <div id="tipPoolBox" class="card tip-pool"></div>
     <div id="tipTable"></div>
     <h3 data-i18n="shiftRecords">근무 기록</h3>
+    <label class="shift-filter"><span data-i18n="thEmployee">직원</span><select id="shiftEmpFilter"><option value="">전체</option></select></label>
     <div id="shiftList"></div>
   </section>
 
@@ -238,6 +239,22 @@
     <div class="row end">
       <button type="button" class="btn btn-ghost" data-close="historyModal" data-i18n="cancel">취소</button>
     </div>
+  </div>
+</div>
+
+<!-- 직원 본인 근무 시간 수정 (최근 7일) -->
+<div id="myShiftModal" class="modal hidden">
+  <div class="modal-box">
+    <h3 data-i18n="myShiftEditTitle">내 근무 시간 수정</h3>
+    <p class="muted" data-i18n="myEditHint">최근 7일 안의 기록만 고칠 수 있어요. 팁·삭제는 관리자에게 말해 주세요.</p>
+    <label><span data-i18n="workDate">근무 날짜</span><input type="date" id="myShiftDate"></label>
+    <label><span data-i18n="clockIn">출근 시간</span><input type="text" id="myShiftIn" inputmode="numeric" maxlength="5" data-i18n-ph="timePh" placeholder="14:00"></label>
+    <label><span data-i18n="clockOut">퇴근 시간</span><input type="text" id="myShiftOut" inputmode="numeric" maxlength="5" data-i18n-ph="timePh" placeholder="14:00"></label>
+    <div class="modal-actions">
+      <button type="button" id="myShiftSave" class="btn btn-primary" data-i18n="save">저장</button>
+      <button type="button" class="btn btn-ghost" data-close="myShiftModal" data-i18n="cancel">취소</button>
+    </div>
+    <p id="myShiftMsg" class="msg"></p>
   </div>
 </div>
 
@@ -492,6 +509,6 @@
 <div id="toast" class="toast hidden"></div>
 
 <script src="config.js"></script>
-<script src="app.js?v=18"></script>
+<script src="app.js?v=19"></script>
 </body>
 </html>
