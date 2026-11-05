@@ -314,6 +314,7 @@
       resNew: '새 예약',
       resThisMonth: '이번달',
       resPrint: '인쇄',
+      resPrintBtn: '인쇄',
       resPrintDateHint: '날짜를 고르면 그날만 인쇄',
       resFormTitle: '새 예약 받기',
       resEmpty: '예약이 없습니다',
@@ -598,6 +599,7 @@
       resNew: 'New reservation',
       resThisMonth: 'This month',
       resPrint: 'Print',
+      resPrintBtn: 'Print',
       resPrintDateHint: 'Pick a date to print that day only',
       resFormTitle: 'New reservation',
       resEmpty: 'No reservations.',
@@ -2918,7 +2920,7 @@
         (meta.length ? '<span class="res-meta">' + meta.join(' · ') + '</span>' : '') +
         '<span class="res-badge">' + esc(r.source === 'web' ? t('resWeb') : t('resManual')) + '</span>' +
         '<span class="row-actions"><button class="btn btn-chip" data-edit-res="' + r.id + '">' + esc(t('resEdit')) +
-        '</button> <button class="btn btn-chip" data-print-res="' + r.id + '" title="' + esc(t('resPrint')) + '">🖨</button>' +
+        '</button> <button class="btn btn-chip" data-print-res="' + r.id + '">' + esc(t('resPrintBtn')) + '</button>' +
         ' <button class="btn btn-chip btn-danger" data-del-res="' + r.id + '">' + esc(t('resDelete')) + '</button></span>' +
         '</div>';
     });
