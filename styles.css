@@ -203,7 +203,8 @@ body {
 .modal-box h2 { margin: 0 0 16px; font-size: 24px; }
 .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .modal-head h2 { margin: 0; }
-.modal-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.modal-head h3 { margin: 0; }
+.modal-actions { display: flex; gap: 10px; margin: 4px 0 16px; flex-wrap: wrap; }
 
 label { display: block; margin: 12px 0; font-size: 15px; font-weight: 600; }
 input, select {
@@ -444,7 +445,9 @@ table.cal-emp-tips { width: auto; min-width: 250px; }
 table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
 
 /* 예약 탭 */
-.res-month-nav { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0 4px; }
+.res-month-nav { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0 4px; flex-wrap: wrap; }
+.res-month-nav #resPrintDate { font-size: 15px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: inherit; }
+.res-print-hint { text-align: center; font-size: 13px; color: var(--text-2); margin: 2px 0 6px; }
 .res-month-nav #resMonthLabel { font-weight: 700; font-size: 17px; min-width: 130px; text-align: center; }
 .res-form-title { margin: 20px 0 8px; font-size: 16px; }
 .res-form { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 4px 20px 16px; margin-bottom: 14px; }
@@ -459,11 +462,17 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
 .res-badge-today { color: #fff; background: var(--blue); vertical-align: middle; }
 .res-row .row-actions { margin-left: auto; }
 
-/* 예약 목록 인쇄 (POS 롤프린터 80mm 영수증) */
+/* 예약 인쇄 (POS 롤프린터 80mm 영수증) — 목록/전표 공통 */
 #resPrintArea { display: none; }
-#resPrintArea .rp-title { font-size: 14px; font-weight: 700; text-align: center; margin-bottom: 4px; }
-#resPrintArea .rp-date { font-weight: 700; margin: 9px 0 2px; }
-#resPrintArea .rp-sub2 { padding-left: 12px; }
+#resPrintArea .rp-title { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+#resPrintArea .rp-date { font-size: 17px; font-weight: 700; margin: 10px 0 3px; }
+#resPrintArea .rp-item { font-size: 16px; font-weight: 700; }
+#resPrintArea .rp-sub2 { font-size: 14px; padding-left: 12px; }
+/* 예약 전표 (1건, POS 전표 형식) */
+#resPrintArea .slip-head { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 8px; }
+#resPrintArea .slip-label { font-size: 12px; margin-top: 12px; }
+#resPrintArea .slip-value { font-size: 21px; font-weight: 800; line-height: 1.35; }
+#resPrintArea .slip-note { font-size: 16px; font-weight: 700; min-height: 22px; }
 
 @media print {
   @page { margin: 0; }
@@ -476,8 +485,8 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
     padding: 2mm 0 2mm;
     background: #fff;
     color: #000;
-    font-family: ui-monospace, "Courier New", monospace;
-    font-size: 12.5px;
-    line-height: 1.45;
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
   }
 }

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jimoco 직원 관리</title>
-<link rel="stylesheet" href="styles.css?v=20">
+<link rel="stylesheet" href="styles.css?v=21">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -182,11 +182,11 @@
 <div id="pinGateModal" class="modal hidden">
   <div class="modal-box small">
     <h2 id="pinGateName"></h2>
-    <label><span data-i18n="empPin">직원 PIN (4~8자리, 출근용)</span><span class="pw-wrap"><input type="password" id="pinGateInput" maxlength="8" inputmode="numeric" autocomplete="off"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
     <div class="modal-actions">
       <button id="pinGateOk" class="btn btn-primary" data-i18n="confirm">확인</button>
       <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
     </div>
+    <label><span data-i18n="empPin">직원 PIN (4~8자리, 출근용)</span><span class="pw-wrap"><input type="password" id="pinGateInput" maxlength="8" inputmode="numeric" autocomplete="off"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
     <p><button id="pinForgotLink" class="btn btn-ghost" data-i18n="pinForgot">PIN을 잊으셨나요?</button></p>
     <p id="pinGateMsg" class="msg"></p>
   </div>
@@ -197,20 +197,20 @@
   <div class="modal-box small">
     <h2 data-i18n="pinResetTitle">PIN 찾기</h2>
     <div id="pinResetStep1">
-      <p class="view-desc"><span data-i18n="pinResetFor">대상</span>: <strong id="pinResetName"></strong></p>
       <div class="modal-actions">
         <button id="pinSendCodeBtn" class="btn btn-primary" data-i18n="sendCode">코드 받기</button>
         <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
       </div>
+      <p class="view-desc"><span data-i18n="pinResetFor">대상</span>: <strong id="pinResetName"></strong></p>
     </div>
     <div id="pinResetStep2" class="hidden">
+      <div class="modal-actions">
+        <button id="pinDoResetBtn" class="btn btn-primary" data-i18n="changePin">PIN 변경</button>
+      </div>
       <p class="pw-rule" data-i18n="codeSent">이메일로 코드를 보냈습니다. (최대 5분 소요)</p>
       <label><span data-i18n="code">인증 코드</span><input type="text" id="pinRsCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
       <label><span data-i18n="newPin">새 PIN</span><span class="pw-wrap"><input type="password" id="pinRsPin" maxlength="8" inputmode="numeric" autocomplete="new-password"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
       <label><span data-i18n="confirmPin">PIN 확인</span><span class="pw-wrap"><input type="password" id="pinRsPin2" maxlength="8" inputmode="numeric" autocomplete="new-password"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
-      <div class="modal-actions">
-        <button id="pinDoResetBtn" class="btn btn-primary" data-i18n="changePin">PIN 변경</button>
-      </div>
     </div>
     <p id="pinResetMsg" class="msg"></p>
   </div>
@@ -220,14 +220,14 @@
 <div id="pinSetupModal" class="modal hidden">
   <div class="modal-box small">
     <h2 data-i18n="pinSetupTitle">PIN 만들기</h2>
-    <p class="view-desc"><strong id="pinSetupName"></strong></p>
-    <p class="pw-rule" data-i18n="pinSetupNote">아직 PIN이 없어요. 기록·본인 정보를 보려면 먼저 본인 PIN을 만들어 주세요.</p>
-    <label><span data-i18n="newPin">새 PIN</span><span class="pw-wrap"><input type="password" id="pinSetupInput" maxlength="8" inputmode="numeric" autocomplete="new-password"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
-    <label><span data-i18n="confirmPin">PIN 확인</span><span class="pw-wrap"><input type="password" id="pinSetupInput2" maxlength="8" inputmode="numeric" autocomplete="new-password"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
     <div class="modal-actions">
       <button id="pinSetupOk" class="btn btn-primary" data-i18n="confirm">확인</button>
       <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
     </div>
+    <p class="view-desc"><strong id="pinSetupName"></strong></p>
+    <p class="pw-rule" data-i18n="pinSetupNote">아직 PIN이 없어요. 기록·본인 정보를 보려면 먼저 본인 PIN을 만들어 주세요.</p>
+    <label><span data-i18n="newPin">새 PIN</span><span class="pw-wrap"><input type="password" id="pinSetupInput" maxlength="8" inputmode="numeric" autocomplete="new-password"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
+    <label><span data-i18n="confirmPin">PIN 확인</span><span class="pw-wrap"><input type="password" id="pinSetupInput2" maxlength="8" inputmode="numeric" autocomplete="new-password"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
     <p id="pinSetupMsg" class="msg"></p>
   </div>
 </div>
@@ -236,6 +236,9 @@
 <div id="historyModal" class="modal hidden">
   <div class="modal-box">
     <h3 data-i18n="histTitle">내 근무 기록</h3>
+    <div class="row end">
+      <button type="button" class="btn btn-ghost" data-close="historyModal" data-i18n="cancel">취소</button>
+    </div>
     <p id="histEmpName" class="muted"></p>
     <div class="hist-nav">
       <button type="button" id="histPrev" class="hist-nav-btn">◀</button>
@@ -244,9 +247,6 @@
     </div>
     <div id="histList"></div>
     <p id="histTotal" class="hist-total"></p>
-    <div class="row end">
-      <button type="button" class="btn btn-ghost" data-close="historyModal" data-i18n="cancel">취소</button>
-    </div>
   </div>
 </div>
 
@@ -254,6 +254,10 @@
 <div id="staffEditModal" class="modal hidden">
   <div class="modal-box small">
     <h2 data-i18n="staffEditTitle">내 정보 수정</h2>
+    <div class="modal-actions">
+      <button id="staffEditSave" class="btn btn-primary" data-i18n="save">저장</button>
+      <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
+    </div>
     <label><span data-i18n="empName">직원 이름</span><input type="text" id="seName" maxlength="100" autocomplete="off"></label>
     <label><span data-i18n="phone">연락처</span><input type="tel" id="sePhone" maxlength="40" autocomplete="off"></label>
     <label><span data-i18n="email">이메일</span><input type="email" id="seEmail" maxlength="254" autocomplete="off"></label>
@@ -261,10 +265,6 @@
     <label><span data-i18n="sin">SIN 번호</span><input type="text" id="seSin" maxlength="40" autocomplete="off"></label>
     <label><span data-i18n="birthday">생일</span><input type="date" id="seBirthday"></label>
     <label><span data-i18n="newPin">새 PIN</span><span class="pw-wrap"><input type="password" id="sePin" maxlength="8" inputmode="numeric" autocomplete="new-password" data-i18n-ph="empPinPh" placeholder="비워두면 미설정"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
-    <div class="modal-actions">
-      <button id="staffEditSave" class="btn btn-primary" data-i18n="save">저장</button>
-      <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
-    </div>
     <p id="staffEditMsg" class="msg"></p>
   </div>
 </div>
@@ -273,6 +273,10 @@
 <div id="shiftModal" class="modal hidden">
   <div class="modal-box" id="shiftModalBox">
     <h2 id="shiftEmpName"></h2>
+    <div class="modal-actions">
+      <button id="shiftSave" class="btn btn-primary" data-i18n="save">저장</button>
+      <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
+    </div>
     <div class="shift-cols">
       <div class="shift-col-main">
     <label><span data-i18n="workDate">근무 날짜</span><input type="date" id="shiftDate"></label>
@@ -282,10 +286,6 @@
     <label><span data-i18n="clockOut">퇴근 시간</span><input type="text" id="shiftOut" inputmode="numeric" maxlength="5" data-i18n-ph="timePh" placeholder="14:00"></label>
       </div>
     </div>
-    <div class="modal-actions">
-      <button id="shiftSave" class="btn btn-primary" data-i18n="save">저장</button>
-      <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
-    </div>
     <p id="shiftMsg" class="msg"></p>
   </div>
 </div>
@@ -293,8 +293,12 @@
 <!-- 예약 모달 (출퇴근 화면·예약 탭 공용) -->
 <div id="resModal" class="modal hidden">
   <div class="modal-box">
-    <h3 data-i18n="tabReservations">예약</h3>
-    <div class="res-month-nav"><button id="resPrevMonth" class="btn btn-ghost">◀</button><span id="resMonthLabel"></span><button id="resNextMonth" class="btn btn-ghost">▶</button><button id="resThisMonth" class="btn btn-ghost" data-i18n="resThisMonth">이번달</button><button id="resPrint" class="btn btn-ghost">🖨 <span data-i18n="resPrint">인쇄</span></button></div>
+    <div class="modal-head">
+      <h3 data-i18n="tabReservations">예약</h3>
+      <button id="resClose" class="btn" data-i18n="close">닫기</button>
+    </div>
+    <div class="res-month-nav"><button id="resPrevMonth" class="btn btn-ghost">◀</button><span id="resMonthLabel"></span><button id="resNextMonth" class="btn btn-ghost">▶</button><button id="resThisMonth" class="btn btn-ghost" data-i18n="resThisMonth">이번달</button><input type="date" id="resPrintDate"><button id="resPrint" class="btn btn-ghost">🖨 <span data-i18n="resPrint">인쇄</span></button></div>
+    <div class="res-print-hint" data-i18n="resPrintDateHint">날짜를 고르면 그날만 인쇄</div>
     <div id="resList"></div>
     <h4 class="res-form-title" data-i18n="resFormTitle">새 예약 받기</h4>
     <div class="res-form">
@@ -310,9 +314,6 @@
         <button id="resReset" class="btn btn-ghost" data-i18n="resNew">새 예약</button>
       </div>
     </div>
-    <div class="modal-actions">
-      <button id="resClose" class="btn" data-i18n="close">닫기</button>
-    </div>
   </div>
 </div>
 
@@ -320,6 +321,10 @@
 <div id="closeoutModal" class="modal hidden">
   <div class="modal-box">
     <h2 data-i18n="coSection">마감 정산</h2>
+    <div class="modal-actions">
+      <button id="coSave" class="btn btn-primary" data-i18n="save">저장</button>
+      <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
+    </div>
     <label><span data-i18n="thEmployee">직원</span><select id="coEmp"></select></label>
     <label><span data-i18n="coEmp2">두 번째 서버 (선택)</span><select id="coEmp2"></select></label>
     <label><span data-i18n="workDate">근무 날짜</span><input type="date" id="coDate"></label>
@@ -343,10 +348,6 @@
     <div class="co-line"><span data-i18n="coExpected">예상 금액</span><strong id="coExpected">$0.00</strong></div>
     <p class="view-desc" id="coPrevNote"></p>
     <div class="co-line"><span data-i18n="coDiff">차이</span><strong id="coDiff">-</strong></div>
-    <div class="modal-actions">
-      <button id="coSave" class="btn btn-primary" data-i18n="save">저장</button>
-      <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
-    </div>
     <p id="coMsg" class="msg"></p>
   </div>
 </div>
@@ -355,11 +356,11 @@
 <div id="todayCoModal" class="modal hidden">
   <div class="modal-box">
     <h2 data-i18n="todayCo">오늘의 정산</h2>
-    <p class="view-desc" id="todayCoDate"></p>
-    <div id="todayCoList"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
     </div>
+    <p class="view-desc" id="todayCoDate"></p>
+    <div id="todayCoList"></div>
   </div>
 </div>
 
@@ -367,12 +368,12 @@
 <div id="loginModal" class="modal hidden">
   <div class="modal-box small">
     <h2 data-i18n="loginTitle">관리자 로그인</h2>
-    <label><span data-i18n="loginUser">아이디</span><input type="text" id="loginUser" autocomplete="off"></label>
-    <label><span data-i18n="password">비밀번호</span><span class="pw-wrap"><input type="password" id="loginPin" autocomplete="off"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
     <div class="modal-actions">
       <button id="loginBtn" class="btn btn-primary" data-i18n="unlock">확인</button>
       <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
     </div>
+    <label><span data-i18n="loginUser">아이디</span><input type="text" id="loginUser" autocomplete="off"></label>
+    <label><span data-i18n="password">비밀번호</span><span class="pw-wrap"><input type="password" id="loginPin" autocomplete="off"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
     <div class="login-links">
       <button type="button" id="openSignup" class="link-btn" data-i18n="signup">회원가입</button>
       <span class="link-sep">·</span>
@@ -386,16 +387,16 @@
 <div id="signupModal" class="modal hidden">
   <div class="modal-box small">
     <h2 data-i18n="suTitle">관리자 권한 회원가입</h2>
+    <div class="modal-actions">
+      <button id="signupBtn" class="btn btn-primary" data-i18n="signupApply">가입 신청</button>
+      <button id="closeSignup" class="btn btn-ghost" data-i18n="cancel">취소</button>
+    </div>
     <p class="view-desc" data-i18n="signupDesc">가입 신청 후 오너 승인 시 로그인할 수 있습니다.</p>
     <label><span data-i18n="loginUser">아이디</span><input type="text" id="suUser" autocomplete="off"></label>
     <label><span data-i18n="email">이메일</span><input type="email" id="suEmail" autocomplete="off" placeholder="example@gmail.com"></label>
     <label><span data-i18n="password">비밀번호</span><span class="pw-wrap"><input type="password" id="suPw" autocomplete="new-password"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
     <label><span data-i18n="confirmPw">비밀번호 확인</span><span class="pw-wrap"><input type="password" id="suPw2" autocomplete="new-password"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
     <p class="pw-rule" data-i18n="pwRuleGuide">비밀번호는 8자 이상, 대문자와 특수문자를 포함해야 합니다. (예: Jimoco!2026)</p>
-    <div class="modal-actions">
-      <button id="signupBtn" class="btn btn-primary" data-i18n="signupApply">가입 신청</button>
-      <button id="closeSignup" class="btn btn-ghost" data-i18n="cancel">취소</button>
-    </div>
     <p id="signupMsg" class="msg"></p>
   </div>
 </div>
@@ -405,21 +406,21 @@
   <div class="modal-box small">
     <h2 data-i18n="resetTitle">비밀번호 찾기</h2>
     <div id="resetStep1">
-      <label><span data-i18n="loginUser">아이디</span><input type="text" id="rsUser" autocomplete="off"></label>
       <div class="modal-actions">
         <button id="sendCodeBtn" class="btn btn-primary" data-i18n="sendCode">코드 받기</button>
         <button id="closeReset" class="btn btn-ghost" data-i18n="cancel">취소</button>
       </div>
+      <label><span data-i18n="loginUser">아이디</span><input type="text" id="rsUser" autocomplete="off"></label>
     </div>
     <div id="resetStep2" class="hidden">
+      <div class="modal-actions">
+        <button id="doResetBtn" class="btn btn-primary" data-i18n="changePw">비밀번호 변경</button>
+      </div>
       <p class="pw-rule" data-i18n="codeSent">이메일로 코드를 보냈습니다. (최대 5분 소요)</p>
       <label><span data-i18n="code">인증 코드</span><input type="text" id="rsCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
       <label><span data-i18n="newPw">새 비밀번호</span><span class="pw-wrap"><input type="password" id="rsPw" autocomplete="new-password"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
       <label><span data-i18n="confirmPw">비밀번호 확인</span><span class="pw-wrap"><input type="password" id="rsPw2" autocomplete="new-password"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
       <p class="pw-rule" data-i18n="pwRuleGuide">비밀번호는 8자 이상, 대문자와 특수문자를 포함해야 합니다. (예: Jimoco!2026)</p>
-      <div class="modal-actions">
-        <button id="doResetBtn" class="btn btn-primary" data-i18n="changePw">비밀번호 변경</button>
-      </div>
     </div>
     <p id="resetMsg" class="msg"></p>
   </div>
@@ -429,6 +430,10 @@
 <div id="empRegModal" class="modal hidden">
   <div class="modal-box small">
     <h2 data-i18n="empRegTitle">새 직원 등록</h2>
+    <div class="modal-actions">
+      <button id="empRegBtn" class="btn btn-primary" data-i18n="empRegBtn">등록 신청</button>
+      <button id="closeEmpReg" class="btn btn-ghost" data-i18n="cancel">취소</button>
+    </div>
     <p class="view-desc" data-i18n="empRegDesc">정보를 입력하면 오너 승인 후 출근 등록이 가능합니다.</p>
     <label><span data-i18n="empName">직원 이름 *</span><input type="text" id="regName" maxlength="60" data-i18n-ph="empNamePh" placeholder="이름"></label>
     <label><span data-i18n="phone">연락처</span><input type="tel" id="regPhone" maxlength="40" data-i18n-ph="empPhonePh" placeholder="전화번호"></label>
@@ -440,10 +445,6 @@
       </select>
     </label>
     <label><span data-i18n="empPin">직원 PIN (4~8자리, 출근용)</span><span class="pw-wrap"><input type="password" id="regPin" autocomplete="new-password" maxlength="8" inputmode="numeric" data-i18n-ph="regPinPh" placeholder="PIN 4~8자리 숫자 (출근용)"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
-    <div class="modal-actions">
-      <button id="empRegBtn" class="btn btn-primary" data-i18n="empRegBtn">등록 신청</button>
-      <button id="closeEmpReg" class="btn btn-ghost" data-i18n="cancel">취소</button>
-    </div>
     <p id="empRegMsg" class="msg"></p>
   </div>
 </div>
@@ -458,6 +459,12 @@
     <div class="emp-modal-body">
       <form id="empForm" class="emp-form">
         <h3 id="empFormTitle" data-i18n="empFormNew">새 직원 추가</h3>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary" data-i18n="save">저장</button>
+          <button type="button" id="empApprove" class="btn btn-primary hidden" data-i18n="empApprove">승인하고 저장</button>
+          <button type="button" id="empReset" class="btn btn-ghost" data-i18n="clear">새로 입력</button>
+          <button type="button" id="empDelete" class="btn btn-danger hidden" data-i18n="del">삭제</button>
+        </div>
         <input type="hidden" id="empId">
         <label><span data-i18n="empName">직원 이름 *</span><input type="text" id="empName" required maxlength="60"></label>
         <label><span data-i18n="role">역할</span>
@@ -474,12 +481,6 @@
         <label><span data-i18n="sin">SIN 번호</span><input type="text" id="empSin" maxlength="40"></label>
         <label><span data-i18n="birthday">생일</span><input type="date" id="empBirthday"></label>
         <label><span data-i18n="firstShift">첫 출근일</span><input type="date" id="empFirstShift"></label>
-        <div class="modal-actions">
-          <button type="submit" class="btn btn-primary" data-i18n="save">저장</button>
-          <button type="button" id="empApprove" class="btn btn-primary hidden" data-i18n="empApprove">승인하고 저장</button>
-          <button type="button" id="empReset" class="btn btn-ghost" data-i18n="clear">새로 입력</button>
-          <button type="button" id="empDelete" class="btn btn-danger hidden" data-i18n="del">삭제</button>
-        </div>
         <p id="empMsg" class="msg"></p>
       </form>
       <div class="emp-list-pane">
@@ -508,6 +509,11 @@
 <div id="editShiftModal" class="modal hidden">
   <div class="modal-box">
     <h2 data-i18n="editShiftTitle">근무 기록 수정</h2>
+    <div class="modal-actions">
+      <button id="editShiftSave" class="btn btn-primary" data-i18n="save">저장</button>
+      <button id="editShiftDelete" class="btn btn-danger" data-i18n="del">삭제</button>
+      <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
+    </div>
     <input type="hidden" id="editShiftId">
     <label><span data-i18n="workDate">근무 날짜</span><input type="date" id="editShiftDate"></label>
     <label><span data-i18n="clockIn">출근 시간</span><input type="text" id="editShiftIn" inputmode="numeric" maxlength="5" data-i18n-ph="timePh" placeholder="14:00"></label>
@@ -515,11 +521,6 @@
     <label class="hidden" id="editEveningRow"><span data-i18n="eveningStart">저녁 쉬프트 시작 시간</span><input type="text" id="editEveningStart" inputmode="numeric" maxlength="5" data-i18n-ph="timePh" placeholder="17:00"></label>
     <label><span data-i18n="clockOut">퇴근 시간</span><input type="text" id="editShiftOut" inputmode="numeric" maxlength="5" data-i18n-ph="timePh" placeholder="14:00"></label>
     <label><span data-i18n="tips">팁 ($)</span><input type="number" id="editShiftTips" min="0" step="0.01"></label>
-    <div class="modal-actions">
-      <button id="editShiftSave" class="btn btn-primary" data-i18n="save">저장</button>
-      <button id="editShiftDelete" class="btn btn-danger" data-i18n="del">삭제</button>
-      <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
-    </div>
     <p id="editShiftMsg" class="msg"></p>
   </div>
 </div>
@@ -530,6 +531,6 @@
 <div id="toast" class="toast hidden"></div>
 
 <script src="config.js"></script>
-<script src="app.js?v=21"></script>
+<script src="app.js?v=22"></script>
 </body>
 </html>

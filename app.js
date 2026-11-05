@@ -314,6 +314,7 @@
       resNew: '새 예약',
       resThisMonth: '이번달',
       resPrint: '인쇄',
+      resPrintDateHint: '날짜를 고르면 그날만 인쇄',
       resFormTitle: '새 예약 받기',
       resEmpty: '예약이 없습니다',
       resWeb: '웹 예약',
@@ -597,6 +598,7 @@
       resNew: 'New reservation',
       resThisMonth: 'This month',
       resPrint: 'Print',
+      resPrintDateHint: 'Pick a date to print that day only',
       resFormTitle: 'New reservation',
       resEmpty: 'No reservations.',
       resWeb: 'Web booking',
@@ -992,6 +994,8 @@
     $('resList').addEventListener('click', function (e) {
       var eb = e.target.closest('[data-edit-res]');
       if (eb) { editReservation(eb.getAttribute('data-edit-res')); return; }
+      var pb = e.target.closest('[data-print-res]');
+      if (pb) { printOneReservation(pb.getAttribute('data-print-res')); return; }
       var db = e.target.closest('[data-del-res]');
       if (db) deleteReservation(db.getAttribute('data-del-res'));
     });
@@ -2914,39 +2918,54 @@
         (meta.length ? '<span class="res-meta">' + meta.join(' · ') + '</span>' : '') +
         '<span class="res-badge">' + esc(r.source === 'web' ? t('resWeb') : t('resManual')) + '</span>' +
         '<span class="row-actions"><button class="btn btn-chip" data-edit-res="' + r.id + '">' + esc(t('resEdit')) +
-        '</button> <button class="btn btn-chip btn-danger" data-del-res="' + r.id + '">' + esc(t('resDelete')) + '</button></span>' +
+        '</button> <button class="btn btn-chip" data-print-res="' + r.id + '" title="' + esc(t('resPrint')) + '">🖨</button>' +
+        ' <button class="btn btn-chip btn-danger" data-del-res="' + r.id + '">' + esc(t('resDelete')) + '</button></span>' +
         '</div>';
     });
     $('resList').innerHTML = html;
   }
 
-  /* 예약 목록 인쇄 (POS 롤프린터 80mm 영수증 형식, #resPrintArea + @media print) */
+  /* 예약 목록 인쇄 (POS 롤프린터 80mm 영수증 형식, #resPrintArea + @media print)
+     - 날짜 입력(resPrintDate)에 값이 있으면 그 날짜만, 없으면 보고 있는 달 전체.
+       인쇄물에는 예약 내용만: 제목 한 줄 + 날짜별 예약 목록 (가게명·인쇄시각 등 제외) */
   function printReservations() {
-    if (!resViewMonth) {
-      var n0 = new Date();
-      resViewMonth = new Date(n0.getFullYear(), n0.getMonth(), 1);
-    }
-    var prefix = resMonthPrefix();
-    var rows = resCache.filter(function (r) { return String(r.res_date || '').slice(0, 7) === prefix; });
-    if (!rows.length) { toast(t('resEmpty')); return; }
-    rows = rows.slice().sort(function (a, b) {
-      var d = String(a.res_date).localeCompare(String(b.res_date));
-      return d !== 0 ? d : String(a.res_time || '').localeCompare(String(b.res_time || ''));
-    });
     var wdNames = lang === 'ko'
       ? ['일', '월', '화', '수', '목', '금', '토']
       : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     var enMonths = ['January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'];
-    var monthTxt = lang === 'ko'
-      ? resViewMonth.getFullYear() + '년 ' + (resViewMonth.getMonth() + 1) + '월'
-      : enMonths[resViewMonth.getMonth()] + ' ' + resViewMonth.getFullYear();
-    /* 인쇄물에는 예약 내용만: 월 제목 한 줄 + 날짜별 예약 목록 (가게명·인쇄시각 등 제외) */
-    var titleTxt = lang === 'ko' ? monthTxt + ' 예약' : 'Reservations — ' + monthTxt;
+    var dateVal = $('resPrintDate') ? $('resPrintDate').value : '';
+    var rows, titleTxt, withDateHeaders;
+    if (dateVal) {
+      rows = resCache.filter(function (r) { return r.res_date === dateVal; });
+      if (!rows.length) { toast(t('resEmpty')); return; }
+      var dd = parseResDate(dateVal);
+      titleTxt = lang === 'ko'
+        ? dd.getFullYear() + '년 ' + (dd.getMonth() + 1) + '월 ' + dd.getDate() + '일 (' + wdNames[dd.getDay()] + ') 예약'
+        : 'Reservations — ' + enMonths[dd.getMonth()] + ' ' + dd.getDate() + ', ' + dd.getFullYear() + ' (' + wdNames[dd.getDay()] + ')';
+      withDateHeaders = false;
+    } else {
+      if (!resViewMonth) {
+        var n0 = new Date();
+        resViewMonth = new Date(n0.getFullYear(), n0.getMonth(), 1);
+      }
+      var prefix = resMonthPrefix();
+      rows = resCache.filter(function (r) { return String(r.res_date || '').slice(0, 7) === prefix; });
+      if (!rows.length) { toast(t('resEmpty')); return; }
+      var monthTxt = lang === 'ko'
+        ? resViewMonth.getFullYear() + '년 ' + (resViewMonth.getMonth() + 1) + '월'
+        : enMonths[resViewMonth.getMonth()] + ' ' + resViewMonth.getFullYear();
+      titleTxt = lang === 'ko' ? monthTxt + ' 예약' : 'Reservations — ' + monthTxt;
+      withDateHeaders = true;
+    }
+    rows = rows.slice().sort(function (a, b) {
+      var d = String(a.res_date).localeCompare(String(b.res_date));
+      return d !== 0 ? d : String(a.res_time || '').localeCompare(String(b.res_time || ''));
+    });
     var html = '<div class="rp-title">' + esc(titleTxt) + '</div>';
     var curDate = null;
     rows.forEach(function (r) {
-      if (r.res_date !== curDate) {
+      if (withDateHeaders && r.res_date !== curDate) {
         curDate = r.res_date;
         var d = parseResDate(curDate);
         html += '<div class="rp-date">' + esc(curDate) + ' (' + wdNames[d.getDay()] + ')</div>';
@@ -2957,6 +2976,36 @@
       if (r.phone) html += '<div class="rp-sub2">' + esc(t('resPhoneLbl')) + ' ' + esc(r.phone) + '</div>';
       if (r.note) html += '<div class="rp-sub2">' + esc(t('resNoteLbl')) + ': ' + esc(r.note) + '</div>';
     });
+    $('resPrintArea').innerHTML = html;
+    window.print();
+  }
+
+  /* 예약 1건 전표 인쇄 (POS 전표 형식: 라벨 작게·값 크고 굵게, 요일은 날짜 아래 줄.
+     라벨과 날짜·요일 표기는 POS 전표와 동일하게 영어 고정) */
+  function printOneReservation(id) {
+    var r = resCache.find(function (x) { return String(x.id) === String(id); });
+    if (!r) return;
+    var enMon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var enDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    var d = parseResDate(r.res_date);
+    var dom = d.getDate();
+    var dateTxt = d.getFullYear() + '-' + enMon[d.getMonth()] + '-' + (dom < 10 ? '0' : '') + dom;
+    var html = '<div class="slip">' +
+      '<div class="slip-head">&gt;&gt;&gt; RESERVATION &lt;&lt;&lt;</div>' +
+      '<div class="slip-label">Date &amp; Time:</div>' +
+      '<div class="slip-value">' + esc(dateTxt + ' ' + fmtTime12(r.res_time)) + '</div>' +
+      '<div class="slip-value">' + enDays[d.getDay()] + '</div>' +
+      '<div class="slip-label">Customer Name:</div>' +
+      '<div class="slip-value">' + esc(r.guest_name) + '</div>';
+    if (r.phone) {
+      html += '<div class="slip-label">Phone No.:</div>' +
+        '<div class="slip-value">' + esc(r.phone) + '</div>';
+    }
+    html += '<div class="slip-label"># of Guests:</div>' +
+      '<div class="slip-value">' + (r.party_size || 0) + '</div>' +
+      '<div class="slip-label">Memo:</div>' +
+      '<div class="slip-note">' + (r.note ? esc(r.note) : '&nbsp;') + '</div>' +
+      '</div>';
     $('resPrintArea').innerHTML = html;
     window.print();
   }
