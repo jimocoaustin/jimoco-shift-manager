@@ -466,13 +466,14 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
 #resPrintArea .rp-sub2 { padding-left: 12px; }
 
 @media print {
-  @page { size: 80mm auto; margin: 0; }
+  @page { margin: 0; }
+  html, body { margin: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; }
   body > *:not(#resPrintArea) { display: none !important; }
   #resPrintArea {
     display: block;
     width: 72mm;
     margin: 0 auto;
-    padding: 4mm 0 8mm;
+    padding: 2mm 0 2mm;
     background: #fff;
     color: #000;
     font-family: ui-monospace, "Courier New", monospace;
