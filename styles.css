@@ -117,8 +117,6 @@ body {
   font-size: 15px;
 }
 .hist-row .hist-h { font-weight: 700; }
-.hist-row { align-items: center; }
-.hist-row .hist-edit { padding: 4px 10px; font-size: 13px; }
 .hist-row.boost { color: #d70015; font-weight: 600; }
 .hist-row .boost-tag {
   color: #d70015; font-weight: 700; font-size: 12px;
@@ -444,3 +442,16 @@ table.emp-info td, table.emp-info th { padding: 6px 8px; text-align: left; }
 .cal-semi-title { margin: 14px 0 4px; font-size: 14px; }
 table.cal-emp-tips { width: auto; min-width: 250px; }
 table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
+
+/* 예약 탭 */
+.res-form { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 4px 20px 16px; margin-bottom: 14px; }
+.res-form .btn-row { margin-top: 14px; }
+.res-group { margin: 18px 0 6px; font-size: 16px; }
+.res-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; margin-bottom: 6px; }
+.res-time { font-weight: 700; min-width: 74px; }
+.res-name { font-weight: 600; }
+.res-party { color: var(--text-2); }
+.res-meta { color: var(--text-2); font-size: 14px; }
+.res-badge { display: inline-block; font-size: 12px; font-weight: 600; color: var(--blue); background: rgba(0,122,255,.12); border-radius: 8px; padding: 2px 8px; }
+.res-badge-today { color: #fff; background: var(--blue); vertical-align: middle; }
+.res-row .row-actions { margin-left: auto; }

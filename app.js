@@ -2,9 +2,6 @@
 (function () {
   'use strict';
 
-  /* 밴쿠버 시간대: BC는 2026-11-01부터 UTC-7 고정 ('Etc/GMT+7' = UTC-7, IANA 표기상 부호 반대) */
-  var VAN_TZ = 'Etc/GMT+7';
-
   var cfg = window.JIMOCO_CONFIG || {};
   var supabase = null;
   var employees = [];
@@ -40,6 +37,8 @@
   var closeoutCache = { rows: [], month: '' };
   var todayCoCache = { rows: [] };
   var coReturnToToday = false;
+  var resCache = []; /* 예약 탭: 현재 불러온 예약 목록 */
+  var editingResId = null; /* 예약 수정 중이면 해당 예약 id */
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -186,8 +185,6 @@
       empCsvBtn: 'CSV로 내보내기',
       calStat: '스탯 홀리데이 1.5배',
       editShiftTitle: '근무 기록 수정',
-      myShiftEditTitle: '내 근무 시간 수정',
-      myEditHint: '최근 7일 안의 기록만 고칠 수 있어요. 팁·삭제는 관리자에게 말해 주세요.',
       wrongPw: '비밀번호가 틀렸습니다.',
       fail3: '3회 실패했습니다. 관리자에게 알림이 전송됩니다.',
       toastEmpFail: '직원 목록을 불러오지 못했습니다.',
@@ -302,7 +299,28 @@
       todayCoEmpty: '오늘 입력된 정산이 아직 없습니다.',
       coSaveFail: '마감 정산 저장 실패: ',
       setupTitle: '설정이 필요합니다',
-      setupBody: 'config.js 파일에 Supabase URL과 anon key를 입력한 뒤 다시 열어주세요.<br>자세한 순서는 README.md를 참고하세요.'
+      setupBody: 'config.js 파일에 Supabase URL과 anon key를 입력한 뒤 다시 열어주세요.<br>자세한 순서는 README.md를 참고하세요.',
+      tabReservations: '예약',
+      resNameLbl: '이름',
+      resEmailLbl: '이메일',
+      resPhoneLbl: '전화',
+      resDateLbl: '날짜',
+      resTimeLbl: '시간',
+      resPartyLbl: '인원',
+      resNoteLbl: '비고',
+      resAdd: '예약 추가',
+      resSaveEdit: '수정 저장',
+      resNew: '새 예약',
+      resShowPast: '지난 예약 보기',
+      resEmpty: '예약이 없습니다',
+      resWeb: '웹 예약',
+      resManual: '직접 입력',
+      resEdit: '수정',
+      resDelete: '삭제',
+      resDelConfirm: '이 예약을 삭제할까요?',
+      resNeedFields: '이름·날짜·시간·인원을 확인하세요',
+      resToday: '오늘',
+      resGuests: '명'
     },
     en: {
       appTitle: 'Jimoco Staff Manager',
@@ -445,8 +463,6 @@
       empCsvBtn: 'Export CSV',
       calStat: 'Stat holiday ×1.5',
       editShiftTitle: 'Edit shift record',
-      myShiftEditTitle: 'Fix my shift time',
-      myEditHint: 'You can fix shifts from the last 7 days. For tips or deleting, ask a manager.',
       wrongPw: 'Incorrect password.',
       fail3: '3 failed attempts. An alert has been sent to the manager.',
       toastEmpFail: 'Failed to load employees.',
@@ -561,7 +577,28 @@
       todayCoEmpty: 'No close-out entered today yet.',
       coSaveFail: 'Close-out save failed: ',
       setupTitle: 'Setup required',
-      setupBody: 'Enter your Supabase URL and anon key in config.js, then reload.<br>See README.md for the steps.'
+      setupBody: 'Enter your Supabase URL and anon key in config.js, then reload.<br>See README.md for the steps.',
+      tabReservations: 'Reservations',
+      resNameLbl: 'Name',
+      resEmailLbl: 'Email',
+      resPhoneLbl: 'Phone',
+      resDateLbl: 'Date',
+      resTimeLbl: 'Time',
+      resPartyLbl: 'Party size',
+      resNoteLbl: 'Note',
+      resAdd: 'Add reservation',
+      resSaveEdit: 'Save changes',
+      resNew: 'New reservation',
+      resShowPast: 'Show past reservations',
+      resEmpty: 'No reservations.',
+      resWeb: 'Web booking',
+      resManual: 'Manual entry',
+      resEdit: 'Edit',
+      resDelete: 'Delete',
+      resDelConfirm: 'Delete this reservation?',
+      resNeedFields: 'Please check name, date, time and party size.',
+      resToday: 'Today',
+      resGuests: 'guests'
     }
   };
 
@@ -617,17 +654,15 @@
   function openModal(id) { $(id).classList.remove('hidden'); }
   function closeModal(id) { $(id).classList.add('hidden'); }
 
-  /* ---------- 날짜/시간 (밴쿠버, 24시간제) ---------- */
-  /* BC는 2026-11-01부터 서머타임 없이 UTC-7 고정. 기기 시간대 DB가 옛날이면 'America/Vancouver'를 UTC-8로 잘못 계산하므로
-     고정 오프셋 사용 (VAN_TZ, 파일 맨 위에 선언) */
+  /* ---------- 날짜/시간 (America/Vancouver 기준, 24시간제) ---------- */
   function todayStr() {
     return new Intl.DateTimeFormat('en-CA', {
-      timeZone: VAN_TZ, year: 'numeric', month: '2-digit', day: '2-digit'
+      timeZone: 'America/Vancouver', year: 'numeric', month: '2-digit', day: '2-digit'
     }).format(new Date());
   }
 
   function vancouverNow() {
-    return new Date(new Date().toLocaleString('en-US', { timeZone: VAN_TZ }));
+    return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
   }
 
   function fmtYMD(d) {
@@ -638,7 +673,7 @@
 
   function vancouverOffsetMs(date) {
     var dtf = new Intl.DateTimeFormat('en-US', {
-      timeZone: VAN_TZ,
+      timeZone: 'America/Vancouver',
       year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
     });
@@ -671,7 +706,7 @@
 
   function fmtTime(iso) {
     var s = new Intl.DateTimeFormat('en-CA', {
-      timeZone: VAN_TZ, hour: '2-digit', minute: '2-digit', hour12: false
+      timeZone: 'America/Vancouver', hour: '2-digit', minute: '2-digit', hour12: false
     }).format(new Date(iso));
     return s.replace(/^24:/, '00:');
   }
@@ -679,7 +714,7 @@
   function fmtDateV(isoOrDate) {
     var d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
     return new Intl.DateTimeFormat('en-CA', {
-      timeZone: VAN_TZ, year: 'numeric', month: '2-digit', day: '2-digit'
+      timeZone: 'America/Vancouver', year: 'numeric', month: '2-digit', day: '2-digit'
     }).format(d);
   }
 
@@ -697,11 +732,11 @@
     try {
       var now = new Date();
       var dFmt = new Intl.DateTimeFormat(lang === 'ko' ? 'ko-KR' : 'en-US', {
-        timeZone: VAN_TZ,
+        timeZone: 'America/Vancouver',
         year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short'
       });
       var tFmt = new Intl.DateTimeFormat('en-GB', {
-        timeZone: VAN_TZ,
+        timeZone: 'America/Vancouver',
         hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
       });
       var cd = $('clockDate'), ct = $('clockTime');
@@ -718,7 +753,7 @@
   function nowHM() {
     try {
       var parts = new Intl.DateTimeFormat('en-GB', {
-        timeZone: VAN_TZ,
+        timeZone: 'America/Vancouver',
         hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
       }).formatToParts(new Date());
       var h = '00', m = '00';
@@ -851,6 +886,7 @@
           if (!$('coMonth').value) $('coMonth').value = todayStr().slice(0, 7);
           loadCloseouts();
         }
+        if (tab.dataset.tab === 'reservations') loadReservations();
       });
     });
 
@@ -924,10 +960,20 @@
       });
     });
     $('editShiftSave').addEventListener('click', saveEditedShift);
-    $('myShiftSave').addEventListener('click', saveMyShift);
-    $('shiftEmpFilter').addEventListener('change', renderShiftList);
     $('editShiftDelete').addEventListener('click', deleteShift);
     $('coLoad').addEventListener('click', loadCloseouts);
+    /* 예약 탭 */
+    initResTimeSlots();
+    resetResForm(); /* 날짜 기본값 = 오늘 */
+    $('resSave').addEventListener('click', saveReservation);
+    $('resReset').addEventListener('click', resetResForm);
+    $('resShowPast').addEventListener('change', loadReservations);
+    $('resList').addEventListener('click', function (e) {
+      var eb = e.target.closest('[data-edit-res]');
+      if (eb) { editReservation(eb.getAttribute('data-edit-res')); return; }
+      var db = e.target.closest('[data-del-res]');
+      if (db) deleteReservation(db.getAttribute('data-del-res'));
+    });
     ['shiftIn', 'shiftOut', 'shiftDate'].forEach(function (id) {
       $(id).addEventListener('input', function () {
         recalcCloseout();
@@ -1270,8 +1316,6 @@
     } catch (e) {}
     var rows = (data && data.mine) || [];
     histCtx = data || { day_shifts: [], closeouts: [] };
-    histRows = rows;
-    var editCutoff = myEditCutoff();
     if (!rows.length) {
       $('histList').innerHTML = '<p class="muted">' + esc(t('histNone')) + '</p>';
       return;
@@ -1283,7 +1327,7 @@
       var h = (co - ci) / 3600000;
       totalH += h;
       var d = new Date(r.work_date + 'T12:00:00');
-      function hm(dt) { return fmtTime(dt); } /* 기기 시간대와 무관하게 밴쿠버 시각으로 표시 */
+      function hm(dt) { function p(n) { return (n < 10 ? '0' : '') + n; } return p(dt.getHours()) + ':' + p(dt.getMinutes()); }
       var probe = Object.assign({}, r, { employees: { name: histEmp.name, role: histEmp.role, hourly_rate_cents: histEmp.hourly_rate_cents } });
       var boostC = effectiveBoosterCents(probe, histCtx.day_shifts, histCtx.closeouts);
       var ftC = isStatHoliday(r.work_date) ? 0 : fulltimeBoosterCents(probe);
@@ -1296,59 +1340,10 @@
       }
       return '<div class="hist-row' + (boostC > 0 ? ' boost' : '') + '"><span>' + (d.getMonth() + 1) + '/' + d.getDate() + ' (' + wd[d.getDay()] + ')</span>' +
         '<span>' + hm(ci) + ' ~ ' + hm(co) + '</span>' +
-        '<span class="hist-h">' + h.toFixed(1) + 'h</span>' + tag +
-        (r.work_date >= editCutoff ? '<button type="button" class="btn btn-chip hist-edit" data-my-shift="' + r.id + '">' + esc(t('edit')) + '</button>' : '') +
-        '</div>';
+        '<span class="hist-h">' + h.toFixed(1) + 'h</span>' + tag + '</div>';
     }).join('');
-    document.querySelectorAll('[data-my-shift]').forEach(function (b) {
-      b.addEventListener('click', function () { openMyShiftEdit(b.dataset.myShift); });
-    });
     $('histTotal').textContent = t('histTotal') + ': ' + totalH.toFixed(1) + 'h · ' + rows.length + t('histDays') +
       (totalBoost > 0 ? ' · ' + t('boostMark') + ' $' + dollars(totalBoost) : '');
-  }
-
-  /* ---------- 직원 본인 근무 시간 수정 (PIN 확인 후, 최근 7일만) ---------- */
-  var histRows = [];
-  var myShiftCur = null;
-  function myEditCutoff() {
-    var d = new Date(todayStr() + 'T12:00:00Z');
-    d.setUTCDate(d.getUTCDate() - 7);
-    return d.toISOString().slice(0, 10);
-  }
-  function openMyShiftEdit(id) {
-    var s = histRows.find(function (x) { return x.id === id; });
-    if (!s) return;
-    myShiftCur = s;
-    $('myShiftDate').value = s.work_date;
-    $('myShiftIn').value = fmtTime(s.clock_in);
-    $('myShiftOut').value = fmtTime(s.clock_out);
-    $('myShiftMsg').textContent = '';
-    $('myShiftMsg').className = 'msg';
-    openModal('myShiftModal');
-  }
-  async function saveMyShift() {
-    var msg = $('myShiftMsg');
-    msg.className = 'msg';
-    if (!myShiftCur || !histEmp) return;
-    var date = $('myShiftDate').value, ci = $('myShiftIn').value, co = $('myShiftOut').value;
-    if (!date || !ci || !co) { msg.textContent = t('needAll'); return; }
-    var ciN = normTime24(ci), coN = normTime24(co);
-    if (!ciN || !coN) { msg.textContent = t('badTime'); return; }
-    if (date < myEditCutoff()) { msg.textContent = t('myEditHint'); return; }
-    var inMs = toMs(date, ciN), outMs = toMs(date, coN);
-    if (outMs <= inMs) outMs += 24 * 3600 * 1000; // 다음날 퇴근
-    if (inMs > Date.now() + 120000 || outMs > Date.now() + 120000) { msg.textContent = t('futureTime'); return; }
-    var ok = false;
-    try {
-      ok = await rpc('staff_update_shift', {
-        p_emp: histEmp.id, p_pin: verifiedPin || '', p_id: myShiftCur.id, p_date: date,
-        p_in: new Date(inMs).toISOString(), p_out: new Date(outMs).toISOString()
-      });
-    } catch (e) {}
-    if (!ok) { msg.textContent = t('saveFail'); return; }
-    closeModal('myShiftModal');
-    toast(t('toastSaved'));
-    renderHistory();
   }
 
   /* ---------- 오너 전용 달력: 날짜별 근무시간·팁 ---------- */
@@ -2614,49 +2609,13 @@
     $('wageTable').innerHTML = wh;
     renderTipTable(c);
 
-    fillShiftEmpFilter();
-    renderShiftList();
-  }
-
-  /* 근무 기록: 직원별 조회 (필터 선택 시 그 직원 기록만 날짜순 + 합계 시간) */
-  function fillShiftEmpFilter() {
-    var sel = $('shiftEmpFilter');
-    if (!sel) return;
-    var prev = sel.value;
-    var seen = {}, list = [];
-    payrollCache.shifts.forEach(function (s) {
+    $('shiftList').innerHTML = payrollCache.shifts.map(function (s) {
       var emp = s.employees || {};
-      if (emp.id && !seen[emp.id]) { seen[emp.id] = true; list.push({ id: emp.id, name: emp.name || '?' }); }
-    });
-    list.sort(function (a, b) { return a.name.localeCompare(b.name); });
-    sel.innerHTML = '<option value="">' + esc(t('filterAll')) + '</option>' +
-      list.map(function (e) { return '<option value="' + esc(e.id) + '">' + esc(e.name) + '</option>'; }).join('');
-    sel.value = seen[prev] ? prev : '';
-  }
-
-  function renderShiftList() {
-    var sel = $('shiftEmpFilter');
-    var fid = sel ? sel.value : '';
-    var rows = payrollCache.shifts.filter(function (s) {
-      return !fid || (s.employees && s.employees.id === fid);
-    });
-    if (fid) {
-      rows = rows.slice().sort(function (a, b) { return new Date(a.clock_in) - new Date(b.clock_in); });
-    }
-    var totalH = 0;
-    var html = rows.map(function (s) {
-      var emp = s.employees || {};
-      var h = (new Date(s.clock_out) - new Date(s.clock_in)) / 3600000;
-      totalH += h;
       return '<div class="shift-row"><span class="grow"><strong>' + esc(emp.name || '?') + '</strong> ' +
         fmtDateV(s.work_date) + ' ' + fmtTime(s.clock_in) + '–' + fmtTime(s.clock_out) +
-        ' · ' + h.toFixed(2) + 'h' +
         (s.tips_cents ? ' · ' + esc(t('tipsWord')) + ' $' + dollars(s.tips_cents) : '') + '</span>' +
         '<button class="btn btn-chip" data-shift="' + s.id + '">' + esc(t('edit')) + '</button></div>';
-    }).join('');
-    if (!html) html = '<p class="view-desc">' + esc(t('noShifts')) + '</p>';
-    else if (fid) html += '<p class="hist-total">' + esc(t('histTotal')) + ': ' + totalH.toFixed(2) + 'h · ' + rows.length + esc(t('histDays')) + '</p>';
-    $('shiftList').innerHTML = html;
+    }).join('') || '<p class="view-desc">' + esc(t('noShifts')) + '</p>';
     document.querySelectorAll('[data-shift]').forEach(function (b) {
       b.addEventListener('click', function () { openEditShift(b.dataset.shift); });
     });
@@ -2817,6 +2776,149 @@
     if (!okDc) { toast(t('delFail')); return; }
     toast(t('toastDeleted'));
     loadCloseouts();
+  }
+
+  /* ---------- 예약 (관리자 탭) ---------- */
+  /* 시간 선택: 11:00~20:30, 30분 간격 (value는 24h "19:00", 표시는 12h "7:00 PM") */
+  function fmtTime12(hhmm) {
+    var parts = String(hhmm || '').split(':');
+    var h = parseInt(parts[0], 10);
+    var m = parts[1] || '00';
+    if (isNaN(h)) return String(hhmm || '');
+    var ap = h >= 12 ? 'PM' : 'AM';
+    var h12 = h % 12;
+    if (h12 === 0) h12 = 12;
+    return h12 + ':' + m + ' ' + ap;
+  }
+
+  function initResTimeSlots() {
+    var sel = $('resTime');
+    if (!sel || sel.options.length) return;
+    var html = '';
+    for (var mins = 11 * 60; mins <= 20 * 60 + 30; mins += 30) {
+      var h = Math.floor(mins / 60);
+      var mm = mins % 60;
+      var v = (h < 10 ? '0' : '') + h + ':' + (mm < 10 ? '0' : '') + mm;
+      html += '<option value="' + v + '">' + fmtTime12(v) + '</option>';
+    }
+    sel.innerHTML = html;
+  }
+
+  /* 'YYYY-MM-DD'를 로컬 날짜로 파싱 (시간대 밀림 방지) */
+  function parseResDate(s) {
+    var p = String(s || '').split('-');
+    return new Date(+p[0], (+p[1] || 1) - 1, +p[2] || 1);
+  }
+
+  async function loadReservations() {
+    var res = await supabase.from('reservations').select('*')
+      .order('res_date', { ascending: true })
+      .order('res_time', { ascending: true });
+    if (res.error) { toast(t('loadFail')); return; }
+    resCache = res.data || [];
+    renderReservations();
+  }
+
+  function renderReservations() {
+    var showPast = $('resShowPast').checked;
+    var today = todayStr();
+    var rows = resCache.filter(function (r) { return showPast || r.res_date >= today; });
+    if (!rows.length) {
+      $('resList').innerHTML = '<p class="view-desc">' + esc(t('resEmpty')) + '</p>';
+      return;
+    }
+    var wdNames = lang === 'ko'
+      ? ['일', '월', '화', '수', '목', '금', '토']
+      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    var html = '';
+    var curDate = null;
+    rows.forEach(function (r) {
+      if (r.res_date !== curDate) {
+        curDate = r.res_date;
+        var d = parseResDate(curDate);
+        html += '<h3 class="res-group">' + esc(curDate) + ' (' + wdNames[d.getDay()] + ')' +
+          (curDate === today ? ' <span class="res-badge res-badge-today">' + esc(t('resToday')) + '</span>' : '') + '</h3>';
+      }
+      var meta = [];
+      if (r.email) meta.push(esc(r.email));
+      if (r.phone) meta.push(esc(r.phone));
+      if (r.note) meta.push(esc(r.note));
+      html += '<div class="res-row">' +
+        '<span class="res-time">' + esc(fmtTime12(r.res_time)) + '</span>' +
+        '<span class="res-name">' + esc(r.guest_name) + '</span>' +
+        '<span class="res-party">' + (r.party_size || 0) + esc(t('resGuests')) + '</span>' +
+        (meta.length ? '<span class="res-meta">' + meta.join(' · ') + '</span>' : '') +
+        '<span class="res-badge">' + esc(r.source === 'web' ? t('resWeb') : t('resManual')) + '</span>' +
+        '<span class="row-actions"><button class="btn btn-chip" data-edit-res="' + r.id + '">' + esc(t('resEdit')) +
+        '</button> <button class="btn btn-chip btn-danger" data-del-res="' + r.id + '">' + esc(t('resDelete')) + '</button></span>' +
+        '</div>';
+    });
+    $('resList').innerHTML = html;
+  }
+
+  async function saveReservation() {
+    var name = $('resName').value.trim();
+    var date = $('resDate').value;
+    var time = $('resTime').value;
+    var party = parseInt($('resParty').value, 10);
+    if (!name || !date || !time || !party || party < 1) { alert(t('resNeedFields')); return; }
+    var payload = {
+      guest_name: name,
+      email: $('resEmail').value.trim() || null,
+      phone: $('resPhone').value.trim() || null,
+      res_date: date,
+      res_time: time,
+      party_size: party,
+      note: $('resNote').value.trim() || null
+    };
+    var res;
+    if (editingResId) {
+      payload.updated_at = new Date().toISOString();
+      res = await supabase.from('reservations').update(payload).eq('id', editingResId);
+    } else {
+      payload.source = 'manual';
+      res = await supabase.from('reservations').insert(payload);
+    }
+    if (res.error) { toast(t('saveFail') + res.error.message); return; }
+    toast(t('toastSaved'));
+    resetResForm();
+    loadReservations();
+  }
+
+  function editReservation(id) {
+    var r = resCache.find(function (x) { return x.id === id; });
+    if (!r) return;
+    editingResId = id;
+    $('resName').value = r.guest_name || '';
+    $('resEmail').value = r.email || '';
+    $('resPhone').value = r.phone || '';
+    $('resDate').value = r.res_date || '';
+    $('resTime').value = r.res_time || '';
+    $('resParty').value = r.party_size || 2;
+    $('resNote').value = r.note || '';
+    $('resSave').textContent = t('resSaveEdit');
+    window.scrollTo(0, 0);
+  }
+
+  function resetResForm() {
+    editingResId = null;
+    $('resName').value = '';
+    $('resEmail').value = '';
+    $('resPhone').value = '';
+    $('resDate').value = todayStr();
+    $('resTime').selectedIndex = 0;
+    $('resParty').value = 2;
+    $('resNote').value = '';
+    $('resSave').textContent = t('resAdd');
+  }
+
+  async function deleteReservation(id) {
+    if (!confirm(t('resDelConfirm'))) return;
+    var res = await supabase.from('reservations').delete().eq('id', id);
+    if (res.error) { toast(t('delFail') + res.error.message); return; }
+    if (editingResId === id) resetResForm();
+    toast(t('toastDeleted'));
+    loadReservations();
   }
 
   /* ---------- CSV ---------- */

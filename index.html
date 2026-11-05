@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jimoco 직원 관리</title>
-<link rel="stylesheet" href="styles.css?v=17">
+<link rel="stylesheet" href="styles.css?v=16">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -57,6 +57,7 @@
   <nav class="tabbar">
     <button class="tab active" data-tab="payroll"><span class="tab-icon">💰</span><span data-i18n="tabPayroll">급여</span></button>
     <button class="tab" data-tab="closeout"><span class="tab-icon">🧾</span><span data-i18n="tabCloseout">마감 정산</span></button>
+    <button class="tab" data-tab="reservations"><span class="tab-icon">📖</span><span data-i18n="tabReservations">예약</span></button>
     <button class="tab" data-tab="employees"><span class="tab-icon">👥</span><span data-i18n="tabEmployees">직원 관리</span></button>
     <button class="tab" data-tab="pin" id="pinTabBtn"><span class="tab-icon">🔑</span><span data-i18n="tabPin">비밀번호 관리</span></button>
     <button class="tab" data-tab="calendar" id="calTabBtn"><span class="tab-icon">📅</span><span data-i18n="tabCalendar">달력</span></button>
@@ -84,7 +85,6 @@
     <div id="tipPoolBox" class="card tip-pool"></div>
     <div id="tipTable"></div>
     <h3 data-i18n="shiftRecords">근무 기록</h3>
-    <label class="shift-filter"><span data-i18n="thEmployee">직원</span><select id="shiftEmpFilter"><option value="">전체</option></select></label>
     <div id="shiftList"></div>
   </section>
 
@@ -96,6 +96,25 @@
     </div>
     <div id="coSummary"></div>
     <div id="coList"></div>
+  </section>
+
+  <!-- 예약 -->
+  <section id="tab-reservations" class="tab-panel hidden">
+    <div class="res-form">
+      <label><span data-i18n="resNameLbl">이름</span><input type="text" id="resName" maxlength="100" autocomplete="off"></label>
+      <label><span data-i18n="resEmailLbl">이메일</span><input type="email" id="resEmail" maxlength="254" autocomplete="off"></label>
+      <label><span data-i18n="resPhoneLbl">전화</span><input type="tel" id="resPhone" maxlength="40" autocomplete="off"></label>
+      <label><span data-i18n="resDateLbl">날짜</span><input type="date" id="resDate"></label>
+      <label><span data-i18n="resTimeLbl">시간</span><select id="resTime"></select></label>
+      <label><span data-i18n="resPartyLbl">인원</span><input type="number" id="resParty" min="1" max="40" value="2"></label>
+      <label><span data-i18n="resNoteLbl">비고</span><input type="text" id="resNote" maxlength="300" autocomplete="off"></label>
+      <div class="btn-row">
+        <button id="resSave" class="btn btn-primary" data-i18n="resAdd">예약 추가</button>
+        <button id="resReset" class="btn btn-ghost" data-i18n="resNew">새 예약</button>
+      </div>
+    </div>
+    <label class="bonus-check"><input type="checkbox" id="resShowPast"><span data-i18n="resShowPast">지난 예약 보기</span></label>
+    <div id="resList"></div>
   </section>
 
   <!-- 직원 관리 -->
@@ -239,22 +258,6 @@
     <div class="row end">
       <button type="button" class="btn btn-ghost" data-close="historyModal" data-i18n="cancel">취소</button>
     </div>
-  </div>
-</div>
-
-<!-- 직원 본인 근무 시간 수정 (최근 7일) -->
-<div id="myShiftModal" class="modal hidden">
-  <div class="modal-box">
-    <h3 data-i18n="myShiftEditTitle">내 근무 시간 수정</h3>
-    <p class="muted" data-i18n="myEditHint">최근 7일 안의 기록만 고칠 수 있어요. 팁·삭제는 관리자에게 말해 주세요.</p>
-    <label><span data-i18n="workDate">근무 날짜</span><input type="date" id="myShiftDate"></label>
-    <label><span data-i18n="clockIn">출근 시간</span><input type="text" id="myShiftIn" inputmode="numeric" maxlength="5" data-i18n-ph="timePh" placeholder="14:00"></label>
-    <label><span data-i18n="clockOut">퇴근 시간</span><input type="text" id="myShiftOut" inputmode="numeric" maxlength="5" data-i18n-ph="timePh" placeholder="14:00"></label>
-    <div class="modal-actions">
-      <button type="button" id="myShiftSave" class="btn btn-primary" data-i18n="save">저장</button>
-      <button type="button" class="btn btn-ghost" data-close="myShiftModal" data-i18n="cancel">취소</button>
-    </div>
-    <p id="myShiftMsg" class="msg"></p>
   </div>
 </div>
 
@@ -509,6 +512,6 @@
 <div id="toast" class="toast hidden"></div>
 
 <script src="config.js"></script>
-<script src="app.js?v=19"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>
