@@ -36,7 +36,7 @@
     <span id="clockTime" class="clock-bar-time"></span>
   </div>
   <p class="view-desc" data-i18n="clockDesc">이름을 눌러 출퇴근 시간을 입력하세요.</p>
-  <div style="margin: 12px 0; display:flex; gap:8px; flex-wrap:wrap;"><button id="openCloseout" class="btn" data-i18n="coSection">마감 정산</button><button id="openTodayCo" class="btn" data-i18n="todayCo">오늘의 정산</button><button id="openEmpReg" class="btn btn-ghost" data-i18n="newEmpReg">새 직원 등록</button></div>
+  <div style="margin: 12px 0; display:flex; gap:8px; flex-wrap:wrap;"><button id="openCloseout" class="btn" data-i18n="coSection">마감 정산</button><button id="openTodayCo" class="btn" data-i18n="todayCo">오늘의 정산</button><button id="openEmpReg" class="btn btn-ghost" data-i18n="newEmpReg">새 직원 등록</button><button id="openRes" class="btn">📖 <span data-i18n="tabReservations">예약</span></button></div>
   <div class="clock-columns">
     <section class="clock-col">
       <h2><span data-i18n="servers">서버</span> <span id="serverCount" class="count"></span></h2>
@@ -98,23 +98,12 @@
     <div id="coList"></div>
   </section>
 
-  <!-- 예약 -->
+  <!-- 예약 (목록·입력은 공용 예약 모달에서) -->
   <section id="tab-reservations" class="tab-panel hidden">
-    <div class="res-form">
-      <label><span data-i18n="resNameLbl">이름</span><input type="text" id="resName" maxlength="100" autocomplete="off"></label>
-      <label><span data-i18n="resEmailLbl">이메일</span><input type="email" id="resEmail" maxlength="254" autocomplete="off"></label>
-      <label><span data-i18n="resPhoneLbl">전화</span><input type="tel" id="resPhone" maxlength="40" autocomplete="off"></label>
-      <label><span data-i18n="resDateLbl">날짜</span><input type="date" id="resDate"></label>
-      <label><span data-i18n="resTimeLbl">시간</span><select id="resTime"></select></label>
-      <label><span data-i18n="resPartyLbl">인원</span><input type="number" id="resParty" min="1" max="40" value="2"></label>
-      <label><span data-i18n="resNoteLbl">비고</span><input type="text" id="resNote" maxlength="300" autocomplete="off"></label>
-      <div class="btn-row">
-        <button id="resSave" class="btn btn-primary" data-i18n="resAdd">예약 추가</button>
-        <button id="resReset" class="btn btn-ghost" data-i18n="resNew">새 예약</button>
-      </div>
+    <div class="btn-row">
+      <button id="openResFromTab" class="btn btn-primary" data-i18n="resOpen">예약 열기</button>
     </div>
-    <label class="bonus-check"><input type="checkbox" id="resShowPast"><span data-i18n="resShowPast">지난 예약 보기</span></label>
-    <div id="resList"></div>
+    <p class="view-desc" data-i18n="resTabDesc">예약 목록을 보고 추가·수정합니다.</p>
   </section>
 
   <!-- 직원 관리 -->
@@ -298,6 +287,31 @@
       <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
     </div>
     <p id="shiftMsg" class="msg"></p>
+  </div>
+</div>
+
+<!-- 예약 모달 (출퇴근 화면·예약 탭 공용) -->
+<div id="resModal" class="modal hidden">
+  <div class="modal-box">
+    <h3 data-i18n="tabReservations">예약</h3>
+    <div class="res-form">
+      <label><span data-i18n="resNameLbl">이름</span><input type="text" id="resName" maxlength="100" autocomplete="off"></label>
+      <label><span data-i18n="resEmailLbl">이메일</span><input type="email" id="resEmail" maxlength="254" autocomplete="off"></label>
+      <label><span data-i18n="resPhoneLbl">전화</span><input type="tel" id="resPhone" maxlength="40" autocomplete="off"></label>
+      <label><span data-i18n="resDateLbl">날짜</span><input type="date" id="resDate"></label>
+      <label><span data-i18n="resTimeLbl">시간</span><select id="resTime"></select></label>
+      <label><span data-i18n="resPartyLbl">인원</span><input type="number" id="resParty" min="1" max="40" value="2"></label>
+      <label><span data-i18n="resNoteLbl">비고</span><input type="text" id="resNote" maxlength="300" autocomplete="off"></label>
+      <div class="btn-row">
+        <button id="resSave" class="btn btn-primary" data-i18n="resAdd">예약 추가</button>
+        <button id="resReset" class="btn btn-ghost" data-i18n="resNew">새 예약</button>
+      </div>
+    </div>
+    <label class="bonus-check"><input type="checkbox" id="resShowPast"><span data-i18n="resShowPast">지난 예약 보기</span></label>
+    <div id="resList"></div>
+    <div class="modal-actions">
+      <button id="resClose" class="btn" data-i18n="close">닫기</button>
+    </div>
   </div>
 </div>
 

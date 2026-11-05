@@ -320,7 +320,10 @@
       resDelConfirm: '이 예약을 삭제할까요?',
       resNeedFields: '이름·날짜·시간·인원을 확인하세요',
       resToday: '오늘',
-      resGuests: '명'
+      resGuests: '명',
+      resOpen: '예약 열기',
+      resTabDesc: '예약 목록을 보고 추가·수정합니다',
+      close: '닫기'
     },
     en: {
       appTitle: 'Jimoco Staff Manager',
@@ -598,7 +601,10 @@
       resDelConfirm: 'Delete this reservation?',
       resNeedFields: 'Please check name, date, time and party size.',
       resToday: 'Today',
-      resGuests: 'guests'
+      resGuests: 'guests',
+      resOpen: 'Open reservations',
+      resTabDesc: 'View, add and edit reservations',
+      close: 'Close'
     }
   };
 
@@ -886,7 +892,6 @@
           if (!$('coMonth').value) $('coMonth').value = todayStr().slice(0, 7);
           loadCloseouts();
         }
-        if (tab.dataset.tab === 'reservations') loadReservations();
       });
     });
 
@@ -962,7 +967,10 @@
     $('editShiftSave').addEventListener('click', saveEditedShift);
     $('editShiftDelete').addEventListener('click', deleteShift);
     $('coLoad').addEventListener('click', loadCloseouts);
-    /* 예약 탭 */
+    /* 예약 모달 (출퇴근 화면·예약 탭 공용) */
+    $('openRes').addEventListener('click', openResModal);
+    $('openResFromTab').addEventListener('click', openResModal);
+    $('resClose').addEventListener('click', function () { closeModal('resModal'); });
     initResTimeSlots();
     resetResForm(); /* 날짜 기본값 = 오늘 */
     $('resSave').addEventListener('click', saveReservation);
@@ -2808,6 +2816,13 @@
   function parseResDate(s) {
     var p = String(s || '').split('-');
     return new Date(+p[0], (+p[1] || 1) - 1, +p[2] || 1);
+  }
+
+  /* 예약 모달 열기 (출퇴근 화면·매니저 예약 탭 공용) */
+  function openResModal() {
+    $('resModal').classList.remove('hidden');
+    resetResForm();
+    loadReservations();
   }
 
   async function loadReservations() {
