@@ -39,6 +39,7 @@
   var coReturnToToday = false;
   var resCache = []; /* 예약 탭: 현재 불러온 예약 목록 */
   var editingResId = null; /* 예약 수정 중이면 해당 예약 id */
+  var resViewMonth = null; /* 예약 월별 보기: 현재 보고 있는 달 (그 달 1일 Date) */
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -311,7 +312,9 @@
       resAdd: '예약 추가',
       resSaveEdit: '수정 저장',
       resNew: '새 예약',
-      resShowPast: '지난 예약 보기',
+      resThisMonth: '이번달',
+      resPrint: '인쇄',
+      resFormTitle: '새 예약 받기',
       resEmpty: '예약이 없습니다',
       resWeb: '웹 예약',
       resManual: '직접 입력',
@@ -592,7 +595,9 @@
       resAdd: 'Add reservation',
       resSaveEdit: 'Save changes',
       resNew: 'New reservation',
-      resShowPast: 'Show past reservations',
+      resThisMonth: 'This month',
+      resPrint: 'Print',
+      resFormTitle: 'New reservation',
       resEmpty: 'No reservations.',
       resWeb: 'Web booking',
       resManual: 'Manual entry',
@@ -633,6 +638,7 @@
     renderClock();
     if (payrollCache.computed) renderPayroll();
     if (closeoutCache.month) renderCloseouts();
+    if (resViewMonth) renderReservations();
     if (!$('empModal').classList.contains('hidden')) renderEmpList();
   }
 
@@ -975,7 +981,14 @@
     resetResForm(); /* 날짜 기본값 = 오늘 */
     $('resSave').addEventListener('click', saveReservation);
     $('resReset').addEventListener('click', resetResForm);
-    $('resShowPast').addEventListener('change', loadReservations);
+    $('resPrevMonth').addEventListener('click', function () { moveResMonth(-1); });
+    $('resNextMonth').addEventListener('click', function () { moveResMonth(1); });
+    $('resThisMonth').addEventListener('click', function () {
+      var n = new Date();
+      resViewMonth = new Date(n.getFullYear(), n.getMonth(), 1);
+      renderReservations();
+    });
+    $('resPrint').addEventListener('click', printReservations);
     $('resList').addEventListener('click', function (e) {
       var eb = e.target.closest('[data-edit-res]');
       if (eb) { editReservation(eb.getAttribute('data-edit-res')); return; }
@@ -2820,9 +2833,40 @@
 
   /* 예약 모달 열기 (출퇴근 화면·매니저 예약 탭 공용) */
   function openResModal() {
+    if (!resViewMonth) {
+      var n = new Date();
+      resViewMonth = new Date(n.getFullYear(), n.getMonth(), 1);
+    }
     $('resModal').classList.remove('hidden');
     resetResForm();
     loadReservations();
+  }
+
+  /* 월 라벨: ko "2026년 11월" / en "November 2026" */
+  function renderResMonthLabel() {
+    if (!resViewMonth) return;
+    var y = resViewMonth.getFullYear();
+    var m = resViewMonth.getMonth();
+    var enMonths = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    $('resMonthLabel').textContent = lang === 'ko'
+      ? y + '년 ' + (m + 1) + '월'
+      : enMonths[m] + ' ' + y;
+  }
+
+  function moveResMonth(delta) {
+    if (!resViewMonth) {
+      var n = new Date();
+      resViewMonth = new Date(n.getFullYear(), n.getMonth(), 1);
+    }
+    resViewMonth = new Date(resViewMonth.getFullYear(), resViewMonth.getMonth() + delta, 1);
+    renderReservations();
+  }
+
+  /* resViewMonth의 'YYYY-MM' 접두사 (res_date 문자열 비교용) */
+  function resMonthPrefix() {
+    var m = resViewMonth.getMonth() + 1;
+    return resViewMonth.getFullYear() + '-' + (m < 10 ? '0' : '') + m;
   }
 
   async function loadReservations() {
@@ -2835,9 +2879,14 @@
   }
 
   function renderReservations() {
-    var showPast = $('resShowPast').checked;
+    if (!resViewMonth) {
+      var n = new Date();
+      resViewMonth = new Date(n.getFullYear(), n.getMonth(), 1);
+    }
+    renderResMonthLabel();
     var today = todayStr();
-    var rows = resCache.filter(function (r) { return showPast || r.res_date >= today; });
+    var prefix = resMonthPrefix();
+    var rows = resCache.filter(function (r) { return String(r.res_date || '').slice(0, 7) === prefix; });
     if (!rows.length) {
       $('resList').innerHTML = '<p class="view-desc">' + esc(t('resEmpty')) + '</p>';
       return;
@@ -2871,6 +2920,47 @@
     $('resList').innerHTML = html;
   }
 
+  /* 예약 목록 인쇄 (POS 롤프린터 80mm 영수증 형식, #resPrintArea + @media print) */
+  function printReservations() {
+    if (!resViewMonth) {
+      var n0 = new Date();
+      resViewMonth = new Date(n0.getFullYear(), n0.getMonth(), 1);
+    }
+    var prefix = resMonthPrefix();
+    var rows = resCache.filter(function (r) { return String(r.res_date || '').slice(0, 7) === prefix; });
+    if (!rows.length) { toast(t('resEmpty')); return; }
+    rows = rows.slice().sort(function (a, b) {
+      var d = String(a.res_date).localeCompare(String(b.res_date));
+      return d !== 0 ? d : String(a.res_time || '').localeCompare(String(b.res_time || ''));
+    });
+    var wdNames = lang === 'ko'
+      ? ['일', '월', '화', '수', '목', '금', '토']
+      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    var enMonths = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    var monthTxt = lang === 'ko'
+      ? resViewMonth.getFullYear() + '년 ' + (resViewMonth.getMonth() + 1) + '월'
+      : enMonths[resViewMonth.getMonth()] + ' ' + resViewMonth.getFullYear();
+    /* 인쇄물에는 예약 내용만: 월 제목 한 줄 + 날짜별 예약 목록 (가게명·인쇄시각 등 제외) */
+    var titleTxt = lang === 'ko' ? monthTxt + ' 예약' : 'Reservations — ' + monthTxt;
+    var html = '<div class="rp-title">' + esc(titleTxt) + '</div>';
+    var curDate = null;
+    rows.forEach(function (r) {
+      if (r.res_date !== curDate) {
+        curDate = r.res_date;
+        var d = parseResDate(curDate);
+        html += '<div class="rp-date">' + esc(curDate) + ' (' + wdNames[d.getDay()] + ')</div>';
+      }
+      var guestsTxt = (r.party_size || 0) + (lang === 'en' ? ' guests' : t('resGuests'));
+      html += '<div class="rp-item">' + esc(fmtTime12(r.res_time)) + ' ' + esc(r.guest_name) +
+        ' · ' + guestsTxt + '</div>';
+      if (r.phone) html += '<div class="rp-sub2">' + esc(t('resPhoneLbl')) + ' ' + esc(r.phone) + '</div>';
+      if (r.note) html += '<div class="rp-sub2">' + esc(t('resNoteLbl')) + ': ' + esc(r.note) + '</div>';
+    });
+    $('resPrintArea').innerHTML = html;
+    window.print();
+  }
+
   async function saveReservation() {
     var name = $('resName').value.trim();
     var date = $('resDate').value;
@@ -2886,6 +2976,7 @@
       party_size: party,
       note: $('resNote').value.trim() || null
     };
+    var wasEditing = editingResId;
     var res;
     if (editingResId) {
       payload.updated_at = new Date().toISOString();
@@ -2896,6 +2987,11 @@
     }
     if (res.error) { toast(t('saveFail') + res.error.message); return; }
     toast(t('toastSaved'));
+    /* 수정한 예약이 다른 달이면 그 달로 이동해 결과가 보이게 */
+    if (wasEditing) {
+      var pd = parseResDate(date);
+      resViewMonth = new Date(pd.getFullYear(), pd.getMonth(), 1);
+    }
     resetResForm();
     loadReservations();
   }

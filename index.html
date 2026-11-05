@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jimoco 직원 관리</title>
-<link rel="stylesheet" href="styles.css?v=17">
+<link rel="stylesheet" href="styles.css?v=19">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -294,6 +294,9 @@
 <div id="resModal" class="modal hidden">
   <div class="modal-box">
     <h3 data-i18n="tabReservations">예약</h3>
+    <div class="res-month-nav"><button id="resPrevMonth" class="btn btn-ghost">◀</button><span id="resMonthLabel"></span><button id="resNextMonth" class="btn btn-ghost">▶</button><button id="resThisMonth" class="btn btn-ghost" data-i18n="resThisMonth">이번달</button><button id="resPrint" class="btn btn-ghost">🖨 <span data-i18n="resPrint">인쇄</span></button></div>
+    <div id="resList"></div>
+    <h4 class="res-form-title" data-i18n="resFormTitle">새 예약 받기</h4>
     <div class="res-form">
       <label><span data-i18n="resNameLbl">이름</span><input type="text" id="resName" maxlength="100" autocomplete="off"></label>
       <label><span data-i18n="resEmailLbl">이메일</span><input type="email" id="resEmail" maxlength="254" autocomplete="off"></label>
@@ -307,8 +310,6 @@
         <button id="resReset" class="btn btn-ghost" data-i18n="resNew">새 예약</button>
       </div>
     </div>
-    <label class="bonus-check"><input type="checkbox" id="resShowPast"><span data-i18n="resShowPast">지난 예약 보기</span></label>
-    <div id="resList"></div>
     <div class="modal-actions">
       <button id="resClose" class="btn" data-i18n="close">닫기</button>
     </div>
@@ -523,9 +524,12 @@
   </div>
 </div>
 
+<!-- 예약 목록 인쇄 전용 영역 (POS 롤프린터용, 평소 숨김) -->
+<div id="resPrintArea"></div>
+
 <div id="toast" class="toast hidden"></div>
 
 <script src="config.js"></script>
-<script src="app.js?v=19"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>

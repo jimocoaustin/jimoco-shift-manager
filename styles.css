@@ -444,6 +444,9 @@ table.cal-emp-tips { width: auto; min-width: 250px; }
 table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
 
 /* 예약 탭 */
+.res-month-nav { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0 4px; }
+.res-month-nav #resMonthLabel { font-weight: 700; font-size: 17px; min-width: 130px; text-align: center; }
+.res-form-title { margin: 20px 0 8px; font-size: 16px; }
 .res-form { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 4px 20px 16px; margin-bottom: 14px; }
 .res-form .btn-row { margin-top: 14px; }
 .res-group { margin: 18px 0 6px; font-size: 16px; }
@@ -455,3 +458,25 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
 .res-badge { display: inline-block; font-size: 12px; font-weight: 600; color: var(--blue); background: rgba(0,122,255,.12); border-radius: 8px; padding: 2px 8px; }
 .res-badge-today { color: #fff; background: var(--blue); vertical-align: middle; }
 .res-row .row-actions { margin-left: auto; }
+
+/* 예약 목록 인쇄 (POS 롤프린터 80mm 영수증) */
+#resPrintArea { display: none; }
+#resPrintArea .rp-title { font-size: 14px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+#resPrintArea .rp-date { font-weight: 700; margin: 9px 0 2px; }
+#resPrintArea .rp-sub2 { padding-left: 12px; }
+
+@media print {
+  @page { size: 80mm auto; margin: 0; }
+  body > *:not(#resPrintArea) { display: none !important; }
+  #resPrintArea {
+    display: block;
+    width: 72mm;
+    margin: 0 auto;
+    padding: 4mm 0 8mm;
+    background: #fff;
+    color: #000;
+    font-family: ui-monospace, "Courier New", monospace;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+}
