@@ -670,15 +670,24 @@
   function openModal(id) { $(id).classList.remove('hidden'); }
   function closeModal(id) { $(id).classList.add('hidden'); }
 
-  /* ---------- 날짜/시간 (America/Vancouver 기준, 24시간제) ---------- */
+  /* ---------- 날짜/시간 (밴쿠버 기준, 24시간제) ----------
+     BC주는 2026-03-08부터 서머타임 연중 고정 (Pacific Time, UTC-7).
+     기기·브라우저의 시간대 DB가 옛 규칙(11월 첫 일요일 PST 복귀)을 갖고 있으면
+     Intl 계산이 실제보다 1시간 어긋나 "미래 시간" 에러가 나므로,
+     오프셋을 UTC-7로 고정해 계산한다 (앱 데이터는 전부 2026-03-08 이후). */
+  var VAN_OFFSET_MS = -7 * 3600 * 1000;
+  function vanShift(d) { return new Date(d.getTime() + VAN_OFFSET_MS); } /* UTC 게터로 밴쿠버 벽시계를 읽는 용도 */
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
   function todayStr() {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Vancouver', year: 'numeric', month: '2-digit', day: '2-digit'
-    }).format(new Date());
+    var v = vanShift(new Date());
+    return v.getUTCFullYear() + '-' + pad2(v.getUTCMonth() + 1) + '-' + pad2(v.getUTCDate());
   }
 
   function vancouverNow() {
-    return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
+    var v = vanShift(new Date());
+    return new Date(v.getUTCFullYear(), v.getUTCMonth(), v.getUTCDate(),
+      v.getUTCHours(), v.getUTCMinutes(), v.getUTCSeconds());
   }
 
   function fmtYMD(d) {
@@ -688,16 +697,7 @@
   }
 
   function vancouverOffsetMs(date) {
-    var dtf = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/Vancouver',
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-    });
-    var parts = {};
-    dtf.formatToParts(date).forEach(function (p) { parts[p.type] = p.value; });
-    var asUTC = Date.UTC(+parts.year, +parts.month - 1, +parts.day,
-      +parts.hour % 24, +parts.minute, +parts.second);
-    return asUTC - date.getTime();
+    return VAN_OFFSET_MS;
   }
 
   // "2026-10-16" + "09:00" -> 밴쿠버 현지시간 기준 epoch ms
@@ -721,17 +721,14 @@
   }
 
   function fmtTime(iso) {
-    var s = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Vancouver', hour: '2-digit', minute: '2-digit', hour12: false
-    }).format(new Date(iso));
-    return s.replace(/^24:/, '00:');
+    var v = vanShift(new Date(iso));
+    return pad2(v.getUTCHours()) + ':' + pad2(v.getUTCMinutes());
   }
 
   function fmtDateV(isoOrDate) {
     var d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Vancouver', year: 'numeric', month: '2-digit', day: '2-digit'
-    }).format(d);
+    var v = vanShift(d);
+    return v.getUTCFullYear() + '-' + pad2(v.getUTCMonth() + 1) + '-' + pad2(v.getUTCDate());
   }
 
   function dollars(cents) {
@@ -746,19 +743,19 @@
   /* ---------- 현재 시각 표시 (America/Vancouver, 24시간제) ---------- */
   function tickClock() {
     try {
-      var now = new Date();
-      var dFmt = new Intl.DateTimeFormat(lang === 'ko' ? 'ko-KR' : 'en-US', {
-        timeZone: 'America/Vancouver',
-        year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short'
-      });
-      var tFmt = new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'America/Vancouver',
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
-      });
+      var v = vanShift(new Date());
+      var wdKo = ['일', '월', '화', '수', '목', '금', '토'];
+      var wdEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      var y = v.getUTCFullYear(), mo = pad2(v.getUTCMonth() + 1), da = pad2(v.getUTCDate());
+      var wd = (lang === 'ko' ? wdKo : wdEn)[v.getUTCDay()];
+      var dateStr = (lang === 'ko')
+        ? y + '. ' + mo + '. ' + da + '. (' + wd + ')'
+        : mo + '/' + da + '/' + y + ' ' + wd;
+      var timeStr = pad2(v.getUTCHours()) + ':' + pad2(v.getUTCMinutes()) + ':' + pad2(v.getUTCSeconds());
       var cd = $('clockDate'), ct = $('clockTime');
-      if (cd) cd.textContent = dFmt.format(now);
-      if (ct) ct.textContent = tFmt.format(now).replace(/^24:/, '00:');
-    } catch (e) { /* 구형 브라우저에서는 표시 생략 */ }
+      if (cd) cd.textContent = dateStr;
+      if (ct) ct.textContent = timeStr;
+    } catch (e) { /* 표시 생략 */ }
   }
 
   function startClock() {
@@ -767,19 +764,8 @@
   }
 
   function nowHM() {
-    try {
-      var parts = new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'America/Vancouver',
-        hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-      }).formatToParts(new Date());
-      var h = '00', m = '00';
-      parts.forEach(function (p) {
-        if (p.type === 'hour') h = p.value;
-        if (p.type === 'minute') m = p.value;
-      });
-      if (h === '24') h = '00';
-      return h + ':' + m;
-    } catch (e) { return ''; }
+    var v = vanShift(new Date());
+    return pad2(v.getUTCHours()) + ':' + pad2(v.getUTCMinutes());
   }
 
   /* ---------- 초기화 ---------- */
