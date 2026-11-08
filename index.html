@@ -354,14 +354,14 @@
   </div>
 </div>
 
-<!-- 오늘의 정산 목록 (직원용: 오늘 입력한 정산 확인·수정) -->
+<!-- 정산 내역 (직원용: 날짜를 골라 그날 정산 확인·수정 — 과거 정산의 시작 캐쉬 오입력 수정용) -->
 <div id="todayCoModal" class="modal hidden">
   <div class="modal-box">
-    <h2 data-i18n="todayCo">오늘의 정산</h2>
+    <h2 data-i18n="todayCo">정산 내역</h2>
     <div class="modal-actions">
       <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
     </div>
-    <p class="view-desc" id="todayCoDate"></p>
+    <label><span data-i18n="workDate">근무 날짜</span><input type="date" id="todayCoDateInput"></label>
     <div id="todayCoList"></div>
   </div>
 </div>
@@ -533,6 +533,6 @@
 <div id="toast" class="toast hidden"></div>
 
 <script src="config.js"></script>
-<script src="app.js?v=25"></script>
+<script src="app.js?v=26"></script>
 </body>
 </html>

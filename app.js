@@ -299,8 +299,8 @@
       coSummary: '월간 합계',
       coMismatch: '차이 건수',
       coNoData: '정산 기록이 없습니다.',
-      todayCo: '오늘의 정산',
-      todayCoEmpty: '오늘 입력된 정산이 아직 없습니다.',
+      todayCo: '정산 내역',
+      todayCoEmpty: '이 날짜에 입력된 정산이 아직 없습니다.',
       coSaveFail: '마감 정산 저장 실패: ',
       setupTitle: '설정이 필요합니다',
       setupBody: 'config.js 파일에 Supabase URL과 anon key를 입력한 뒤 다시 열어주세요.<br>자세한 순서는 README.md를 참고하세요.',
@@ -587,8 +587,8 @@
       coSummary: 'Monthly totals',
       coMismatch: 'Mismatches',
       coNoData: 'No close-out records.',
-      todayCo: "Today's close-out",
-      todayCoEmpty: 'No close-out entered today yet.',
+      todayCo: 'Close-out records',
+      todayCoEmpty: 'No close-out entered for this date yet.',
       coSaveFail: 'Close-out save failed: ',
       setupTitle: 'Setup required',
       setupBody: 'Enter your Supabase URL and anon key in config.js, then reload.<br>See README.md for the steps.',
@@ -872,6 +872,9 @@
     $('shiftSave').addEventListener('click', saveShift);
     $('openCloseout').addEventListener('click', openCloseoutModal);
     $('openTodayCo').addEventListener('click', openTodayCoModal);
+    $('todayCoDateInput').addEventListener('change', function () {
+      if ($('todayCoDateInput').value) { todayCoSelDate = $('todayCoDateInput').value; loadTodayCo(todayCoSelDate); }
+    });
     $('coSave').addEventListener('click', saveCloseoutModal);
     $('openEmpModal').addEventListener('click', openEmpModal);
     $('openEmpPendingBtn').addEventListener('click', openEmpModal);
@@ -1631,13 +1634,20 @@
     if (coReturnToToday) { coReturnToToday = false; openTodayCoModal(); }
   }
 
-  /* ---------- 오늘의 정산 (직원용 목록·수정) ---------- */
+  /* ---------- 정산 내역 (직원용 목록·수정, 날짜 선택으로 과거 정산도 수정 가능) ---------- */
+  var todayCoSelDate = '';
   async function openTodayCoModal() {
-    $('todayCoDate').textContent = fmtDateV(todayStr());
-    $('todayCoList').innerHTML = '';
+    var d = todayCoSelDate || todayStr();
+    todayCoSelDate = d;
+    $('todayCoDateInput').value = d;
     openModal('todayCoModal');
+    loadTodayCo(d);
+  }
+
+  async function loadTodayCo(d) {
+    $('todayCoList').innerHTML = '';
     try {
-      var rows = await rpc('staff_day_closeouts', { p_date: todayStr() });
+      var rows = await rpc('staff_day_closeouts', { p_date: d });
       todayCoCache = { rows: rows || [] };
     } catch (e) {
       todayCoCache = { rows: [] };
