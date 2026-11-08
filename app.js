@@ -273,6 +273,9 @@
       coWorkedHours: '근무 시간',
       coTotalSales: '총매출 ($)',
       coCashSales: '현금 매출 ($) (팁 포함)',
+      coPurchases: '물품 구매비 ($)',
+      coPurchaseNote: '구매 품목 메모',
+      coThPurchases: '구매비',
       coOpening: '오늘 시작 캐쉬 ($)',
       coTotalTip: '팁 ($) · Total Tip',
       coServerTip: '서버 팁 (70%)',
@@ -558,6 +561,9 @@
       coWorkedHours: 'Hours worked',
       coTotalSales: 'Total sales ($)',
       coCashSales: 'Cash sales ($) (incl. tips)',
+      coPurchases: 'Supply purchases ($)',
+      coPurchaseNote: 'Purchase note',
+      coThPurchases: 'Purchases',
       coOpening: 'Opening cash today ($)',
       coTotalTip: 'Tip ($) · Total Tip',
       coServerTip: 'Server tip (70%)',
@@ -992,7 +998,7 @@
         recalcCloseout();
       });
     });
-    ['coTotalSales', 'coCashSales', 'coOpening', 'coTips', 'coDate'].forEach(function (id) {
+    ['coTotalSales', 'coCashSales', 'coOpening', 'coTips', 'coDate', 'coPurchases'].forEach(function (id) {
       $(id).addEventListener('input', function () {
         if (id === 'coDate') fetchPrevCounted($('coDate').value);
         recalcCloseout();
@@ -1609,7 +1615,9 @@
       tips_cents: tipsCents,
       counted_cents: r.counted,
       expected_cents: r.expected,
-      diff_cents: r.diff
+      diff_cents: r.diff,
+      purchases_cents: r.purchases,
+      purchase_note: ($('coPurchaseNote').value || '').trim() || null
     };
     DENOMS.forEach(function (d) {
       row[d.key] = parseInt($(d.id).value, 10) || 0;
@@ -1644,7 +1652,7 @@
       return;
     }
     var html = '<table class="pay"><tr><th>' + esc(t('thEmployee')) + '</th><th>' + esc(t('coThTotalSales')) +
-      '</th><th>' + esc(t('coThCash')) + '</th><th>' + esc(t('coThTips')) + '</th><th>' +
+      '</th><th>' + esc(t('coThCash')) + '</th><th>' + esc(t('coThPurchases')) + '</th><th>' + esc(t('coThTips')) + '</th><th>' +
       esc(t('coThCounted')) + '</th><th>' + esc(t('coThDiff')) + '</th><th></th></tr>';
     rows.forEach(function (r) {
       var d = r.diff_cents || 0;
@@ -1653,7 +1661,9 @@
         : '<span class="diff-bad">' + (d > 0 ? '+' : '') + '$' + dollars(d) + '</span>';
       html += '<tr><td>' + esc((r.employees && r.employees.name) || '?') +
         (r.employees2 ? ' · ' + esc(r.employees2.name) : '') + '</td><td>$' + dollars(r.total_sales_cents) +
-        '</td><td>$' + dollars(r.cash_sales_cents) + '</td><td>$' + dollars(r.tips_cents) +
+        '</td><td>$' + dollars(r.cash_sales_cents) + '</td><td>' +
+        (r.purchases_cents ? '$' + dollars(r.purchases_cents) : '–') +
+        '</td><td>$' + dollars(r.tips_cents) +
         '</td><td>$' + dollars(r.counted_cents) + '</td><td>' + dHtml + '</td>' +
         '<td class="row-actions"><button class="btn btn-chip" data-edit-today-co="' + r.id + '">' + esc(t('edit')) +
         '</button></td></tr>';
@@ -1680,6 +1690,8 @@
     $('coDate').value = r.work_date || '';
     $('coTotalSales').value = r.total_sales_cents != null ? (r.total_sales_cents / 100) : '';
     $('coCashSales').value = r.cash_sales_cents != null ? (r.cash_sales_cents / 100) : '';
+    $('coPurchases').value = r.purchases_cents ? (r.purchases_cents / 100) : '';
+    $('coPurchaseNote').value = r.purchase_note || '';
     $('coTips').value = r.tips_cents != null ? (r.tips_cents / 100) : '';
     DENOMS.forEach(function (d) {
       $(d.id).value = r[d.key] != null ? r[d.key] : '';
@@ -1704,6 +1716,8 @@
   function resetCloseout() {
     $('coTotalSales').value = '';
     $('coCashSales').value = '';
+    $('coPurchases').value = '';
+    $('coPurchaseNote').value = '';
     $('coOpening').value = '';
     coOpeningFromRecord = null;
     coEditingId = null;
@@ -1744,10 +1758,12 @@
     }
     var cash = parseCents($('coCashSales').value);
     var opening = parseCents($('coOpening').value);
-    var expected = opening + cash;
+    var purchases = parseCents($('coPurchases').value);
+    var expected = opening + cash - purchases;
     $('coExpected').textContent = '$' + dollars(expected);
     $('coPrevNote').textContent = t('coPrevNote') + ' $' + dollars(opening) +
-      ' + ' + t('coCashSales') + ' $' + dollars(cash);
+      ' + ' + t('coCashSales') + ' $' + dollars(cash) +
+      (purchases > 0 ? ' − ' + t('coPurchases') + ' $' + dollars(purchases) : '');
     var diff = counted - expected;
     var dEl = $('coDiff');
     if (Math.abs(diff) <= 200) {
@@ -1757,7 +1773,7 @@
       dEl.textContent = (diff > 0 ? '+' : '') + '$' + dollars(diff);
       dEl.className = 'diff-bad';
     }
-    return { counted: counted, expected: expected, diff: diff, opening: opening };
+    return { counted: counted, expected: expected, diff: diff, opening: opening, purchases: purchases };
   }
 
   async function saveShift() {
@@ -2730,9 +2746,10 @@
       $('coSummary').innerHTML = '';
       return;
     }
-    var tSales = 0, tCash = 0, tTips = 0, mism = 0;
+    var tSales = 0, tCash = 0, tTips = 0, tPurch = 0, mism = 0;
     var html = '<table class="pay"><tr><th>' + esc(t('coThDate')) + '</th><th>' + esc(t('thEmployee')) +
       '</th><th>' + esc(t('coThTotalSales')) + '</th><th>' + esc(t('coThCash')) + '</th><th>' +
+      esc(t('coThPurchases')) + '</th><th>' +
       esc(t('coThOpening')) + '</th><th>' +
       esc(t('coThTips')) + '</th><th>' + esc(t('coThExpected')) + '</th><th>' + esc(t('coThCounted')) +
       '</th><th>' + esc(t('coThDiff')) + '</th><th></th></tr>';
@@ -2740,6 +2757,7 @@
       tSales += r.total_sales_cents || 0;
       tCash += r.cash_sales_cents || 0;
       tTips += r.tips_cents || 0;
+      tPurch += r.purchases_cents || 0;
       var d = r.diff_cents || 0;
       if (Math.abs(d) > 200) mism++;
       var dHtml = Math.abs(d) <= 200
@@ -2748,6 +2766,9 @@
       html += '<tr><td>' + esc(fmtDateV(r.work_date)) + '</td><td>' +
         esc((r.employees && r.employees.name) || '?') + '</td><td>$' + dollars(r.total_sales_cents) +
         '</td><td>$' + dollars(r.cash_sales_cents) + '</td><td>' +
+        (r.purchases_cents ? '$' + dollars(r.purchases_cents) +
+          (r.purchase_note ? '<br><small>' + esc(r.purchase_note) + '</small>' : '') : '–') +
+        '</td><td>' +
         (r.opening_cents != null ? '$' + dollars(r.opening_cents) : '–') +
         '</td><td>$' + dollars(r.tips_cents) +
         '</td><td>$' + dollars(r.expected_cents) + '</td><td>$' + dollars(r.counted_cents) +
@@ -2769,6 +2790,7 @@
       '<div class="co-stat"><div class="k">' + esc(t('coThTotalSales')) + '</div><div class="v">$' + dollars(tSales) + '</div></div>' +
       '<div class="co-stat"><div class="k">' + esc(t('coThCash')) + '</div><div class="v">$' + dollars(tCash) + '</div></div>' +
       '<div class="co-stat"><div class="k">' + esc(t('coThTips')) + '</div><div class="v">$' + dollars(tTips) + '</div></div>' +
+      '<div class="co-stat"><div class="k">' + esc(t('coThPurchases')) + '</div><div class="v">$' + dollars(tPurch) + '</div></div>' +
       '<div class="co-stat"><div class="k">' + esc(t('coMismatch')) + '</div><div class="v">' + mism + '</div></div>' +
       '</div>';
   }
