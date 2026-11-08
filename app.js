@@ -9,6 +9,7 @@
   var managerRole = (_mr === 'manager') ? 'manager' : 'owner'; /* '1'은 구버전 오너 세션 */
   var managerAuthed = (_mr === '1' || _mr === 'owner' || _mr === 'manager');
   var currentShiftEmp = null;
+  var editingShiftId = null; /* 기록 화면에서 본인 근무 기록 수정 중이면 그 shift id */
   var mgrToken = sessionStorage.getItem('jimoco_mgr_token') || null; /* 매니저 세션 토큰 (RPC 인증) */
   var allEmployees = []; /* 승인 대기 포함 전체 직원 (관리자 세션에서만 채워짐) */
   var verifiedPin = null; /* PIN 게이트를 통과한 직원 PIN (기록·본인 정보 조회용) */
@@ -1132,6 +1133,7 @@
   }
   function openShiftForm(emp) {
     currentShiftEmp = emp;
+    editingShiftId = null;
     $('shiftEmpName').textContent = emp.name;
     $('shiftDate').value = todayStr();
     $('shiftIn').value = nowHM();
@@ -1145,6 +1147,30 @@
     $('shiftModalBox').classList.toggle('wide', false);
     openModal('shiftModal');
   }
+  /* 기록 화면에서 본인 근무 기록 수정 열기 (PIN은 기록 열 때 이미 확인됨) */
+  function openShiftEditForm(r) {
+    if (!histEmp) return;
+    currentShiftEmp = histEmp;
+    editingShiftId = r.id;
+    function hmL(iso) {
+      var dt = new Date(iso);
+      function p(n) { return (n < 10 ? '0' : '') + n; }
+      return p(dt.getHours()) + ':' + p(dt.getMinutes());
+    }
+    $('shiftEmpName').textContent = histEmp.name + ' · ' + t('editShiftTitle');
+    $('shiftDate').value = r.work_date || '';
+    $('shiftIn').value = r.clock_in ? hmL(r.clock_in) : '';
+    $('shiftOut').value = r.clock_out ? hmL(r.clock_out) : '';
+    $('shiftFulltime').checked = !!r.is_fulltime;
+    $('shiftEveningStart').value = r.evening_start ? hmL(r.evening_start) : '';
+    $('shiftEveningRow').classList.toggle('hidden', !r.is_fulltime);
+    $('shiftFulltimeRow').classList.toggle('hidden', histEmp.role !== 'server');
+    $('shiftMsg').textContent = '';
+    $('shiftMsg').className = 'msg';
+    $('shiftModalBox').classList.toggle('wide', false);
+    openModal('shiftModal');
+  }
+
   var pinGateAllowSetup = false;
   function openPinGate(emp, purpose, allowSetup) {
     pinGateEmp = emp;
@@ -1362,8 +1388,15 @@
       }
       return '<div class="hist-row' + (boostC > 0 ? ' boost' : '') + '"><span>' + (d.getMonth() + 1) + '/' + d.getDate() + ' (' + wd[d.getDay()] + ')</span>' +
         '<span>' + hm(ci) + ' ~ ' + hm(co) + '</span>' +
-        '<span class="hist-h">' + h.toFixed(1) + 'h</span>' + tag + '</div>';
+        '<span class="hist-h">' + h.toFixed(1) + 'h</span>' + tag +
+        '<button class="btn btn-chip" data-edit-shift="' + r.id + '">' + esc(t('edit')) + '</button></div>';
     }).join('');
+    $('histList').querySelectorAll('[data-edit-shift]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var r = rows.find(function (x) { return x.id === b.getAttribute('data-edit-shift'); });
+        if (r) openShiftEditForm(r);
+      });
+    });
     $('histTotal').textContent = t('histTotal') + ': ' + totalH.toFixed(1) + 'h · ' + rows.length + t('histDays') +
       (totalBoost > 0 ? ' · ' + t('boostMark') + ' $' + dollars(totalBoost) : '');
   }
@@ -1805,6 +1838,29 @@
       if (evMs < inMs || evMs >= outMs) { msg.textContent = t('eveOrder'); return; }
       isFt = true;
       eveIso = new Date(evMs).toISOString();
+    }
+    /* 수정 모드: 기록 화면에서 본인 기록을 고치는 경우 (PIN 검증 RPC) */
+    if (editingShiftId) {
+      var okEdit = false;
+      try {
+        okEdit = await rpc('emp_update_shift', {
+          p_emp: currentShiftEmp.id, p_pin: verifiedPin || '', p_id: editingShiftId,
+          p_row: {
+            work_date: date,
+            clock_in: new Date(inMs).toISOString(),
+            clock_out: new Date(outMs).toISOString(),
+            is_fulltime: isFt,
+            evening_start: eveIso || ''
+          }
+        });
+      } catch (e) {}
+      if (!okEdit) { msg.textContent = t('saveFail'); return; }
+      editingShiftId = null;
+      msg.textContent = '';
+      closeModal('shiftModal');
+      toast(t('toastSaved'));
+      renderHistory();
+      return;
     }
     var res = await supabase.from('shifts').insert({
       employee_id: currentShiftEmp.id,
