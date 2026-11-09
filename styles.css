@@ -343,6 +343,13 @@ table.pay tr.tip-section td { font-weight: 700; background: #e8f0fe; color: #1a5
 
 /* 마감 정산 (register close-out) */
 .modal-box.wide { max-width: 920px; }
+/* 정산 내역 표: 열이 많아 좁은 창에서 꺾이던 문제 — 줄바꿈 금지 + 촘촘한 간격, 좁은 화면에서만 가로 스크롤 */
+#todayCoList { overflow-x: auto; }
+#todayCoList table.pay { margin: 8px 0; }
+#todayCoList table.pay th, #todayCoList table.pay td {
+  white-space: nowrap; padding: 9px 10px; font-size: 14px;
+}
+#todayCoList table.pay td:first-child { white-space: normal; min-width: 104px; }
 .pw-wrap { position: relative; display: block; }
 .pw-wrap input[type="password"], .pw-wrap input[type="text"] { width: 100%; padding-right: 42px; box-sizing: border-box; }
 .pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; padding: 6px; opacity: 0.7; }
