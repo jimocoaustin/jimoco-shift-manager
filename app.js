@@ -41,6 +41,7 @@
   var resCache = []; /* 예약 탭: 현재 불러온 예약 목록 */
   var editingResId = null; /* 예약 수정 중이면 해당 예약 id */
   var resViewMonth = null; /* 예약 월별 보기: 현재 보고 있는 달 (그 달 1일 Date) */
+  var resSelDate = null; /* 예약 달력에서 선택한 날짜 (YYYY-MM-DD) */
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -330,6 +331,9 @@
       resDelConfirm: '이 예약을 삭제할까요?',
       resNeedFields: '이름·날짜·시간·인원을 확인하세요',
       resToday: '오늘',
+      resTodayTitle: '오늘 예약',
+      resNoToday: '오늘 예약이 없습니다',
+      resCountUnit: '건',
       resGuests: '명',
       resOpen: '예약 열기',
       resTabDesc: '예약 목록을 보고 추가·수정합니다',
@@ -619,6 +623,9 @@
       resDelConfirm: 'Delete this reservation?',
       resNeedFields: 'Please check name, date, time and party size.',
       resToday: 'Today',
+      resTodayTitle: "Today's reservations",
+      resNoToday: 'No reservations today.',
+      resCountUnit: '',
       resGuests: 'guests',
       resOpen: 'Open reservations',
       resTabDesc: 'View, add and edit reservations',
@@ -992,6 +999,8 @@
     });
     $('resPrint').addEventListener('click', printReservations);
     $('resList').addEventListener('click', function (e) {
+      var cd = e.target.closest('[data-cal-date]');
+      if (cd) { resSelDate = cd.getAttribute('data-cal-date'); renderReservations(); return; }
       var eb = e.target.closest('[data-edit-res]');
       if (eb) { editReservation(eb.getAttribute('data-edit-res')); return; }
       var pb = e.target.closest('[data-print-res]');
@@ -2974,38 +2983,64 @@
     renderResMonthLabel();
     var today = todayStr();
     var prefix = resMonthPrefix();
-    var rows = resCache.filter(function (r) { return String(r.res_date || '').slice(0, 7) === prefix; });
-    if (!rows.length) {
-      $('resList').innerHTML = '<p class="view-desc">' + esc(t('resEmpty')) + '</p>';
-      return;
-    }
     var wdNames = lang === 'ko'
       ? ['일', '월', '화', '수', '목', '금', '토']
       : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    function resRowsHtml(list) {
+      var h = '';
+      list.forEach(function (r) {
+        var meta = [];
+        if (r.email) meta.push(esc(r.email));
+        if (r.phone) meta.push(esc(r.phone));
+        if (r.note) meta.push(esc(r.note));
+        h += '<div class="res-row">' +
+          '<span class="res-time">' + esc(fmtTime12(r.res_time)) + '</span>' +
+          '<span class="res-name">' + esc(r.guest_name) + '</span>' +
+          '<span class="res-party">' + (r.party_size || 0) + esc(t('resGuests')) + '</span>' +
+          (meta.length ? '<span class="res-meta">' + meta.join(' · ') + '</span>' : '') +
+          '<span class="res-badge">' + esc(r.source === 'web' ? t('resWeb') : t('resManual')) + '</span>' +
+          '<span class="row-actions"><button class="btn btn-chip" data-edit-res="' + r.id + '">' + esc(t('resEdit')) +
+          '</button> <button class="btn btn-chip" data-print-res="' + r.id + '">' + esc(t('resPrintBtn')) + '</button>' +
+          ' <button class="btn btn-chip btn-danger" data-del-res="' + r.id + '">' + esc(t('resDelete')) + '</button></span>' +
+          '</div>';
+      });
+      return h;
+    }
     var html = '';
-    var curDate = null;
-    rows.forEach(function (r) {
-      if (r.res_date !== curDate) {
-        curDate = r.res_date;
-        var d = parseResDate(curDate);
-        html += '<h3 class="res-group">' + esc(curDate) + ' (' + wdNames[d.getDay()] + ')' +
-          (curDate === today ? ' <span class="res-badge res-badge-today">' + esc(t('resToday')) + '</span>' : '') + '</h3>';
-      }
-      var meta = [];
-      if (r.email) meta.push(esc(r.email));
-      if (r.phone) meta.push(esc(r.phone));
-      if (r.note) meta.push(esc(r.note));
-      html += '<div class="res-row">' +
-        '<span class="res-time">' + esc(fmtTime12(r.res_time)) + '</span>' +
-        '<span class="res-name">' + esc(r.guest_name) + '</span>' +
-        '<span class="res-party">' + (r.party_size || 0) + esc(t('resGuests')) + '</span>' +
-        (meta.length ? '<span class="res-meta">' + meta.join(' · ') + '</span>' : '') +
-        '<span class="res-badge">' + esc(r.source === 'web' ? t('resWeb') : t('resManual')) + '</span>' +
-        '<span class="row-actions"><button class="btn btn-chip" data-edit-res="' + r.id + '">' + esc(t('resEdit')) +
-        '</button> <button class="btn btn-chip" data-print-res="' + r.id + '">' + esc(t('resPrintBtn')) + '</button>' +
-        ' <button class="btn btn-chip btn-danger" data-del-res="' + r.id + '">' + esc(t('resDelete')) + '</button></span>' +
-        '</div>';
+    /* 1) 오늘 예약 — 항상 맨 위 */
+    var todays = resCache.filter(function (r) { return r.res_date === today; });
+    var tdow = wdNames[parseResDate(today).getDay()];
+    html += '<h3 class="res-group">' + esc(t('resTodayTitle')) + ' · ' + esc(today) + ' (' + tdow + ')' +
+      (todays.length ? ' · ' + todays.length + esc(t('resCountUnit')) : '') + '</h3>';
+    html += todays.length ? resRowsHtml(todays) : '<p class="view-desc">' + esc(t('resNoToday')) + '</p>';
+    /* 2) 달력 — 예약 있는 날은 건수 배지, 눌러서 그날 예약 확인 */
+    var y = resViewMonth.getFullYear(), mo = resViewMonth.getMonth();
+    var firstDow = new Date(y, mo, 1).getDay();
+    var daysInMonth = new Date(y, mo + 1, 0).getDate();
+    var counts = {};
+    resCache.forEach(function (r) {
+      var ds = String(r.res_date || '');
+      if (ds.slice(0, 7) === prefix) counts[ds] = (counts[ds] || 0) + 1;
     });
+    if (!resSelDate || resSelDate.slice(0, 7) !== prefix) {
+      resSelDate = (prefix === today.slice(0, 7)) ? today : prefix + '-01';
+    }
+    html += '<div class="res-cal">';
+    wdNames.forEach(function (w) { html += '<div class="res-cal-dow">' + esc(w) + '</div>'; });
+    for (var i = 0; i < firstDow; i++) html += '<div></div>';
+    for (var day = 1; day <= daysInMonth; day++) {
+      var ds2 = prefix + '-' + (day < 10 ? '0' : '') + day;
+      var cls = 'res-cal-day' + (ds2 === today ? ' today' : '') + (ds2 === resSelDate ? ' sel' : '') + (ds2 < today ? ' past' : '');
+      html += '<button class="' + cls + '" data-cal-date="' + ds2 + '"><span class="res-cal-num">' + day + '</span>' +
+        (counts[ds2] ? '<span class="res-cal-cnt">' + counts[ds2] + '</span>' : '') + '</button>';
+    }
+    html += '</div>';
+    /* 3) 선택한 날짜의 예약 */
+    var selRows = resCache.filter(function (r) { return r.res_date === resSelDate; });
+    var sdow = wdNames[parseResDate(resSelDate).getDay()];
+    html += '<h3 class="res-group">' + esc(resSelDate) + ' (' + sdow + ')' +
+      (resSelDate === today ? ' <span class="res-badge res-badge-today">' + esc(t('resToday')) + '</span>' : '') + '</h3>';
+    html += selRows.length ? resRowsHtml(selRows) : '<p class="view-desc">' + esc(t('resEmpty')) + '</p>';
     $('resList').innerHTML = html;
   }
 

@@ -498,3 +498,10 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
     line-height: 1.5;
   }
 }
+.res-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 14px 0 4px; }
+.res-cal-dow { text-align: center; font-size: 12px; font-weight: 700; color: #8e8e93; padding: 2px 0; }
+.res-cal-day { position: relative; min-height: 46px; border: 1px solid #e3e3e8; border-radius: 10px; background: #fff; font-size: 15px; cursor: pointer; padding: 4px; text-align: left; }
+.res-cal-day.past { opacity: .45; }
+.res-cal-day.today .res-cal-num { color: var(--blue); font-weight: 800; }
+.res-cal-day.sel { border-color: var(--blue); background: rgba(0,122,255,.08); font-weight: 700; }
+.res-cal-cnt { position: absolute; top: 4px; right: 4px; min-width: 20px; height: 20px; line-height: 20px; text-align: center; font-size: 12px; font-weight: 700; color: #fff; background: var(--blue); border-radius: 10px; padding: 0 5px; }
