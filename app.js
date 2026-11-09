@@ -214,6 +214,7 @@
   calNone: '이 날 기록이 없습니다.',
   histTotal: '총 근무시간',
   histDays: '일 근무',
+  histWageTotal: '임금 합계',
   histNone: '이 기간에 근무 기록이 없습니다.',
       pinForgot: 'PIN을 잊으셨나요?',
       pinSetupTitle: 'PIN 만들기',
@@ -502,6 +503,7 @@
   calNone: 'No records for this day.',
   histTotal: 'Total hours',
   histDays: 'days worked',
+  histWageTotal: 'Total pay',
   histNone: 'No shifts in this period.',
       pinForgot: 'Forgot your PIN?',
       pinSetupTitle: 'Create your PIN',
@@ -1369,7 +1371,7 @@
       return;
     }
     var wd = lang === 'ko' ? ['일', '월', '화', '수', '목', '금', '토'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    var totalH = 0, totalBoost = 0;
+    var totalH = 0, totalBoost = 0, totalWage = 0;
     $('histList').innerHTML = rows.map(function (r) {
       var ci = new Date(r.clock_in), co = new Date(r.clock_out);
       var h = (co - ci) / 3600000;
@@ -1386,9 +1388,14 @@
           (ftC > 0 && r.evening_start ? ' +' + esc(t('fulltimeShort')) + ' ' + hm(new Date(r.evening_start)) + '~' + hm(co) : '') +
           ' · $' + dollars(boostC) + '</span>';
       }
+      var rateC = histEmp.hourly_rate_cents || 0;
+      var holC = isStatHoliday(r.work_date) ? Math.round(h * rateC * 0.5) : 0;
+      var wageC = Math.round(h * rateC) + holC + boostC;
+      totalWage += wageC;
       return '<div class="hist-row' + (boostC > 0 ? ' boost' : '') + '"><span>' + (d.getMonth() + 1) + '/' + d.getDate() + ' (' + wd[d.getDay()] + ')</span>' +
         '<span>' + hm(ci) + ' ~ ' + hm(co) + '</span>' +
         '<span class="hist-h">' + h.toFixed(1) + 'h</span>' + tag +
+        '<span class="hist-wage">' + esc(t('calDailyPay')) + ' $' + dollars(wageC) + '</span>' +
         '<button class="btn btn-chip" data-edit-shift="' + r.id + '">' + esc(t('edit')) + '</button></div>';
     }).join('');
     $('histList').querySelectorAll('[data-edit-shift]').forEach(function (b) {
@@ -1398,7 +1405,8 @@
       });
     });
     $('histTotal').textContent = t('histTotal') + ': ' + totalH.toFixed(1) + 'h · ' + rows.length + t('histDays') +
-      (totalBoost > 0 ? ' · ' + t('boostMark') + ' $' + dollars(totalBoost) : '');
+      (totalBoost > 0 ? ' · ' + t('boostMark') + ' $' + dollars(totalBoost) : '') +
+      ' · ' + t('histWageTotal') + ' $' + dollars(totalWage);
   }
 
   /* ---------- 오너 전용 달력: 날짜별 근무시간·팁 ---------- */
