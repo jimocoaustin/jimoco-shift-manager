@@ -205,6 +205,13 @@
       badPin: '직원 PIN은 4~8자리 숫자입니다.',
       staffEditTitle: '내 정보 수정',
   histBtn: '기록',
+  ctabClock: '출퇴근',
+  ctabMore: '더보기',
+  recordsDesc: '이름을 누르면 PIN 확인 후 기록을 보여드려요.',
+  moreDesc: '가끔 쓰는 기능은 여기로 모았어요.',
+  chipToday: '오늘 근무',
+  chipOff: '대기',
+  timeInput: '시간 입력',
   histTitle: '내 근무 기록',
   tabCalendar: '달력',
   calTipsTotal: '팁 합계',
@@ -498,6 +505,13 @@
       badPin: 'Employee PIN must be 4–8 digits.',
       staffEditTitle: 'Edit my info',
   histBtn: 'History',
+  ctabClock: 'Clock',
+  ctabMore: 'More',
+  recordsDesc: 'Tap your name \u2014 enter your PIN to see your records.',
+  moreDesc: 'Less-used features live here.',
+  chipToday: 'Today',
+  chipOff: 'Off',
+  timeInput: 'Enter time',
   histTitle: 'My work history',
   tabCalendar: 'Calendar',
   calTipsTotal: 'Total tips',
@@ -987,6 +1001,14 @@
     $('coLoad').addEventListener('click', loadCloseouts);
     /* 예약 모달 (출퇴근 화면·예약 탭 공용) */
     $('openRes').addEventListener('click', openResModal);
+    document.querySelectorAll('.ctab').forEach(function (b) {
+      b.addEventListener('click', function () { switchClockTab(b.getAttribute('data-ctab')); });
+    });
+    $('moreRes').addEventListener('click', openResModal);
+    $('moreCloseout').addEventListener('click', openCloseoutModal);
+    $('moreTodayCo').addEventListener('click', openTodayCoModal);
+    $('moreEmpReg').addEventListener('click', openEmpReg);
+    $('moreAdmin').addEventListener('click', function () { $('managerBtn').click(); });
     $('openResFromTab').addEventListener('click', openResModal);
     $('resClose').addEventListener('click', function () { closeModal('resModal'); });
     initResTimeSlots();
@@ -1034,12 +1056,16 @@
   function goHome() {
     document.querySelectorAll('.modal').forEach(function (m) { m.classList.add('hidden'); });
     $('view-manager').classList.add('hidden');
-    $('view-clock').classList.remove('hidden');
+    var ct = $('clockTabbar'); if (ct) ct.classList.remove('hidden');
+    switchClockTab('clock');
     window.scrollTo(0, 0);
   }
 
   function showManager(toPayroll) {
     $('view-clock').classList.add('hidden');
+    $('view-records').classList.add('hidden');
+    $('view-more').classList.add('hidden');
+    var ctb = $('clockTabbar'); if (ctb) ctb.classList.add('hidden');
     $('view-manager').classList.remove('hidden');
     /* 매니저 직급은 비밀번호 관리·달력 탭 숨김 (오너 전용) */
     var pinBtn = $('pinTabBtn');
@@ -1068,23 +1094,47 @@
   function servers() { return employees.filter(function (e) { return e.role === 'server'; }); }
   function kitchen() { return employees.filter(function (e) { return e.role !== 'server'; }); }
 
+  var todayWorked = {};
+  var todayWorkedAt = 0;
+  async function loadTodayWorked() {
+    try {
+      var res = await supabase.from('shifts').select('employee_id').eq('work_date', todayStr());
+      if (res.error) return;
+      var set = {};
+      (res.data || []).forEach(function (r) { set[r.employee_id] = true; });
+      todayWorked = set;
+      todayWorkedAt = Date.now();
+      document.querySelectorAll('[data-chip]').forEach(function (chip) {
+        var on = !!todayWorked[chip.getAttribute('data-chip')];
+        chip.className = 'stchip' + (on ? ' on' : '');
+        chip.textContent = t(on ? 'chipToday' : 'chipOff');
+      });
+    } catch (e) { /* 상태 표시만 생략 */ }
+  }
+  function empRowHtml(e) {
+    var on = !!todayWorked[e.id];
+    return '<div class="emp-line-row"><div class="emp-main">' +
+      '<button class="emp-line" data-id="' + e.id + '">' + esc(e.name) + '</button>' +
+      '<div class="emp-sub"><button type="button" class="emp-mini" data-history="' + e.id + '">' + esc(t('histBtn')) + '</button>' +
+      '<span class="sep">\u00b7</span><button type="button" class="emp-mini" data-self-edit="' + e.id + '">' + esc(t('edit')) + '</button></div></div>' +
+      '<span class="stchip' + (on ? ' on' : '') + '" data-chip="' + e.id + '">' + esc(t(on ? 'chipToday' : 'chipOff')) + '</span>' +
+      '<button type="button" class="iobtn" data-io="' + e.id + '">' + esc(t('timeInput')) + '</button></div>';
+  }
   function renderClock() {
     var sv = servers(), kt = kitchen();
     $('serverCount').textContent = countLabel(sv.length);
     $('kitchenCount').textContent = countLabel(kt.length);
-    $('serverList').innerHTML = sv.map(function (e) {
-      return '<div class="emp-line-row"><button class="emp-line grow" data-id="' + e.id + '">' + esc(e.name) + '</button>' +
-        '<button type="button" class="btn btn-chip emp-history" data-history="' + e.id + '">' + esc(t('histBtn')) + '</button>' +
-        '<button type="button" class="btn btn-chip emp-self-edit" data-self-edit="' + e.id + '">' + esc(t('edit')) + '</button></div>';
-    }).join('');
-    $('kitchenList').innerHTML = kt.map(function (e) {
-      return '<div class="emp-line-row"><button class="emp-line grow" data-id="' + e.id + '">' + esc(e.name) + '</button>' +
-        '<button type="button" class="btn btn-chip emp-history" data-history="' + e.id + '">' + esc(t('histBtn')) + '</button>' +
-        '<button type="button" class="btn btn-chip emp-self-edit" data-self-edit="' + e.id + '">' + esc(t('edit')) + '</button></div>';
-    }).join('');
+    $('serverList').innerHTML = sv.map(empRowHtml).join('');
+    $('kitchenList').innerHTML = kt.map(empRowHtml).join('');
     document.querySelectorAll('.emp-line').forEach(function (b) {
       b.addEventListener('click', function () {
         var emp = employees.find(function (x) { return x.id === b.dataset.id; });
+        if (emp) openShiftModal(emp);
+      });
+    });
+    document.querySelectorAll('[data-io]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var emp = employees.find(function (x) { return x.id === b.getAttribute('data-io'); });
         if (emp) openShiftModal(emp);
       });
     });
@@ -1097,6 +1147,38 @@
     document.querySelectorAll('[data-history]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var emp = employees.find(function (x) { return x.id === btn.getAttribute('data-history'); });
+        if (emp) openEmpHistory(emp);
+      });
+    });
+    if (Date.now() - todayWorkedAt > 20000) loadTodayWorked();
+  }
+
+  /* ---------- 하단 탭 (출퇴근 껍데기) ---------- */
+  var clockTab = 'clock';
+  function switchClockTab(tab) {
+    if (tab === 'closeout') { openCloseoutModal(); return; }
+    clockTab = tab;
+    $('view-clock').classList.toggle('hidden', tab !== 'clock');
+    $('view-records').classList.toggle('hidden', tab !== 'records');
+    $('view-more').classList.toggle('hidden', tab !== 'more');
+    document.querySelectorAll('.ctab').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-ctab') === tab);
+    });
+    if (tab === 'records') renderRecords();
+    window.scrollTo(0, 0);
+  }
+  function renderRecords() {
+    var sv = servers(), kt = kitchen();
+    $('recServerCount').textContent = countLabel(sv.length);
+    $('recKitchenCount').textContent = countLabel(kt.length);
+    var html = function (e) {
+      return '<button type="button" class="rec-row" data-rec="' + e.id + '"><span class="rec-nm">' + esc(e.name) + '</span><span class="arr">\u203a</span></button>';
+    };
+    $('recServerList').innerHTML = sv.map(html).join('');
+    $('recKitchenList').innerHTML = kt.map(html).join('');
+    document.querySelectorAll('[data-rec]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var emp = employees.find(function (x) { return x.id === b.getAttribute('data-rec'); });
         if (emp) openEmpHistory(emp);
       });
     });
@@ -1899,6 +1981,8 @@
     msg.textContent = '';
     closeModal('shiftModal');
     toast(t('toastSaved'));
+    todayWorkedAt = 0;
+    renderClock();
   }
 
   /* ---------- 관리자 로그인 (오너: 아이디+비번 / 매니저: 아이디+비번) ---------- */

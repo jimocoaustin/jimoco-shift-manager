@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jimoco 직원 관리</title>
-<link rel="stylesheet" href="styles.css?v=25">
+<link rel="stylesheet" href="styles.css?v=26">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -30,13 +30,17 @@
   <button id="managerBtn" class="btn btn-ghost" data-i18n="admin">관리자</button>
 </header>
 
-<main id="view-clock" class="view">
-  <div class="clock-bar">
-    <span id="clockDate" class="clock-bar-date"></span>
-    <span id="clockTime" class="clock-bar-time"></span>
+<main id="view-clock" class="view has-ctabbar">
+  <div class="clock-card">
+    <div id="clockDate" class="clock-card-date"></div>
+    <div id="clockTime" class="clock-card-time"></div>
   </div>
-  <p class="view-desc" data-i18n="clockDesc">이름을 눌러 출퇴근 시간을 입력하세요.</p>
-  <div style="margin: 12px 0; display:flex; gap:8px; flex-wrap:wrap;"><button id="openCloseout" class="btn" data-i18n="coSection">마감 정산</button><button id="openTodayCo" class="btn" data-i18n="todayCo">오늘의 정산</button><button id="openEmpReg" class="btn btn-ghost" data-i18n="newEmpReg">새 직원 등록</button><button id="openRes" class="btn">📖 <span data-i18n="tabReservations">예약</span></button></div>
+  <div class="act-grid">
+    <button id="openCloseout" class="act-btn" data-i18n="coSection">마감 정산</button>
+    <button id="openTodayCo" class="act-btn" data-i18n="todayCo">오늘의 정산</button>
+  </div>
+  <button id="openRes" class="act-btn full">📖 <span data-i18n="tabReservations">예약</span></button>
+  <button id="openEmpReg" class="act-link" data-i18n="newEmpReg">새 직원 등록</button>
   <div class="clock-columns">
     <section class="clock-col">
       <h2><span data-i18n="servers">서버</span> <span id="serverCount" class="count"></span></h2>
@@ -48,6 +52,38 @@
     </section>
   </div>
 </main>
+
+<main id="view-records" class="view has-ctabbar hidden">
+  <h2 class="screen-title" data-i18n="histTitle">내 기록</h2>
+  <p class="view-desc" data-i18n="recordsDesc">이름을 누르면 PIN 확인 후 기록을 보여드려요.</p>
+  <div class="clock-columns">
+    <section class="clock-col">
+      <h2><span data-i18n="servers">서버</span> <span id="recServerCount" class="count"></span></h2>
+      <div id="recServerList"></div>
+    </section>
+    <section class="clock-col">
+      <h2><span data-i18n="kitchen">주방</span> <span id="recKitchenCount" class="count"></span></h2>
+      <div id="recKitchenList"></div>
+    </section>
+  </div>
+</main>
+
+<main id="view-more" class="view has-ctabbar hidden">
+  <h2 class="screen-title" data-i18n="ctabMore">더보기</h2>
+  <p class="view-desc" data-i18n="moreDesc">가끔 쓰는 기능은 여기로 모았어요.</p>
+  <button class="more-row" id="moreRes"><span>📖 <span data-i18n="tabReservations">예약</span></span><span class="arr">›</span></button>
+  <button class="more-row" id="moreCloseout"><span>🧾 <span data-i18n="coSection">마감 정산</span></span><span class="arr">›</span></button>
+  <button class="more-row" id="moreTodayCo"><span>📋 <span data-i18n="todayCo">오늘의 정산</span></span><span class="arr">›</span></button>
+  <button class="more-row" id="moreEmpReg"><span>🆕 <span data-i18n="newEmpReg">새 직원 등록</span></span><span class="arr">›</span></button>
+  <button class="more-row" id="moreAdmin"><span>🔐 <span data-i18n="admin">관리자</span></span><span class="arr">›</span></button>
+</main>
+
+<nav id="clockTabbar" class="tabbar">
+  <button class="ctab active" data-ctab="clock"><span class="tab-icon">🕐</span><span data-i18n="ctabClock">출퇴근</span></button>
+  <button class="ctab" data-ctab="records"><span class="tab-icon">📋</span><span data-i18n="histBtn">기록</span></button>
+  <button class="ctab" data-ctab="closeout"><span class="tab-icon">🧾</span><span data-i18n="coSection">마감 정산</span></button>
+  <button class="ctab" data-ctab="more"><span class="tab-icon">☰</span><span data-i18n="ctabMore">더보기</span></button>
+</nav>
 
 <main id="view-manager" class="view has-tabbar hidden">
   <div class="manager-top">
@@ -532,6 +568,6 @@
 <div id="toast" class="toast hidden"></div>
 
 <script src="config.js"></script>
-<script src="app.js?v=30"></script>
+<script src="app.js?v=31"></script>
 </body>
 </html>
