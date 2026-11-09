@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jimoco 직원 관리</title>
-<link rel="stylesheet" href="styles.css?v=24">
+<link rel="stylesheet" href="styles.css?v=25">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -297,8 +297,7 @@
       <h3 data-i18n="tabReservations">예약</h3>
       <button id="resClose" class="btn" data-i18n="close">닫기</button>
     </div>
-    <div class="res-month-nav"><button id="resPrevMonth" class="btn btn-ghost">◀</button><span id="resMonthLabel"></span><button id="resNextMonth" class="btn btn-ghost">▶</button><button id="resThisMonth" class="btn btn-ghost" data-i18n="resThisMonth">이번달</button><input type="date" id="resPrintDate"><button id="resPrint" class="btn btn-ghost"><span data-i18n="resPrint">인쇄</span></button></div>
-    <div class="res-print-hint" data-i18n="resPrintDateHint">날짜를 고르면 그날만 인쇄</div>
+    <div class="res-month-nav"><button id="resPrevMonth" class="btn btn-ghost">◀</button><span id="resMonthLabel"></span><button id="resNextMonth" class="btn btn-ghost">▶</button></div>
     <div id="resList"></div>
     <h4 class="res-form-title" data-i18n="resFormTitle">새 예약 받기</h4>
     <div class="res-form">
@@ -533,6 +532,6 @@
 <div id="toast" class="toast hidden"></div>
 
 <script src="config.js"></script>
-<script src="app.js?v=29"></script>
+<script src="app.js?v=30"></script>
 </body>
 </html>
