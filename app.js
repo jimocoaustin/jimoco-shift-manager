@@ -210,6 +210,15 @@
   histBtn: '기록',
   ctabClock: '출퇴근',
   ctabMore: '더보기',
+  schedBtn: '시간표',
+  schedTitle: '서버 시간표',
+  schedToday: '오늘 근무',
+  schedOff: '휴무',
+  schedLoading: '시간표를 불러오는 중…',
+  schedError: '시간표를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
+  schedRefresh: '새로고침',
+  schedUpdated: '업데이트',
+  schedNobody: '오늘 근무 예정 없음',
   recordsDesc: '이름을 누르면 PIN 확인 후 기록을 보여드려요.',
   moreDesc: '가끔 쓰는 기능은 여기로 모았어요.',
   chipToday: '오늘 근무',
@@ -535,6 +544,15 @@
   histBtn: 'History',
   ctabClock: 'Clock',
   ctabMore: 'More',
+  schedBtn: 'Schedule',
+  schedTitle: 'Server Schedule',
+  schedToday: 'Working today',
+  schedOff: 'Off',
+  schedLoading: 'Loading schedule…',
+  schedError: "Couldn't load the schedule. Please try again in a moment.",
+  schedRefresh: 'Refresh',
+  schedUpdated: 'Updated',
+  schedNobody: 'No one scheduled today',
   recordsDesc: 'Tap your name \u2014 enter your PIN to see your records.',
   moreDesc: 'Less-used features live here.',
   chipToday: 'Today',
@@ -1072,6 +1090,11 @@
       b.addEventListener('click', function () { switchClockTab(b.getAttribute('data-ctab')); });
     });
     $('moreRes').addEventListener('click', openResModal);
+    /* 시간표 모달 (구글시트 연동) */
+    $('openSched').addEventListener('click', openSchedule);
+    $('moreSched').addEventListener('click', openSchedule);
+    $('schedClose').addEventListener('click', function () { closeModal('schedModal'); });
+    $('schedRefresh').addEventListener('click', function () { loadSchedule(); });
     $('moreCloseout').addEventListener('click', openCloseoutModal);
     $('moreTodayCo').addEventListener('click', openTodayCoModal);
     $('moreEmpReg').addEventListener('click', openEmpReg);
@@ -3269,6 +3292,90 @@
   function parseResDate(s) {
     var p = String(s || '').split('-');
     return new Date(+p[0], (+p[1] || 1) - 1, +p[2] || 1);
+  }
+
+  /* ---------- 시간표 (구글시트 'server schedule' 연동, 자체 UI) ---------- */
+  var SCHED_SHEET_ID = '1Q3rupaZzhqr6REPvdzrBUmTYv90aVx-FPjn4nlDWR_s';
+  var schedData = null; /* {days:[...], rows:[{name, cells:[...]}]} */
+  function schedCellText(cell) {
+    if (!cell) return '';
+    var v = cell.f != null ? cell.f : cell.v;
+    return v == null ? '' : String(v).trim();
+  }
+  function schedName(s) {
+    s = String(s || '').trim();
+    return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
+  }
+  function openSchedule() {
+    $('schedModal').classList.remove('hidden');
+    if (!schedData) {
+      $('schedToday').innerHTML = '';
+      $('schedBody').innerHTML = '<p class="view-desc">' + esc(t('schedLoading')) + '</p>';
+    }
+    loadSchedule();
+  }
+  function loadSchedule() {
+    var url = 'https://docs.google.com/spreadsheets/d/' + SCHED_SHEET_ID + '/gviz/tq?tqx=out:json&gid=0&headers=0';
+    fetch(url).then(function (r) {
+      if (!r.ok) throw new Error('http ' + r.status);
+      return r.text();
+    }).then(function (txt) {
+      var s = txt.indexOf('{'), e = txt.lastIndexOf('}');
+      if (s < 0 || e <= s) throw new Error('bad payload');
+      var data = JSON.parse(txt.slice(s, e + 1));
+      var rows = (data.table && data.table.rows) || [];
+      var parsed = rows.map(function (r) {
+        var c = (r && r.c) || [];
+        return { name: schedCellText(c[0]), cells: [1, 2, 3, 4, 5, 6, 7].map(function (i) { return schedCellText(c[i]); }) };
+      }).filter(function (r) { return r.name || r.cells.some(function (x) { return x; }); });
+      if (!parsed.length) throw new Error('empty');
+      schedData = { days: parsed[0].cells, rows: parsed.slice(1) };
+      renderSchedule();
+      var now = new Date();
+      $('schedUpdated').textContent = t('schedUpdated') + ' ' + now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }).catch(function () {
+      if (!schedData) {
+        $('schedToday').innerHTML = '';
+        $('schedBody').innerHTML = '<p class="view-desc">' + esc(t('schedError')) + '</p>';
+      }
+    });
+  }
+  function schedChip(val) {
+    var v = String(val || '').trim();
+    if (!v) return '<span class="sch-none">–</span>';
+    if (/^x$/i.test(v)) return '<span class="sch-off">' + esc(t('schedOff')) + '</span>';
+    if (/^full$/i.test(v)) return '<span class="sch-chip sch-full">Full</span>';
+    var m = v.match(/^(\d{1,2})/);
+    var morning = m && (+m[1] >= 9 && +m[1] <= 11);
+    return '<span class="sch-chip ' + (morning ? 'sch-am' : 'sch-pm') + '">' + esc(v) + '</span>';
+  }
+  function renderSchedule() {
+    if (!schedData) return;
+    var today = new Date().getDay(); /* 0=Sun … 6=Sat, 시트 열 순서와 동일 */
+    var workers = schedData.rows.filter(function (r) {
+      var v = r.cells[today];
+      return v && !/^x$/i.test(v);
+    });
+    var th = '<div class="sch-today-head">📅 ' + esc(t('schedToday')) + '</div>';
+    if (workers.length) {
+      th += '<div class="sch-today-list">' + workers.map(function (r) {
+        return '<span class="sch-today-chip"><b>' + esc(schedName(r.name)) + '</b> ' + esc(r.cells[today]) + '</span>';
+      }).join('') + '</div>';
+    } else {
+      th += '<p class="view-desc">' + esc(t('schedNobody')) + '</p>';
+    }
+    $('schedToday').innerHTML = th;
+    var html = '<div class="sch-wrap"><table class="sch-table"><thead><tr><th class="sch-name-col"></th>' +
+      schedData.days.map(function (d, i) {
+        return '<th class="' + (i === today ? 'sch-today-col' : '') + '">' + esc(d) + '</th>';
+      }).join('') + '</tr></thead><tbody>' +
+      schedData.rows.map(function (r) {
+        return '<tr><th class="sch-name-col">' + esc(schedName(r.name)) + '</th>' +
+          r.cells.map(function (c, i) {
+            return '<td class="' + (i === today ? 'sch-today-col' : '') + '">' + schedChip(c) + '</td>';
+          }).join('') + '</tr>';
+      }).join('') + '</tbody></table></div>';
+    $('schedBody').innerHTML = html;
   }
 
   /* 예약 모달 열기 (출퇴근 화면·매니저 예약 탭 공용) */

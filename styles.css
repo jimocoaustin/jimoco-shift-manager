@@ -608,3 +608,38 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
 .wd-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .wd-head h3 { margin: 0; }
 .wd-total { font-weight: 700; margin-top: 8px; }
+
+/* 시간표 (구글시트 연동, 자체 UI) */
+.sch-today { margin-bottom: 14px; }
+.sch-today-head { font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+.sch-today-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.sch-today-chip {
+  background: #eef4ff; color: var(--text); border: 1px solid #c9dcff;
+  border-radius: 999px; padding: 5px 11px; font-size: 13.5px;
+}
+.sch-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.sch-table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 560px; font-size: 13.5px; }
+.sch-table th, .sch-table td {
+  padding: 7px 4px; text-align: center; border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.sch-table thead th { font-size: 12.5px; color: var(--text-2); font-weight: 600; }
+.sch-table .sch-name-col {
+  position: sticky; left: 0; background: var(--card); text-align: left;
+  font-weight: 600; padding-left: 2px; padding-right: 8px; z-index: 1;
+}
+.sch-table .sch-today-col { background: #fff7e6; }
+.sch-chip {
+  display: inline-block; border-radius: 999px; padding: 2.5px 9px;
+  font-size: 12.5px; font-weight: 600; line-height: 1.45;
+}
+.sch-full { background: #1d7a3a; color: #fff; }
+.sch-am { background: #dbeafe; color: #1e40af; }
+.sch-pm { background: #ffedd5; color: #9a3412; }
+.sch-off { color: #b0b0b5; font-size: 12.5px; }
+.sch-none { color: #d8d8dc; }
+.sch-foot {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 12px;
+}
+.sch-updated { color: var(--text-2); font-size: 12.5px; }
