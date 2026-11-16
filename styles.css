@@ -383,6 +383,9 @@ table.pay tr.tip-section td { font-weight: 700; background: #e8f0fe; color: #1a5
 }
 .co-stat .k { font-size: 13px; color: var(--text-2); }
 .co-stat .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sales-row { cursor: pointer; }
+.sales-row.sales-open td { background: #eef4ff; }
+.sales-detail td { background: #f7f8fa; text-align: left !important; font-size: 14px; line-height: 1.8; }
 
 @media (max-width: 760px) {
   .denom-grid { grid-template-columns: repeat(2, 1fr); }
@@ -599,3 +602,9 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
   cursor: pointer; text-align: left;
 }
 .more-row .arr { color: #c7c7cc; }
+
+/* 돈통 인출 (2026-11-10) */
+.wd-card { margin-bottom: 14px; }
+.wd-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.wd-head h3 { margin: 0; }
+.wd-total { font-weight: 700; margin-top: 8px; }

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jimoco 직원 관리</title>
-<link rel="stylesheet" href="styles.css?v=26">
+<link rel="stylesheet" href="styles.css?v=28">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -93,6 +93,7 @@
   <nav class="tabbar">
     <button class="tab active" data-tab="payroll"><span class="tab-icon">💰</span><span data-i18n="tabPayroll">급여</span></button>
     <button class="tab" data-tab="closeout"><span class="tab-icon">🧾</span><span data-i18n="tabCloseout">마감 정산</span></button>
+    <button class="tab" data-tab="sales"><span class="tab-icon">📈</span><span data-i18n="tabSales">매출</span></button>
     <button class="tab" data-tab="reservations"><span class="tab-icon">📖</span><span data-i18n="tabReservations">예약</span></button>
     <button class="tab" data-tab="employees"><span class="tab-icon">👥</span><span data-i18n="tabEmployees">직원 관리</span></button>
     <button class="tab" data-tab="pin" id="pinTabBtn"><span class="tab-icon">🔑</span><span data-i18n="tabPin">비밀번호 관리</span></button>
@@ -126,12 +127,32 @@
 
   <!-- 마감 정산 -->
   <section id="tab-closeout" class="tab-panel hidden">
+    <div class="card wd-card">
+      <div class="wd-head">
+        <h3>💵 <span data-i18n="wdTitle">돈통 인출</span></h3>
+        <button id="wdAddBtn" class="btn btn-primary" data-i18n="wdBtn">돈통에서 현금 가져가기</button>
+      </div>
+      <p class="view-desc" data-i18n="wdDesc">사장님이 돈통에서 현금을 가져가면 여기에 기록하세요. 그날 마감 정산의 예상 금액에서 자동으로 빠집니다.</p>
+      <div id="wdList"></div>
+    </div>
     <div class="period-row">
       <input type="month" id="coMonth">
       <button id="coLoad" class="btn btn-primary" data-i18n="load">조회</button>
     </div>
     <div id="coSummary"></div>
     <div id="coList"></div>
+  </section>
+
+  <!-- 매출 (관리자): 매장(마감 정산) + 배달(Otter) 일별 합산 -->
+  <section id="tab-sales" class="tab-panel hidden">
+    <div class="period-row">
+      <input type="month" id="salesMonth">
+      <input type="date" id="salesDate">
+      <button id="salesLoad" class="btn btn-primary" data-i18n="load">조회</button>
+    </div>
+    <div id="salesSummary"></div>
+    <div id="salesList"></div>
+    <p class="view-desc" data-i18n="salesNote">매장 매출은 마감 정산 기준, 배달 매출은 Otter에서 매일 자동으로 가져옵니다. 날짜를 누르면 채널별 상세가 열립니다.</p>
   </section>
 
   <!-- 예약 (목록·입력은 공용 예약 모달에서) -->
@@ -382,10 +403,27 @@
       <label><span>25¢</span><input type="number" id="coC25" min="0" step="1"></label>
     </div>
     <div class="co-line"><span data-i18n="coCounted">실제 돈통 금액</span><strong id="coCounted">$0.00</strong></div>
+    <div class="co-line hidden" id="coWithdrawLine"><span data-i18n="coWithdraw">오너 인출</span><strong id="coWithdrawAmt">−$0.00</strong></div>
     <div class="co-line"><span data-i18n="coExpected">예상 금액</span><strong id="coExpected">$0.00</strong></div>
     <p class="view-desc" id="coPrevNote"></p>
     <div class="co-line"><span data-i18n="coDiff">차이</span><strong id="coDiff">-</strong></div>
     <p id="coMsg" class="msg"></p>
+  </div>
+</div>
+
+<!-- 돈통 인출 모달 (오너 전용: 관리자 비밀번호 확인) -->
+<div id="withdrawModal" class="modal hidden">
+  <div class="modal-box small">
+    <h2>💵 <span data-i18n="wdTitle">돈통 인출</span></h2>
+    <div class="modal-actions">
+      <button id="wdSave" class="btn btn-primary" data-i18n="save">저장</button>
+      <button class="btn btn-ghost" data-close data-i18n="cancel">취소</button>
+    </div>
+    <label><span data-i18n="workDate">근무 날짜</span><input type="date" id="wdDate"></label>
+    <label><span data-i18n="wdAmount">가져갈 금액 ($)</span><input type="number" id="wdAmount" min="0" step="0.01"></label>
+    <label><span data-i18n="wdNote">메모 (선택)</span><input type="text" id="wdNote" maxlength="100" placeholder="예: 은행 입금"></label>
+    <label><span data-i18n="wdPw">관리자 비밀번호</span><span class="pw-wrap"><input type="password" id="wdPw" autocomplete="off"><button type="button" class="pw-eye" tabindex="-1" aria-label="show">👁</button></span></label>
+    <p id="wdMsg" class="msg"></p>
   </div>
 </div>
 
@@ -568,6 +606,6 @@
 <div id="toast" class="toast hidden"></div>
 
 <script src="config.js"></script>
-<script src="app.js?v=31"></script>
+<script src="app.js?v=33"></script>
 </body>
 </html>

@@ -35,6 +35,9 @@
   var coPrevCounted = 0;
   var coOpeningFromRecord = null;
   var coEditingId = null;
+  var coWithdrawCents = 0;   /* 그날 오너 인출 합계 (정산 예상 금액에서 차감) */
+  var coWithdrawItems = [];
+  var wdCache = [];
   var closeoutCache = { rows: [], month: '' };
   var todayCoCache = { rows: [] };
   var coReturnToToday = false;
@@ -280,6 +283,17 @@
       csvDateRange: '날짜 범위',
       tipsWord: '팁',
       tabCloseout: '마감 정산',
+      tabSales: '매출',
+      salesStore: '매장',
+      salesDelivery: '배달',
+      salesTotal: '합계',
+      salesAvg: '일평균 (합계)',
+      salesOrders: '건',
+      salesNoData: '매출 기록이 없습니다.',
+      salesNote: '매장 매출은 마감 정산 기준, 배달 매출은 Otter에서 매일 자동으로 가져옵니다. 날짜를 누르면 채널별 상세가 열립니다.',
+      salesCloseouts: '마감',
+      salesCash: '현금 매출',
+      wdays: ['일', '월', '화', '수', '목', '금', '토'],
       coSection: '마감 정산',
       coWorkedHours: '근무 시간',
       coTotalSales: '총매출 ($)',
@@ -287,6 +301,20 @@
       coPurchases: '물품 구매비 ($)',
       coPurchaseNote: '구매 품목 메모',
       coThPurchases: '구매비',
+      wdTitle: '돈통 인출',
+      wdBtn: '돈통에서 현금 가져가기',
+      wdDesc: '사장님이 돈통에서 현금을 가져가면 여기에 기록하세요. 그날 마감 정산의 예상 금액에서 자동으로 빠집니다.',
+      wdAmount: '가져갈 금액 ($)',
+      wdNote: '메모 (선택)',
+      wdPw: '관리자 비밀번호',
+      wdPwNeed: '관리자 비밀번호를 입력하세요.',
+      wdPwWrong: '관리자 비밀번호가 틀렸습니다.',
+      wdAmountNeed: '금액을 입력하세요.',
+      wdEmpty: '이 달 인출 내역이 없습니다.',
+      wdMonthTotal: '이 달 인출 합계',
+      coWithdraw: '오너 인출',
+      coThWithdraw: '인출',
+      confirmDelWd: '이 인출 기록을 삭제할까요?',
       coOpening: '오늘 시작 캐쉬 ($)',
       coTotalTip: '팁 ($) · Total Tip',
       coServerTip: '서버 팁 (70%)',
@@ -580,6 +608,17 @@
       csvDateRange: 'Date range',
       tipsWord: 'Tips',
       tabCloseout: 'Close-out',
+      tabSales: 'Sales',
+      salesStore: 'In-store',
+      salesDelivery: 'Delivery',
+      salesTotal: 'Total',
+      salesAvg: 'Daily average (total)',
+      salesOrders: 'orders',
+      salesNoData: 'No sales records.',
+      salesNote: 'In-store sales come from register close-outs; delivery sales sync from Otter daily. Tap a date for the channel breakdown.',
+      salesCloseouts: 'close-outs',
+      salesCash: 'Cash sales',
+      wdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       coSection: 'Register close-out',
       coWorkedHours: 'Hours worked',
       coTotalSales: 'Total sales ($)',
@@ -587,6 +626,20 @@
       coPurchases: 'Supply purchases ($)',
       coPurchaseNote: 'Purchase note',
       coThPurchases: 'Purchases',
+      wdTitle: 'Till withdrawals',
+      wdBtn: 'Take cash from till',
+      wdDesc: 'Record cash the owner takes from the till here. It is deducted automatically from that day\'s expected close-out amount.',
+      wdAmount: 'Amount to take ($)',
+      wdNote: 'Note (optional)',
+      wdPw: 'Admin password',
+      wdPwNeed: 'Enter the admin password.',
+      wdPwWrong: 'Wrong admin password.',
+      wdAmountNeed: 'Enter an amount.',
+      wdEmpty: 'No withdrawals this month.',
+      wdMonthTotal: 'Withdrawals this month',
+      coWithdraw: 'Owner withdrawal',
+      coThWithdraw: 'Withdrawal',
+      confirmDelWd: 'Delete this withdrawal record?',
       coOpening: 'Opening cash today ($)',
       coTotalTip: 'Tip ($) · Total Tip',
       coServerTip: 'Server tip (70%)',
@@ -924,6 +977,10 @@
           if (!$('coMonth').value) $('coMonth').value = todayStr().slice(0, 7);
           loadCloseouts();
         }
+        if (tab.dataset.tab === 'sales') {
+          if (!$('salesMonth').value) $('salesMonth').value = todayStr().slice(0, 7);
+          loadSales();
+        }
       });
     });
 
@@ -935,6 +992,13 @@
     $('payStart').addEventListener('change', loadPayroll);
     $('payEnd').addEventListener('change', loadPayroll);
     $('coMonth').addEventListener('change', loadCloseouts);
+    $('salesLoad').addEventListener('click', loadSales);
+    $('salesMonth').addEventListener('change', loadSales);
+    $('salesDate').addEventListener('change', function () {
+      var d = $('salesDate').value;
+      if (d && $('salesMonth').value !== d.slice(0, 7)) $('salesMonth').value = d.slice(0, 7);
+      loadSales();
+    });
     $('payCsv').addEventListener('click', exportCSV);
     document.querySelectorAll('.role-filter').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -999,6 +1063,9 @@
     $('editShiftSave').addEventListener('click', saveEditedShift);
     $('editShiftDelete').addEventListener('click', deleteShift);
     $('coLoad').addEventListener('click', loadCloseouts);
+    $('wdAddBtn').addEventListener('click', openWithdrawModal);
+    $('wdSave').addEventListener('click', saveWithdrawal);
+    $('wdPw').addEventListener('keydown', function (e) { if (e.key === 'Enter') saveWithdrawal(); });
     /* 예약 모달 (출퇴근 화면·예약 탭 공용) */
     $('openRes').addEventListener('click', openResModal);
     document.querySelectorAll('.ctab').forEach(function (b) {
@@ -1757,7 +1824,8 @@
       expected_cents: r.expected,
       diff_cents: r.diff,
       purchases_cents: r.purchases,
-      purchase_note: ($('coPurchaseNote').value || '').trim() || null
+      purchase_note: ($('coPurchaseNote').value || '').trim() || null,
+      withdrawal_cents: r.withdrawals
     };
     DENOMS.forEach(function (d) {
       row[d.key] = parseInt($(d.id).value, 10) || 0;
@@ -1868,6 +1936,7 @@
     $('coOpening').value = '';
     coOpeningFromRecord = null;
     coEditingId = null;
+    coWithdrawCents = 0; coWithdrawItems = [];
     DENOMS.forEach(function (d) { $(d.id).value = ''; });
     coPrevCounted = 0;
     recalcCloseout();
@@ -1885,6 +1954,12 @@
     /* 시작 캐쉬 기본값: 수정 중인 기록에 저장된 시작 캐쉬가 있으면 그것, 없으면 전날 실사 금액 */
     var oc = coOpeningFromRecord != null ? coOpeningFromRecord : coPrevCounted;
     $('coOpening').value = oc ? (oc / 100) : '';
+    /* 그날 오너 인출 합계 (예상 금액에서 자동 차감) */
+    coWithdrawCents = 0; coWithdrawItems = [];
+    try {
+      var wd = await rpc('day_withdrawals', { p_date: date });
+      if (wd) { coWithdrawCents = wd.total_cents || 0; coWithdrawItems = wd.items || []; }
+    } catch (e) {}
     recalcCloseout();
   }
 
@@ -1906,11 +1981,18 @@
     var cash = parseCents($('coCashSales').value);
     var opening = parseCents($('coOpening').value);
     var purchases = parseCents($('coPurchases').value);
-    var expected = opening + cash - purchases;
+    var expected = opening + cash - purchases - coWithdrawCents;
     $('coExpected').textContent = '$' + dollars(expected);
+    if (coWithdrawCents > 0) {
+      $('coWithdrawLine').classList.remove('hidden');
+      $('coWithdrawAmt').textContent = '−$' + dollars(coWithdrawCents);
+    } else {
+      $('coWithdrawLine').classList.add('hidden');
+    }
     $('coPrevNote').textContent = t('coPrevNote') + ' $' + dollars(opening) +
       ' + ' + t('coCashSales') + ' $' + dollars(cash) +
-      (purchases > 0 ? ' − ' + t('coPurchases') + ' $' + dollars(purchases) : '');
+      (purchases > 0 ? ' − ' + t('coPurchases') + ' $' + dollars(purchases) : '') +
+      (coWithdrawCents > 0 ? ' − ' + t('coWithdraw') + ' $' + dollars(coWithdrawCents) : '');
     var diff = counted - expected;
     var dEl = $('coDiff');
     if (Math.abs(diff) <= 200) {
@@ -1920,7 +2002,7 @@
       dEl.textContent = (diff > 0 ? '+' : '') + '$' + dollars(diff);
       dEl.className = 'diff-bad';
     }
-    return { counted: counted, expected: expected, diff: diff, opening: opening, purchases: purchases };
+    return { counted: counted, expected: expected, diff: diff, opening: opening, purchases: purchases, withdrawals: coWithdrawCents };
   }
 
   async function saveShift() {
@@ -2904,6 +2986,7 @@
       var rows = await mgrRpc('admin_closeouts', { p_from: start, p_to: end });
       closeoutCache = { rows: rows || [], month: mv };
       renderCloseouts();
+      loadWithdrawals(start, end);
     } catch (e) {
       closeoutCache = { rows: [], month: mv };
       $('coList').innerHTML = '<p class="view-desc">' + esc(t('coNoData')) + '</p>';
@@ -2918,10 +3001,11 @@
       $('coSummary').innerHTML = '';
       return;
     }
-    var tSales = 0, tCash = 0, tTips = 0, tPurch = 0, mism = 0;
+    var tSales = 0, tCash = 0, tTips = 0, tPurch = 0, tWd = 0, mism = 0;
     var html = '<table class="pay"><tr><th>' + esc(t('coThDate')) + '</th><th>' + esc(t('thEmployee')) +
       '</th><th>' + esc(t('coThTotalSales')) + '</th><th>' + esc(t('coThCash')) + '</th><th>' +
       esc(t('coThPurchases')) + '</th><th>' +
+      esc(t('coThWithdraw')) + '</th><th>' +
       esc(t('coThOpening')) + '</th><th>' +
       esc(t('coThTips')) + '</th><th>' + esc(t('coThExpected')) + '</th><th>' + esc(t('coThCounted')) +
       '</th><th>' + esc(t('coThDiff')) + '</th><th></th></tr>';
@@ -2930,6 +3014,7 @@
       tCash += r.cash_sales_cents || 0;
       tTips += r.tips_cents || 0;
       tPurch += r.purchases_cents || 0;
+      tWd += r.withdrawal_cents || 0;
       var d = r.diff_cents || 0;
       if (Math.abs(d) > 200) mism++;
       var dHtml = Math.abs(d) <= 200
@@ -2940,6 +3025,8 @@
         '</td><td>$' + dollars(r.cash_sales_cents) + '</td><td>' +
         (r.purchases_cents ? '$' + dollars(r.purchases_cents) +
           (r.purchase_note ? '<br><small>' + esc(r.purchase_note) + '</small>' : '') : '–') +
+        '</td><td>' +
+        (r.withdrawal_cents ? '-$' + dollars(r.withdrawal_cents) : '–') +
         '</td><td>' +
         (r.opening_cents != null ? '$' + dollars(r.opening_cents) : '–') +
         '</td><td>$' + dollars(r.tips_cents) +
@@ -2963,7 +3050,96 @@
       '<div class="co-stat"><div class="k">' + esc(t('coThCash')) + '</div><div class="v">$' + dollars(tCash) + '</div></div>' +
       '<div class="co-stat"><div class="k">' + esc(t('coThTips')) + '</div><div class="v">$' + dollars(tTips) + '</div></div>' +
       '<div class="co-stat"><div class="k">' + esc(t('coThPurchases')) + '</div><div class="v">$' + dollars(tPurch) + '</div></div>' +
+      '<div class="co-stat"><div class="k">' + esc(t('coThWithdraw')) + '</div><div class="v">$' + dollars(tWd) + '</div></div>' +
       '<div class="co-stat"><div class="k">' + esc(t('coMismatch')) + '</div><div class="v">' + mism + '</div></div>' +
+      '</div>';
+  }
+
+  /* ---------- 매출 (관리자 탭): 매장(마감 정산) + 배달(Otter) 일별 합산 ---------- */
+  var salesCache = { store: [], delivery: [], month: '', openDate: '' };
+  var CH_LABEL = { doordash: 'DoorDash', skip: 'SkipTheDishes', ubereats: 'Uber Eats' };
+
+  async function loadSales() {
+    var mv = $('salesMonth').value;
+    if (!mv) { toast(t('toastPickPeriod')); return; }
+    var start = mv + '-01';
+    var end = fmtYMD(new Date(+mv.slice(0, 4), +mv.slice(5, 7), 0));
+    var cos = [], dvs = [];
+    try { cos = await mgrRpc('admin_closeouts', { p_from: start, p_to: end }) || []; } catch (e) { cos = []; }
+    try { dvs = await mgrRpc('admin_delivery_sales', { p_from: start, p_to: end }) || []; } catch (e) { dvs = []; }
+    var fd = $('salesDate').value;
+    salesCache = { store: cos, delivery: dvs, month: mv, openDate: (fd && fd.slice(0, 7) === mv) ? fd : salesCache.openDate };
+    renderSales();
+    if (fd && fd.slice(0, 7) === mv) {
+      var el = document.querySelector('[data-sales-day="' + fd + '"]');
+      if (el) el.scrollIntoView({ block: 'center' });
+    }
+  }
+
+  function renderSales() {
+    var mv = salesCache.month;
+    var y = +mv.slice(0, 4), m = +mv.slice(5, 7);
+    var lastDay = new Date(y, m, 0).getDate();
+    var today = todayStr();
+    var storeByDay = {}, delByDay = {};
+    salesCache.store.forEach(function (c) {
+      var d = c.work_date; if (!storeByDay[d]) storeByDay[d] = { sales: 0, cash: 0, n: 0 };
+      storeByDay[d].sales += c.total_sales_cents || 0;
+      storeByDay[d].cash += c.cash_sales_cents || 0;
+      storeByDay[d].n += 1;
+    });
+    salesCache.delivery.forEach(function (r) {
+      var d = r.work_date; if (!delByDay[d]) delByDay[d] = { sales: 0, orders: 0, ch: {} };
+      delByDay[d].sales += r.sales_cents || 0;
+      delByDay[d].orders += r.orders || 0;
+      delByDay[d].ch[r.channel] = { sales: r.sales_cents || 0, orders: r.orders || 0 };
+    });
+    var tStore = 0, tDel = 0, daysWith = 0, rowsHtml = '';
+    for (var day = lastDay; day >= 1; day--) {
+      var iso = mv + '-' + (day < 10 ? '0' : '') + day;
+      if (iso > today) continue;
+      var s = storeByDay[iso], dv = delByDay[iso];
+      var sVal = s ? s.sales : null, dVal = dv ? dv.sales : null;
+      if (sVal != null) tStore += sVal;
+      if (dVal != null) tDel += dVal;
+      if (sVal != null || dVal != null) daysWith += 1;
+      var tot = (sVal || 0) + (dVal || 0);
+      var wd = t('wdays')[new Date(y, m - 1, day).getDay()];
+      var open = salesCache.openDate === iso;
+      rowsHtml += '<tr class="sales-row' + (open ? ' sales-open' : '') + '" data-sales-day="' + iso + '">' +
+        '<td>' + day + '일 (' + esc(wd) + ')</td>' +
+        '<td>' + (sVal != null ? '$' + dollars(sVal) : '–') + '</td>' +
+        '<td>' + (dVal != null ? '$' + dollars(dVal) : '–') + '</td>' +
+        '<td><strong>' + ((sVal != null || dVal != null) ? '$' + dollars(tot) : '–') + '</strong></td></tr>';
+      if (open) {
+        var det = '';
+        ['doordash', 'skip', 'ubereats'].forEach(function (ch) {
+          var c = dv ? dv.ch[ch] : null;
+          det += '<div>' + CH_LABEL[ch] + ': ' + (c ? '$' + dollars(c.sales) + ' · ' + c.orders + esc(t('salesOrders')) : '–') + '</div>';
+        });
+        if (s) det += '<div>' + esc(t('salesStore')) + ' · ' + esc(t('salesCloseouts')) + ' ' + s.n + esc(t('salesOrders')) + ' · ' + esc(t('salesCash')) + ' $' + dollars(s.cash) + '</div>';
+        rowsHtml += '<tr class="sales-detail"><td colspan="4">' + det + '</td></tr>';
+      }
+    }
+    if (!daysWith) {
+      $('salesList').innerHTML = '<p class="view-desc">' + esc(t('salesNoData')) + '</p>';
+    } else {
+      $('salesList').innerHTML = '<table class="pay"><tr><th>' + esc(t('coThDate')) + '</th><th>' + esc(t('salesStore')) + '</th><th>' + esc(t('salesDelivery')) + '</th><th>' + esc(t('salesTotal')) + '</th></tr>' + rowsHtml + '</table>';
+      $('salesList').querySelectorAll('.sales-row').forEach(function (tr) {
+        tr.addEventListener('click', function () {
+          var d = tr.getAttribute('data-sales-day');
+          salesCache.openDate = (salesCache.openDate === d) ? '' : d;
+          renderSales();
+        });
+      });
+    }
+    var tAll = tStore + tDel;
+    $('salesSummary').innerHTML =
+      '<div class="co-stat-grid">' +
+      '<div class="co-stat"><div class="k">' + esc(t('salesStore')) + '</div><div class="v">$' + dollars(tStore) + '</div></div>' +
+      '<div class="co-stat"><div class="k">' + esc(t('salesDelivery')) + '</div><div class="v">$' + dollars(tDel) + '</div></div>' +
+      '<div class="co-stat"><div class="k">' + esc(t('salesTotal')) + '</div><div class="v">$' + dollars(tAll) + '</div></div>' +
+      '<div class="co-stat"><div class="k">' + esc(t('salesAvg')) + '</div><div class="v">$' + dollars(daysWith ? Math.round(tAll / daysWith) : 0) + '</div></div>' +
       '</div>';
   }
 
@@ -2983,6 +3159,84 @@
     if (!okDc) { toast(t('delFail')); return; }
     toast(t('toastDeleted'));
     loadCloseouts();
+  }
+
+  /* ---------- 돈통 인출 (관리자 탭) ---------- */
+  function openWithdrawModal() {
+    $('wdDate').value = todayStr();
+    $('wdAmount').value = '';
+    $('wdNote').value = '';
+    $('wdPw').value = '';
+    $('wdMsg').textContent = '';
+    $('wdMsg').className = 'msg';
+    openModal('withdrawModal');
+    setTimeout(function () { $('wdAmount').focus(); }, 50);
+  }
+
+  async function saveWithdrawal() {
+    var msg = $('wdMsg');
+    msg.className = 'msg';
+    var amt = parseCents($('wdAmount').value);
+    if (!amt || amt <= 0) { msg.textContent = t('wdAmountNeed'); return; }
+    var pw = $('wdPw').value;
+    if (!pw) { msg.textContent = t('wdPwNeed'); return; }
+    var date = $('wdDate').value;
+    if (!date) { msg.textContent = t('needAll'); return; }
+    var ok = false;
+    try {
+      ok = await rpc('admin_add_withdrawal', {
+        p_token: mgrToken, p_pw: pw, p_date: date,
+        p_amount_cents: amt, p_note: ($('wdNote').value || '').trim()
+      });
+    } catch (e) {}
+    if (!ok) { msg.textContent = t('wdPwWrong'); return; }
+    closeModal('withdrawModal');
+    toast(t('toastSaved'));
+    if ($('coMonth').value) loadCloseouts();
+  }
+
+  async function loadWithdrawals(start, end) {
+    try {
+      var rows = await rpc('admin_withdrawals', { p_token: mgrToken, p_from: start, p_to: end });
+      wdCache = rows || [];
+    } catch (e) {
+      wdCache = [];
+    }
+    renderWithdrawals();
+  }
+
+  function renderWithdrawals() {
+    var el = $('wdList');
+    if (!el) return;
+    if (!wdCache.length) {
+      el.innerHTML = '<p class="view-desc">' + esc(t('wdEmpty')) + '</p>';
+      return;
+    }
+    var tot = 0;
+    var html = '<table class="pay"><tr><th>' + esc(t('coThDate')) + '</th><th>' +
+      esc(t('coThWithdraw')) + '</th><th>' + esc(t('wdNote')) + '</th><th></th></tr>';
+    wdCache.forEach(function (r) {
+      tot += r.amount_cents || 0;
+      html += '<tr><td>' + esc(fmtDateV(r.work_date)) + '</td><td>$' + dollars(r.amount_cents) +
+        '</td><td>' + (r.note ? esc(r.note) : '–') + '</td>' +
+        '<td class="row-actions"><button class="btn btn-chip btn-danger" data-del-wd="' + r.id + '">' +
+        esc(t('del')) + '</button></td></tr>';
+    });
+    html += '</table>';
+    html += '<p class="wd-total">' + esc(t('wdMonthTotal')) + ': $' + dollars(tot) + '</p>';
+    el.innerHTML = html;
+    el.querySelectorAll('[data-del-wd]').forEach(function (b) {
+      b.addEventListener('click', function () { deleteWithdrawal(b.getAttribute('data-del-wd')); });
+    });
+  }
+
+  async function deleteWithdrawal(id) {
+    if (!confirm(t('confirmDelWd'))) return;
+    var ok = false;
+    try { ok = await rpc('admin_delete_withdrawal', { p_token: mgrToken, p_id: id }); } catch (e) {}
+    if (!ok) { toast(t('delFail')); return; }
+    toast(t('toastDeleted'));
+    if ($('coMonth').value) loadCloseouts();
   }
 
   /* ---------- 예약 (관리자 탭) ---------- */
