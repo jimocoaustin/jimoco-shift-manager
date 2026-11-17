@@ -160,6 +160,13 @@
       shiftCloseTogether: '마감 같이',
       needShiftType: '쉬프트 유형(오픈/마감/마감 같이)을 먼저 선택하세요.',
       noticeAck: '확인했어요',
+      bdTitle: '예약 차단 날짜',
+      bdDesc: '웹사이트 예약에서 막을 날짜예요. 추가·삭제하면 바로 반영돼요 (배포 불필요).',
+      bdYearly: '매년 반복',
+      bdEveryYear: '매년',
+      bdOnce: '한 번만',
+      bdEmpty: '차단된 날짜가 없어요.',
+      bdNeedDate: '날짜를 먼저 선택하세요.',
       masterPinTitle: '마스터 PIN (오너 전용)',
       masterPinDesc: '모든 직원의 기록·수정을 열 수 있는 오너 전용 번호입니다.',
       masterPinNew: '새 마스터 PIN (4~8자리 숫자)',
@@ -500,6 +507,13 @@
       shiftCloseTogether: 'Close together',
       needShiftType: 'Pick a shift type first (Open / Close / Close together).',
       noticeAck: 'Got it',
+      bdTitle: 'Blocked reservation dates',
+      bdDesc: 'Dates the website reservation form will not accept. Changes apply right away — no redeploy.',
+      bdYearly: 'Repeat every year',
+      bdEveryYear: 'Every year',
+      bdOnce: 'Once',
+      bdEmpty: 'No blocked dates.',
+      bdNeedDate: 'Pick a date first.',
       masterPinTitle: 'Master PIN (owner only)',
       masterPinDesc: 'Owner-only number that opens any employee\'s records and profile.',
       masterPinNew: 'New master PIN (4-8 digits)',
@@ -1013,6 +1027,7 @@
           if (!$('coMonth').value) $('coMonth').value = todayStr().slice(0, 7);
           loadCloseouts();
         }
+        if (tab.dataset.tab === 'reservations') loadBlockedDates();
         if (tab.dataset.tab === 'sales') {
           if (!$('salesMonth').value) $('salesMonth').value = todayStr().slice(0, 7);
           loadSales();
@@ -1068,6 +1083,7 @@
     $('doResetBtn').addEventListener('click', doResetPassword);
     $('pinGateOk').addEventListener('click', checkPinGate);
     $('noticeAckBtn').addEventListener('click', ackCurrentNotice);
+    $('bdAddBtn').addEventListener('click', addBlockedDate);
     $('pinSetupOk').addEventListener('click', doPinSetup);
     $('pinSetupInput2').addEventListener('keydown', function (e) { if (e.key === 'Enter') doPinSetup(); });
     $('pinGateInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') checkPinGate(); });
@@ -1384,6 +1400,44 @@
     closeModal('noticeModal');
     var r = noticeRoute; noticeRoute = null;
     routeAfterPin(r.emp, r.purpose);
+  }
+
+  /* ---------- 예약 차단 날짜 (웹사이트 연동) ---------- */
+  async function loadBlockedDates() {
+    var box = $('bdList');
+    if (!box) return;
+    var rows = null;
+    try { rows = await mgrRpc('admin_list_blocked_dates', {}); } catch (e) {}
+    if (!rows) { box.innerHTML = ''; return; }
+    if (!rows.length) { box.innerHTML = '<p class="view-desc">' + esc(t('bdEmpty')) + '</p>'; return; }
+    box.innerHTML = rows.map(function (r) {
+      var yearly = /^\d{2}-\d{2}$/.test(r.blocked_date);
+      return '<div class="bd-row"><span class="bd-date">' + esc(r.blocked_date) + '</span>' +
+        '<span class="bd-badge">' + esc(yearly ? t('bdEveryYear') : t('bdOnce')) + '</span>' +
+        (r.note ? '<span class="bd-note">' + esc(r.note) + '</span>' : '') +
+        '<button class="btn btn-ghost bd-del" data-bd="' + esc(r.blocked_date) + '">✕</button></div>';
+    }).join('');
+    box.querySelectorAll('.bd-del').forEach(function (b) {
+      b.addEventListener('click', function () { removeBlockedDate(b.getAttribute('data-bd')); });
+    });
+  }
+  async function addBlockedDate() {
+    var msg = $('bdMsg');
+    msg.className = 'msg'; msg.textContent = '';
+    var v = $('bdDate').value;
+    if (!v) { msg.textContent = t('bdNeedDate'); return; }
+    var stored = $('bdYearly').checked ? v.slice(5) : v;
+    var ok = false;
+    try { ok = await mgrRpc('admin_add_blocked_date', { p_date: stored, p_note: '' }); } catch (e) {}
+    if (!ok) { msg.textContent = t('saveFail'); return; }
+    $('bdDate').value = '';
+    $('bdYearly').checked = false;
+    loadBlockedDates();
+  }
+  async function removeBlockedDate(d) {
+    var ok = false;
+    try { ok = await mgrRpc('admin_remove_blocked_date', { p_date: d }); } catch (e) {}
+    if (ok) loadBlockedDates();
   }
 
   /* 쉬프트 유형 선택 (오픈/마감/마감 같이) — 하나를 골라야 저장 가능 */

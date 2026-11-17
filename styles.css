@@ -662,3 +662,14 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
 /* 업데이트 공지 배너 */
 .notice-body { margin: 10px 0 6px; }
 .notice-line { margin: 0 0 8px; line-height: 1.55; }
+
+/* 예약 차단 날짜 (관리자 > 예약 탭) */
+.bd-card { margin-top: 16px; }
+.bd-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.bd-row:last-child { border-bottom: none; }
+.bd-date { font-weight: 600; }
+.bd-badge { font-size: 12px; background: #f3e9d2; border-radius: 999px; padding: 2px 8px; }
+.bd-note { color: var(--muted, #666); font-size: 13px; }
+.bd-del { margin-left: auto; }
+.bd-add { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.bd-yearly { display: flex; align-items: center; gap: 6px; }
