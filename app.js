@@ -154,6 +154,12 @@
       fulltimeCheck: '풀타임 근무 (부스터는 저녁 시간만)',
       fulltimeShort: '풀타임',
       eveningStart: '저녁 쉬프트 시작 시간',
+      shiftType: '쉬프트 유형',
+      shiftOpen: '오픈',
+      shiftClose: '마감',
+      shiftCloseTogether: '마감 같이',
+      needShiftType: '쉬프트 유형(오픈/마감/마감 같이)을 먼저 선택하세요.',
+      noticeAck: '확인했어요',
       masterPinTitle: '마스터 PIN (오너 전용)',
       masterPinDesc: '모든 직원의 기록·수정을 열 수 있는 오너 전용 번호입니다.',
       masterPinNew: '새 마스터 PIN (4~8자리 숫자)',
@@ -488,6 +494,12 @@
       fulltimeCheck: 'Full-time shift (booster on evening hours only)',
       fulltimeShort: 'Full-time',
       eveningStart: 'Evening shift start',
+      shiftType: 'Shift type',
+      shiftOpen: 'Open',
+      shiftClose: 'Close',
+      shiftCloseTogether: 'Close together',
+      needShiftType: 'Pick a shift type first (Open / Close / Close together).',
+      noticeAck: 'Got it',
       masterPinTitle: 'Master PIN (owner only)',
       masterPinDesc: 'Owner-only number that opens any employee\'s records and profile.',
       masterPinNew: 'New master PIN (4-8 digits)',
@@ -968,6 +980,12 @@
     });
 
     $('shiftSave').addEventListener('click', saveShift);
+    document.querySelectorAll('[data-shift-type]').forEach(function (b) {
+      b.addEventListener('click', function () { setShiftType(b.getAttribute('data-shift-type')); });
+    });
+    document.querySelectorAll('[data-edit-shift-type]').forEach(function (b) {
+      b.addEventListener('click', function () { setEditShiftType(b.getAttribute('data-edit-shift-type')); });
+    });
     $('openCloseout').addEventListener('click', openCloseoutModal);
     $('openTodayCo').addEventListener('click', openTodayCoModal);
     $('todayCoDateInput').addEventListener('change', function () {
@@ -1049,6 +1067,7 @@
     $('sendCodeBtn').addEventListener('click', sendResetCode);
     $('doResetBtn').addEventListener('click', doResetPassword);
     $('pinGateOk').addEventListener('click', checkPinGate);
+    $('noticeAckBtn').addEventListener('click', ackCurrentNotice);
     $('pinSetupOk').addEventListener('click', doPinSetup);
     $('pinSetupInput2').addEventListener('keydown', function (e) { if (e.key === 'Enter') doPinSetup(); });
     $('pinGateInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') checkPinGate(); });
@@ -1315,13 +1334,74 @@
     var idx = employees.findIndex(function (x) { return x.id === pinSetupEmp.id; });
     if (idx >= 0) employees[idx].has_pin = true;
     closeModal('pinSetupModal');
-    if (pinSetupPurpose === 'edit') openStaffEditForm(pinSetupEmp);
-    else if (pinSetupPurpose === 'history') openHistoryModal(pinSetupEmp);
-    else openShiftForm(pinSetupEmp);
+    gateNoticesThenRoute(pinSetupEmp, pinSetupPurpose);
   }
+  /* ---------- 업데이트 공지 게이트 ----------
+     PIN 확인 직후, 아직 확인 안 한 공지가 있으면 배너를 띄우고
+     [확인했어요]를 눌러야 원래 가려던 화면으로 진행된다 (직원별 기록). */
+  var noticeQueue = [];
+  var noticeRoute = null;
+  function routeAfterPin(emp, purpose) {
+    if (purpose === 'edit') openStaffEditForm(emp);
+    else if (purpose === 'history') openHistoryModal(emp);
+    else openShiftForm(emp);
+  }
+  async function gateNoticesThenRoute(emp, purpose) {
+    var list = null;
+    try { list = await rpc('pending_notices', { p_emp: emp.id, p_pin: verifiedPin || '' }); } catch (e) {}
+    if (list && list.length) {
+      noticeQueue = list.slice();
+      noticeRoute = { emp: emp, purpose: purpose };
+      showNextNotice();
+    } else {
+      routeAfterPin(emp, purpose);
+    }
+  }
+  function showNextNotice() {
+    var n = noticeQueue[0];
+    if (!n) return;
+    $('noticeTitle').textContent = n.title || '';
+    var body = $('noticeBody');
+    body.innerHTML = '';
+    String(n.body || '').split('\n').forEach(function (line) {
+      if (!line.trim()) return;
+      var p = document.createElement('p');
+      p.className = 'notice-line';
+      p.textContent = line;
+      body.appendChild(p);
+    });
+    $('noticeMsg').className = 'msg'; $('noticeMsg').textContent = '';
+    openModal('noticeModal');
+  }
+  async function ackCurrentNotice() {
+    var n = noticeQueue[0];
+    if (!n || !noticeRoute) return;
+    var ok = false;
+    try { ok = await rpc('ack_notice', { p_emp: noticeRoute.emp.id, p_pin: verifiedPin || '', p_notice: n.id }); } catch (e) {}
+    if (!ok) { $('noticeMsg').textContent = t('saveFail'); return; }
+    noticeQueue.shift();
+    if (noticeQueue.length) { showNextNotice(); return; }
+    closeModal('noticeModal');
+    var r = noticeRoute; noticeRoute = null;
+    routeAfterPin(r.emp, r.purpose);
+  }
+
+  /* 쉬프트 유형 선택 (오픈/마감/마감 같이) — 하나를 골라야 저장 가능 */
+  var shiftTypeSel = null;
+  function setShiftType(v) {
+    shiftTypeSel = v || null;
+    document.querySelectorAll('[data-shift-type]').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-shift-type') === shiftTypeSel);
+    });
+  }
+  function shiftTypeLabel(v) {
+    return t(v === 'open' ? 'shiftOpen' : v === 'close' ? 'shiftClose' : 'shiftCloseTogether');
+  }
+
   function openShiftForm(emp) {
     currentShiftEmp = emp;
     editingShiftId = null;
+    setShiftType(null);
     $('shiftEmpName').textContent = emp.name;
     $('shiftDate').value = todayStr();
     $('shiftIn').value = nowHM();
@@ -1346,6 +1426,7 @@
       return p(dt.getHours()) + ':' + p(dt.getMinutes());
     }
     $('shiftEmpName').textContent = histEmp.name + ' · ' + t('editShiftTitle');
+    setShiftType(r.shift_type || null);
     $('shiftDate').value = r.work_date || '';
     $('shiftIn').value = r.clock_in ? hmL(r.clock_in) : '';
     $('shiftOut').value = r.clock_out ? hmL(r.clock_out) : '';
@@ -1380,9 +1461,7 @@
     if (ok) {
       verifiedPin = pin;
       closeModal('pinGateModal');
-      if (pinGatePurpose === 'edit') openStaffEditForm(pinGateEmp);
-      else if (pinGatePurpose === 'history') openHistoryModal(pinGateEmp);
-      else openShiftForm(pinGateEmp);
+      gateNoticesThenRoute(pinGateEmp, pinGatePurpose);
     } else if (pinGateAllowSetup) {
       /* 본인 PIN이 아직 없는 직원: 마스터 PIN도 아니면 최초 PIN 설정으로 이동 */
       closeModal('pinGateModal');
@@ -1440,9 +1519,7 @@
     var idx = employees.findIndex(function (x) { return x.id === pinResetEmp.id; });
     if (idx >= 0) employees[idx].has_pin = true;
     closeModal('pinResetModal');
-    if (pinGatePurpose === 'edit') openStaffEditForm(pinResetEmp);
-    else if (pinGatePurpose === 'history') openHistoryModal(pinResetEmp);
-    else openShiftForm(pinResetEmp);
+    gateNoticesThenRoute(pinResetEmp, pinGatePurpose);
   }
 
   /* ---------- 직원 본인 정보 수정 (시급·직군 제외) ---------- */
@@ -1578,9 +1655,10 @@
       var holC = isStatHoliday(r.work_date) ? Math.round(h * rateC * 0.5) : 0;
       var wageC = Math.round(h * rateC) + holC + boostC;
       totalWage += wageC;
+      var typeTag = r.shift_type ? '<span class="type-tag">' + esc(shiftTypeLabel(r.shift_type)) + '</span>' : '';
       return '<div class="hist-row' + (boostC > 0 ? ' boost' : '') + '"><span>' + (d.getMonth() + 1) + '/' + d.getDate() + ' (' + wd[d.getDay()] + ')</span>' +
         '<span>' + hm(ci) + ' ~ ' + hm(co) + '</span>' +
-        '<span class="hist-h">' + h.toFixed(1) + 'h</span>' + tag +
+        '<span class="hist-h">' + h.toFixed(1) + 'h</span>' + typeTag + tag +
         '<span class="hist-wage">' + esc(t('calDailyPay')) + ' $' + dollars(wageC) + '</span>' +
         '<button class="btn btn-chip" data-edit-shift="' + r.id + '">' + esc(t('edit')) + '</button></div>';
     }).join('');
@@ -2033,6 +2111,7 @@
     var msg = $('shiftMsg');
     msg.className = 'msg';
     if (!date || !ci || !co) { msg.textContent = t('needAll'); return; }
+    if (!shiftTypeSel) { msg.textContent = t('needShiftType'); return; }
     var ciN = normTime24(ci), coN = normTime24(co);
     if (!ciN || !coN) { msg.textContent = t('badTime'); return; }
     var inMs = toMs(date, ciN), outMs = toMs(date, coN);
@@ -2059,7 +2138,8 @@
             clock_in: new Date(inMs).toISOString(),
             clock_out: new Date(outMs).toISOString(),
             is_fulltime: isFt,
-            evening_start: eveIso || ''
+            evening_start: eveIso || '',
+            shift_type: shiftTypeSel
           }
         });
       } catch (e) {}
@@ -2080,7 +2160,8 @@
       booster_cents: 0,
       holiday_cents: 0,
       is_fulltime: isFt,
-      evening_start: eveIso
+      evening_start: eveIso,
+      shift_type: shiftTypeSel
     });
     if (res.error) { msg.textContent = t('saveFail') + res.error.message; return; }
     msg.textContent = '';
@@ -2919,6 +3000,7 @@
       var emp = s.employees || {};
       return '<div class="shift-row"><span class="grow"><strong>' + esc(emp.name || '?') + '</strong> ' +
         fmtDateV(s.work_date) + ' ' + fmtTime(s.clock_in) + '–' + fmtTime(s.clock_out) +
+        (s.shift_type ? ' · ' + esc(shiftTypeLabel(s.shift_type)) : '') +
         (s.tips_cents ? ' · ' + esc(t('tipsWord')) + ' $' + dollars(s.tips_cents) : '') + '</span>' +
         '<button class="btn btn-chip" data-shift="' + s.id + '">' + esc(t('edit')) + '</button></div>';
     }).join('') || '<p class="view-desc">' + esc(t('noShifts')) + '</p>';
@@ -2928,10 +3010,18 @@
   }
 
   var editShiftCur = null;
+  var editShiftTypeSel = null;
+  function setEditShiftType(v) {
+    editShiftTypeSel = v || null;
+    document.querySelectorAll('[data-edit-shift-type]').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-edit-shift-type') === editShiftTypeSel);
+    });
+  }
   function openEditShift(id) {
     var s = payrollCache.shifts.find(function (x) { return x.id === id; });
     if (!s) return;
     editShiftCur = s;
+    setEditShiftType(s.shift_type || null);
     $('editShiftId').value = s.id;
     $('editShiftDate').value = s.work_date;
     $('editShiftIn').value = fmtTime(s.clock_in);
@@ -2963,7 +3053,8 @@
       work_date: date,
       clock_in: new Date(inMs).toISOString(),
       clock_out: new Date(outMs).toISOString(),
-      tips_cents: (!isNaN(tm) && tm > 0) ? Math.round(tm * 100) : 0
+      tips_cents: (!isNaN(tm) && tm > 0) ? Math.round(tm * 100) : 0,
+      shift_type: editShiftTypeSel
     };
     /* 풀타임(서버): 저녁 시작 시간만 저장/해제 — 금액은 계산 때 합산 (저장된 수동 부스터는 건드리지 않음) */
     if (editShiftCur && editShiftCur.employees && editShiftCur.employees.role === 'server') {

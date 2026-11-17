@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jimoco 직원 관리</title>
-<link rel="stylesheet" href="styles.css?v=29">
+<link rel="stylesheet" href="styles.css?v=30">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -251,6 +251,18 @@
   </div>
 </div>
 
+<!-- 업데이트 공지 (직원별 확인 전에는 다음 화면으로 못 넘어감) -->
+<div id="noticeModal" class="modal hidden">
+  <div class="modal-box small">
+    <h2 id="noticeTitle"></h2>
+    <div id="noticeBody" class="notice-body"></div>
+    <div class="modal-actions">
+      <button id="noticeAckBtn" class="btn btn-primary" data-i18n="noticeAck">확인했어요</button>
+    </div>
+    <p id="noticeMsg" class="msg"></p>
+  </div>
+</div>
+
 <!-- 직원 PIN 찾기 (이메일 인증 코드) -->
 <div id="pinResetModal" class="modal hidden">
   <div class="modal-box small">
@@ -339,6 +351,14 @@
     <div class="shift-cols">
       <div class="shift-col-main">
     <label><span data-i18n="workDate">근무 날짜</span><input type="date" id="shiftDate"></label>
+    <div class="shift-type-row">
+      <span class="shift-type-lbl" data-i18n="shiftType">쉬프트 유형</span>
+      <div class="shift-type-btns">
+        <button type="button" class="stype-btn" data-shift-type="open" data-i18n="shiftOpen">오픈</button>
+        <button type="button" class="stype-btn" data-shift-type="close" data-i18n="shiftClose">마감</button>
+        <button type="button" class="stype-btn" data-shift-type="close_together" data-i18n="shiftCloseTogether">마감 같이</button>
+      </div>
+    </div>
     <label><span data-i18n="clockIn">출근 시간</span><input type="text" id="shiftIn" inputmode="numeric" maxlength="5" data-i18n-ph="timePh" placeholder="14:00"></label>
     <label class="bonus-check hidden" id="shiftFulltimeRow"><input type="checkbox" id="shiftFulltime"><span data-i18n="fulltimeCheck">풀타임 근무 (부스터는 저녁 시간만)</span></label>
     <label class="hidden" id="shiftEveningRow"><span data-i18n="eveningStart">저녁 쉬프트 시작 시간</span><input type="text" id="shiftEveningStart" inputmode="numeric" maxlength="5" data-i18n-ph="timePh" placeholder="17:00"></label>
@@ -609,6 +629,14 @@
     </div>
     <input type="hidden" id="editShiftId">
     <label><span data-i18n="workDate">근무 날짜</span><input type="date" id="editShiftDate"></label>
+    <div class="shift-type-row">
+      <span class="shift-type-lbl" data-i18n="shiftType">쉬프트 유형</span>
+      <div class="shift-type-btns">
+        <button type="button" class="stype-btn" data-edit-shift-type="open" data-i18n="shiftOpen">오픈</button>
+        <button type="button" class="stype-btn" data-edit-shift-type="close" data-i18n="shiftClose">마감</button>
+        <button type="button" class="stype-btn" data-edit-shift-type="close_together" data-i18n="shiftCloseTogether">마감 같이</button>
+      </div>
+    </div>
     <label><span data-i18n="clockIn">출근 시간</span><input type="text" id="editShiftIn" inputmode="numeric" maxlength="5" data-i18n-ph="timePh" placeholder="14:00"></label>
     <label class="bonus-check hidden" id="editFulltimeRow"><input type="checkbox" id="editFulltime"><span data-i18n="fulltimeCheck">풀타임 근무 (부스터는 저녁 시간만)</span></label>
     <label class="hidden" id="editEveningRow"><span data-i18n="eveningStart">저녁 쉬프트 시작 시간</span><input type="text" id="editEveningStart" inputmode="numeric" maxlength="5" data-i18n-ph="timePh" placeholder="17:00"></label>
@@ -624,6 +652,6 @@
 <div id="toast" class="toast hidden"></div>
 
 <script src="config.js"></script>
-<script src="app.js?v=34"></script>
+<script src="app.js?v=35"></script>
 </body>
 </html>

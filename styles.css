@@ -643,3 +643,22 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
   margin-top: 12px;
 }
 .sch-updated { color: var(--text-2); font-size: 12.5px; }
+
+/* 쉬프트 유형 선택 (오픈/마감/마감 같이) — v35 */
+.shift-type-row { margin: 2px 0 10px; }
+.shift-type-lbl { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 6px; }
+.shift-type-btns { display: flex; gap: 8px; }
+.stype-btn {
+  flex: 1; padding: 11px 0; border: 1.5px solid var(--line); background: var(--card);
+  border-radius: 10px; font-size: 15px; font-weight: 600; color: var(--text);
+  cursor: pointer; font-family: var(--font); -webkit-tap-highlight-color: transparent;
+}
+.stype-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+.hist-row .type-tag {
+  color: var(--blue-dark); font-weight: 700; font-size: 12px;
+  border: 1px solid var(--blue); border-radius: 999px; padding: 1px 7px;
+}
+
+/* 업데이트 공지 배너 */
+.notice-body { margin: 10px 0 6px; }
+.notice-line { margin: 0 0 8px; line-height: 1.55; }
