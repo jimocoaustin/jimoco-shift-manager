@@ -997,6 +997,9 @@
     document.querySelectorAll('[data-shift-type]').forEach(function (b) {
       b.addEventListener('click', function () { setShiftType(b.getAttribute('data-shift-type')); });
     });
+    document.querySelectorAll('[data-co-shift-type]').forEach(function (b) {
+      b.addEventListener('click', function () { setCoShiftType(b.getAttribute('data-co-shift-type')); });
+    });
     document.querySelectorAll('[data-edit-shift-type]').forEach(function (b) {
       b.addEventListener('click', function () { setEditShiftType(b.getAttribute('data-edit-shift-type')); });
     });
@@ -1450,6 +1453,17 @@
   }
   function shiftTypeLabel(v) {
     return t(v === 'open' ? 'shiftOpen' : v === 'close' ? 'shiftClose' : 'shiftCloseTogether');
+  }
+  /* 마감 정산 쉬프트 유형 (v37): 쉬프트 기록과 같은 3가지. 표시·구분용 라벨일 뿐 급여·팁·부스터 계산에는 쓰지 않음 */
+  var coShiftTypeSel = null;
+  function setCoShiftType(v) {
+    coShiftTypeSel = v || null;
+    document.querySelectorAll('[data-co-shift-type]').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-co-shift-type') === coShiftTypeSel);
+    });
+  }
+  function coTypeTag(v) {
+    return v ? ' <span class="type-tag">' + esc(shiftTypeLabel(v)) + '</span>' : '';
   }
 
   function openShiftForm(emp) {
@@ -1964,6 +1978,7 @@
     var msg = $('coMsg');
     msg.className = 'msg';
     if (!empId || !date) { msg.textContent = t('needAll'); return; }
+    if (!coShiftTypeSel) { msg.textContent = t('needShiftType'); return; }
     var tipsCents = Math.round((parseFloat($('coTips').value) || 0) * 100);
     var r = recalcCloseout();
     var row = {
@@ -1980,7 +1995,8 @@
       diff_cents: r.diff,
       purchases_cents: r.purchases,
       purchase_note: ($('coPurchaseNote').value || '').trim() || null,
-      withdrawal_cents: r.withdrawals
+      withdrawal_cents: r.withdrawals,
+      shift_type: coShiftTypeSel
     };
     DENOMS.forEach(function (d) {
       row[d.key] = parseInt($(d.id).value, 10) || 0;
@@ -2030,7 +2046,7 @@
         ? '<span class="diff-ok">' + esc(t('coMatch')) + '</span>'
         : '<span class="diff-bad">' + (d > 0 ? '+' : '') + '$' + dollars(d) + '</span>';
       html += '<tr><td>' + esc((r.employees && r.employees.name) || '?') +
-        (r.employees2 ? ' · ' + esc(r.employees2.name) : '') + '</td><td>$' + dollars(r.total_sales_cents) +
+        (r.employees2 ? ' · ' + esc(r.employees2.name) : '') + coTypeTag(r.shift_type) + '</td><td>$' + dollars(r.total_sales_cents) +
         '</td><td>$' + dollars(r.cash_sales_cents) + '</td><td>' +
         (r.purchases_cents ? '$' + dollars(r.purchases_cents) : '–') +
         '</td><td>$' + dollars(r.tips_cents) +
@@ -2070,6 +2086,7 @@
     $('coMsg').className = 'msg';
     coOpeningFromRecord = r.opening_cents != null ? r.opening_cents : null;
     coEditingId = r.id || null;
+    setCoShiftType(r.shift_type || null);
     fetchPrevCounted($('coDate').value);
   }
 
@@ -2091,6 +2108,7 @@
     $('coOpening').value = '';
     coOpeningFromRecord = null;
     coEditingId = null;
+    setCoShiftType(null);
     coWithdrawCents = 0; coWithdrawItems = [];
     DENOMS.forEach(function (d) { $(d.id).value = ''; });
     coPrevCounted = 0;
@@ -3189,7 +3207,7 @@
         ? '<span class="diff-ok">' + esc(t('coMatch')) + '</span>'
         : '<span class="diff-bad">' + (d > 0 ? '+' : '') + '$' + dollars(d) + '</span>';
       html += '<tr><td>' + esc(fmtDateV(r.work_date)) + '</td><td>' +
-        esc((r.employees && r.employees.name) || '?') + '</td><td>$' + dollars(r.total_sales_cents) +
+        esc((r.employees && r.employees.name) || '?') + coTypeTag(r.shift_type) + '</td><td>$' + dollars(r.total_sales_cents) +
         '</td><td>$' + dollars(r.cash_sales_cents) + '</td><td>' +
         (r.purchases_cents ? '$' + dollars(r.purchases_cents) +
           (r.purchase_note ? '<br><small>' + esc(r.purchase_note) + '</small>' : '') : '–') +

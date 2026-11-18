@@ -654,7 +654,7 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
   cursor: pointer; font-family: var(--font); -webkit-tap-highlight-color: transparent;
 }
 .stype-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
-.hist-row .type-tag {
+.hist-row .type-tag, .pay .type-tag {
   color: var(--blue-dark); font-weight: 700; font-size: 12px;
   border: 1px solid var(--blue); border-radius: 999px; padding: 1px 7px;
 }
@@ -673,3 +673,4 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
 .bd-del { margin-left: auto; }
 .bd-add { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 .bd-yearly { display: flex; align-items: center; gap: 6px; }
+.pay .type-tag { display: inline-block; margin-left: 4px; white-space: nowrap; }
