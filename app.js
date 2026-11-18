@@ -1478,6 +1478,7 @@
     $('shiftEveningStart').value = '';
     $('shiftEveningRow').classList.add('hidden');
     $('shiftFulltimeRow').classList.toggle('hidden', emp.role !== 'server');
+    $('shiftTypeRow').classList.toggle('hidden', emp.role !== 'server');
     $('shiftMsg').textContent = '';
     $('shiftMsg').className = 'msg';
     $('shiftModalBox').classList.toggle('wide', false);
@@ -1502,6 +1503,7 @@
     $('shiftEveningStart').value = r.evening_start ? hmL(r.evening_start) : '';
     $('shiftEveningRow').classList.toggle('hidden', !r.is_fulltime);
     $('shiftFulltimeRow').classList.toggle('hidden', histEmp.role !== 'server');
+    $('shiftTypeRow').classList.toggle('hidden', histEmp.role !== 'server');
     $('shiftMsg').textContent = '';
     $('shiftMsg').className = 'msg';
     $('shiftModalBox').classList.toggle('wide', false);
@@ -2183,7 +2185,9 @@
     var msg = $('shiftMsg');
     msg.className = 'msg';
     if (!date || !ci || !co) { msg.textContent = t('needAll'); return; }
-    if (!shiftTypeSel) { msg.textContent = t('needShiftType'); return; }
+    /* 쉬프트 유형(오픈/마감/마감 같이)은 서버만 (v38, 사장님 2026-11-17). 주방은 버튼 숨김·유형 없이 저장 */
+    var srvType = currentShiftEmp.role === 'server';
+    if (srvType && !shiftTypeSel) { msg.textContent = t('needShiftType'); return; }
     var ciN = normTime24(ci), coN = normTime24(co);
     if (!ciN || !coN) { msg.textContent = t('badTime'); return; }
     var inMs = toMs(date, ciN), outMs = toMs(date, coN);
@@ -2202,17 +2206,18 @@
     /* 수정 모드: 기록 화면에서 본인 기록을 고치는 경우 (PIN 검증 RPC) */
     if (editingShiftId) {
       var okEdit = false;
+      var editRow = {
+        work_date: date,
+        clock_in: new Date(inMs).toISOString(),
+        clock_out: new Date(outMs).toISOString(),
+        is_fulltime: isFt,
+        evening_start: eveIso || ''
+      };
+      if (srvType) editRow.shift_type = shiftTypeSel;
       try {
         okEdit = await rpc('emp_update_shift', {
           p_emp: currentShiftEmp.id, p_pin: verifiedPin || '', p_id: editingShiftId,
-          p_row: {
-            work_date: date,
-            clock_in: new Date(inMs).toISOString(),
-            clock_out: new Date(outMs).toISOString(),
-            is_fulltime: isFt,
-            evening_start: eveIso || '',
-            shift_type: shiftTypeSel
-          }
+          p_row: editRow
         });
       } catch (e) {}
       if (!okEdit) { msg.textContent = t('saveFail'); return; }
@@ -2233,7 +2238,7 @@
       holiday_cents: 0,
       is_fulltime: isFt,
       evening_start: eveIso,
-      shift_type: shiftTypeSel
+      shift_type: srvType ? shiftTypeSel : null
     });
     if (res.error) { msg.textContent = t('saveFail') + res.error.message; return; }
     msg.textContent = '';
@@ -3101,6 +3106,7 @@
     $('editShiftTips').value = s.tips_cents ? (s.tips_cents / 100).toFixed(2) : '';
     var isSrv = !!(s.employees && s.employees.role === 'server');
     $('editFulltimeRow').classList.toggle('hidden', !isSrv);
+    $('editShiftTypeRow').classList.toggle('hidden', !isSrv);
     $('editFulltime').checked = !!s.is_fulltime;
     $('editEveningStart').value = s.evening_start ? fmtTime(s.evening_start) : '';
     $('editEveningRow').classList.toggle('hidden', !(isSrv && s.is_fulltime));
@@ -3125,9 +3131,9 @@
       work_date: date,
       clock_in: new Date(inMs).toISOString(),
       clock_out: new Date(outMs).toISOString(),
-      tips_cents: (!isNaN(tm) && tm > 0) ? Math.round(tm * 100) : 0,
-      shift_type: editShiftTypeSel
+      tips_cents: (!isNaN(tm) && tm > 0) ? Math.round(tm * 100) : 0
     };
+    if (editShiftCur && editShiftCur.employees && editShiftCur.employees.role === 'server') upd.shift_type = editShiftTypeSel;
     /* 풀타임(서버): 저녁 시작 시간만 저장/해제 — 금액은 계산 때 합산 (저장된 수동 부스터는 건드리지 않음) */
     if (editShiftCur && editShiftCur.employees && editShiftCur.employees.role === 'server') {
       if ($('editFulltime').checked) {
