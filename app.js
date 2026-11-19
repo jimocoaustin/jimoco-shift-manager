@@ -365,7 +365,53 @@
       resPartyUnit: '명',
       resOpen: '예약 열기',
       resTabDesc: '예약 목록을 보고 추가·수정합니다',
-      close: '닫기'
+      close: '닫기',
+      ppBtn: '급여 정보',
+      ppTitle: '급여 정보 (명세서용)',
+      ppNew: '새로 추가',
+      ppEditTitle: '수정: ',
+      ppName: '이름 (명세서 표시)',
+      ppEmp: '연결된 직원 (시급제는 필수)',
+      ppNoEmp: '없음',
+      ppAddr: '주소 (줄바꿈 가능)',
+      ppSalary: '월급제 금액 ($, 기간당 · 비우면 시급제)',
+      ppEiEx: 'EI 면제',
+      ppCppEx: 'CPP 면제',
+      ppActive: '명세서에 포함',
+      ppYtdTitle: '연간 누계 (YTD)',
+      ppYtdHint: '기준일까지의 올해 누계예요 (회계사 명세서 기준, 달러). 기준일 이후 확정 저장한 기간은 자동으로 더해집니다.',
+      ppYtdAsOf: 'YTD 기준일',
+      ytd_wage: '임금',
+      ytd_bonus: '보너스',
+      ytd_vac: '휴가수당',
+      ytd_cpp: 'CPP',
+      ytd_ei: 'EI',
+      ytd_tax: '소득세',
+      ytd_net: '실수령',
+      ppEmpty: '등록된 급여 정보가 없습니다.',
+      ppHourly: '시급제',
+      ppSalaried: '월급제',
+      ppInactive: '제외',
+      ppNeedEmp: '시급제는 연결된 직원을 골라야 합니다.',
+      psBtn: '급여명세서',
+      psTitle: '급여명세서',
+      psChequeDate: '수표 날짜',
+      psPrint: '인쇄용 새 탭',
+      psFinalize: '확정 저장',
+      psConfirm: '이 기간 급여명세서를 확정 저장할까요? 같은 기간에 저장된 명세서는 덮어씁니다.',
+      psSaved: '확정 저장했습니다.',
+      psNoProfile: '급여 정보 없음',
+      psNoProfileDesc: '근무 기록은 있지만 급여 정보가 없어 명세서에서 빠졌어요: ',
+      psYtdLate: 'YTD 기준일이 이 기간 시작일 이후라 기준 누계를 빼고 계산했어요: ',
+      psNoRows: '이 기간에 만들 명세서가 없습니다.',
+      psNeedLoad: '먼저 급여를 조회하세요.',
+      psPopup: '새 탭이 차단됐어요. 이 사이트의 팝업을 허용해 주세요.',
+      psVac: '휴가수당 4%',
+      psGross: '총지급',
+      psTax: '소득세',
+      psNet: '실수령 (수표)',
+      psTipCheque: '팁 수표',
+      psSalary: '월급제'
     },
     en: {
       appTitle: 'Jimoco Staff Manager',
@@ -682,7 +728,53 @@
       resPartyUnit: ' guests',
       resOpen: 'Open reservations',
       resTabDesc: 'View, add and edit reservations',
-      close: 'Close'
+      close: 'Close',
+      ppBtn: 'Payroll info',
+      ppTitle: 'Payroll info (for pay stubs)',
+      ppNew: 'Add new',
+      ppEditTitle: 'Edit: ',
+      ppName: 'Name (on stub)',
+      ppEmp: 'Linked employee (required for hourly)',
+      ppNoEmp: 'None',
+      ppAddr: 'Address (multi-line)',
+      ppSalary: 'Salary per pay period ($, blank = hourly)',
+      ppEiEx: 'EI exempt',
+      ppCppEx: 'CPP exempt',
+      ppActive: 'Include in pay stubs',
+      ppYtdTitle: 'Year-to-date (YTD)',
+      ppYtdHint: 'Totals for this year up to the as-of date (from the accountant\'s stub, in dollars). Periods finalized after that date are added automatically.',
+      ppYtdAsOf: 'YTD as of',
+      ytd_wage: 'Wage',
+      ytd_bonus: 'Bonus',
+      ytd_vac: 'Vacation pay',
+      ytd_cpp: 'CPP',
+      ytd_ei: 'EI',
+      ytd_tax: 'Income tax',
+      ytd_net: 'Net pay',
+      ppEmpty: 'No payroll info yet.',
+      ppHourly: 'Hourly',
+      ppSalaried: 'Salaried',
+      ppInactive: 'excluded',
+      ppNeedEmp: 'Hourly profiles need a linked employee.',
+      psBtn: 'Pay stubs',
+      psTitle: 'Pay stubs',
+      psChequeDate: 'Cheque date',
+      psPrint: 'Open print view',
+      psFinalize: 'Finalize',
+      psConfirm: 'Finalize the pay stubs for this period? Stubs already saved for the same period will be replaced.',
+      psSaved: 'Finalized.',
+      psNoProfile: 'No payroll info',
+      psNoProfileDesc: 'Worked hours but no payroll info, so left out: ',
+      psYtdLate: 'YTD as-of date is after this period started, so the base YTD was left out for: ',
+      psNoRows: 'No pay stubs for this period.',
+      psNeedLoad: 'Load payroll first.',
+      psPopup: 'The new tab was blocked. Please allow pop-ups for this site.',
+      psVac: 'Vac 4%',
+      psGross: 'Gross',
+      psTax: 'Tax',
+      psNet: 'Net (cheque)',
+      psTipCheque: 'Tip cheque',
+      psSalary: 'Salary'
     }
   };
 
@@ -1167,6 +1259,33 @@
     });
     $('coEmp').addEventListener('change', function () { syncCoEmp2($('coEmp2').value); recalcCloseout(); });
     $('coEmp2').addEventListener('change', recalcCloseout);
+    /* 급여명세서 (오너 전용) */
+    $('openPayProfiles').addEventListener('click', openPayProfiles);
+    $('openPayStubs').addEventListener('click', openPayStubs);
+    $('ppForm').addEventListener('submit', savePayProfile);
+    $('ppReset').addEventListener('click', resetPayProfileForm);
+    $('ppList').addEventListener('click', function (e) {
+      var c = e.target.closest('[data-pp]');
+      var pf = c && payProfiles.find(function (x) { return x.id === c.getAttribute('data-pp'); });
+      if (pf) fillPayProfileForm(pf);
+    });
+    $('psPrint').addEventListener('click', openPayStubPrint);
+    $('psFinalize').addEventListener('click', finalizePayStubs);
+    $('confirmOk').addEventListener('click', function () { closeConfirm(true); });
+    $('confirmCancel').addEventListener('click', function () { closeConfirm(false); });
+  }
+
+  /* 앱 공용 확인 창: appConfirm(문구).then(ok => ...) — window.confirm 대신 */
+  var confirmResolve = null;
+  function appConfirm(text) {
+    $('confirmText').textContent = text;
+    openModal('confirmModal');
+    return new Promise(function (resolve) { confirmResolve = resolve; });
+  }
+  function closeConfirm(ok) {
+    closeModal('confirmModal');
+    var r = confirmResolve; confirmResolve = null;
+    if (r) r(ok);
   }
 
   function goHome() {
@@ -1188,6 +1307,7 @@
     if (pinBtn) pinBtn.style.display = (managerRole === 'owner') ? '' : 'none';
     var calBtn = $('calTabBtn');
     if (calBtn) calBtn.style.display = (managerRole === 'owner') ? '' : 'none';
+    $('payStubRow').classList.toggle('hidden', managerRole !== 'owner');
     if (managerRole !== 'owner') {
       var pinPanel = $('tab-pin');
       if (pinPanel && !pinPanel.classList.contains('hidden')) {
@@ -2685,6 +2805,8 @@
   }
   function effectiveBoosterCents(s, dayShifts, closeouts) {
     if (isStatHoliday(s.work_date)) return 0;
+    /* 풀타임(저녁 시작 입력) 근무는 저녁 구간 10%만 — 중복 없음 (Jay Kim 2026-11-19, 11/9 시트 기준) */
+    if (s.is_fulltime && s.evening_start) return fulltimeBoosterCents(s);
     var base;
     if (s.employees && s.employees.role === 'server' &&
         boosterApplies(s, dayShifts, closeouts)) {
@@ -2694,7 +2816,7 @@
     } else {
       base = s.booster_cents || 0;
     }
-    return base + fulltimeBoosterCents(s); /* 풀타임 부스터는 추가 합산 */
+    return base;
   }
 
   function computePayroll(shifts, closeouts) {
@@ -3591,6 +3713,417 @@
       ].map(csvCell).join(','));
     });
     downloadCsv('jimoco-payroll-' + payrollCache.start + '_' + payrollCache.end + '.csv', lines);
+  }
+
+  /* =====================================================================
+     급여명세서 (오너 전용, v41): 원천징수 계산 + 수표·명세서 인쇄 + 확정 저장
+     (급여·부스터·팁 계산은 computePayroll 결과를 그대로 받아 쓰고, 여기서는 바꾸지 않음)
+     ===================================================================== */
+  /* PAYCALC-START — BC 세미먼슬리 원천징수 (CRA T4127 옵션1 방식). 회계사 2026-11-15 명세서와 0~2센트 이내 일치 확인.
+     보너스는 회계사 명세서처럼 '보너스 방식'으로 과세. 단위는 달러 (회계사 명세서와 같은 2자리 반올림). */
+  /* 2026년 7–12월 값: CRA T4127 Payroll Deductions Formulas, July 2026 (BC는 7월 개정분을 연 환산해 반영).
+     매년 1월·7월에 이 객체 숫자만 새 T4127 값으로 바꾸면 됩니다. */
+  var PAY_RULES = {
+    periods: 24,                      /* 세미먼슬리 */
+    cppRate: 0.0595, cppBaseRate: 0.0495, cppEnhRate: 0.01, cppExempt: 3500, ympe: 74600,  /* CPP (기본 4.95% + 추가 1%) */
+    eiRate: 0.0163, eiMie: 68900,     /* EI */
+    fed: [[58523, 0.14], [117045, 0.205], [181440, 0.26], [258482, 0.29], [Infinity, 0.33]],
+    fedLowRate: 0.14, fedBpa: 16452, cea: 1501,
+    bcLowRate: 0.0614,                /* 7–12월 비례 BC 최저세율 */
+    bc: [[50363, 0.0614], [100728, 0.077], [115648, 0.105], [140430, 0.1229],
+      [190405, 0.147], [265545, 0.168], [Infinity, 0.205]],
+    bcBpa: 13216,
+    bcRedMax: 805, bcRedTh: 25570, bcRedRate: 0.0356,  /* BC 세액 감면 (7–12월 비례 최대액) */
+    vacRate: 0.04                     /* 휴가수당: 임금의 4% (보너스 제외, 회계사와 동일) */
+  };
+
+  function r2(x) { return Number((x + 1e-9).toFixed(2)); }
+  function payBracket(a, table) {
+    var tax = 0, lo = 0;
+    table.forEach(function (b) {
+      if (a > lo) tax += (Math.min(a, b[0]) - lo) * b[1];
+      lo = b[0];
+    });
+    return tax;
+  }
+  function payCpp(pi, exempt) {
+    if (exempt) return 0;
+    var R = PAY_RULES, max = r2(R.cppRate * (R.ympe - R.cppExempt));
+    var c = r2(R.cppRate * (pi - r2(R.cppExempt / R.periods)));
+    return Math.max(0, Math.min(c, max));
+  }
+  function payEi(ie, exempt) {
+    if (exempt) return 0;
+    var R = PAY_RULES;
+    return Math.max(0, Math.min(r2(R.eiRate * ie), r2(R.eiRate * R.eiMie)));
+  }
+  /* 연 환산 과세소득 a 에 대한 연방 + BC 연간 세액 */
+  function payAnnualTax(a, cppAnnual, eiAnnual) {
+    var R = PAY_RULES;
+    a = Math.max(a, 0);
+    var credBase = cppAnnual * (R.cppBaseRate / R.cppRate) + eiAnnual;
+    var fed = payBracket(a, R.fed) - R.fedLowRate * R.fedBpa - R.fedLowRate * credBase - R.fedLowRate * Math.min(a, R.cea);
+    fed = Math.max(fed, 0);
+    var bc = payBracket(a, R.bc) - R.bcLowRate * R.bcBpa - R.bcLowRate * credBase;
+    bc = Math.max(bc, 0);
+    var red = Math.max(0, R.bcRedMax - R.bcRedRate * Math.max(0, a - R.bcRedTh));
+    bc = Math.max(bc - red, 0);
+    return fed + bc;
+  }
+  /* regular = 이번 기간 정기 급여 (임금 + 휴가수당), bonus = 보너스(일시금).
+     opt: { eiExempt, cppExempt, ytdCpp, ytdEi } — YTD는 연간 최대 CPP/EI 한도에만 사용 */
+  function payStub(regular, bonus, opt) {
+    var R = PAY_RULES, P = R.periods, o = opt || {};
+    bonus = bonus || 0;
+    var gross = regular + bonus;
+    var c = payCpp(gross, o.cppExempt);
+    var e = payEi(gross, o.eiExempt);
+    var cReg = payCpp(regular, o.cppExempt);
+    var eReg = payEi(regular, o.eiExempt);
+    var enh = R.cppEnhRate / R.cppRate;
+    var aReg = P * (regular - cReg * enh);
+    var tReg = payAnnualTax(aReg, P * cReg, P * eReg) / P;
+    var tBonus = 0;
+    if (bonus) {
+      var cB = c - cReg, eB = e - eReg;
+      var aB = aReg + bonus - cB * enh;
+      tBonus = payAnnualTax(aB, P * cReg + cB, P * eReg + eB) - payAnnualTax(aReg, P * cReg, P * eReg);
+    }
+    /* 연간 한도: 올해 이미 낸 CPP/EI가 최대치에 가까우면 남은 만큼만 (세액 계산은 위 값 그대로) */
+    c = Math.max(0, Math.min(c, r2(R.cppRate * (R.ympe - R.cppExempt)) - (o.ytdCpp || 0)));
+    e = Math.max(0, Math.min(e, r2(R.eiRate * R.eiMie) - (o.ytdEi || 0)));
+    var tax = r2(tReg + tBonus);
+    return { gross: r2(gross), cpp: r2(c), ei: r2(e), tax: tax, net: r2(gross - c - e - tax) };
+  }
+  /* PAYCALC-END */
+
+  /* 수표 금액 영문 표기: 1234.56 -> "One Thousand Two Hundred Thirty-Four and 56/100" */
+  var W_ONES = 'Zero One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve Thirteen Fourteen Fifteen Sixteen Seventeen Eighteen Nineteen'.split(' ');
+  var W_TENS = '_ _ Twenty Thirty Forty Fifty Sixty Seventy Eighty Ninety'.split(' ');
+  function amountWords(n) {
+    function under1000(x) {
+      var out = [];
+      if (x >= 100) { out.push(W_ONES[Math.floor(x / 100)] + ' Hundred'); x %= 100; }
+      if (x >= 20) { out.push(W_TENS[Math.floor(x / 10)] + (x % 10 ? '-' + W_ONES[x % 10] : '')); x = 0; }
+      if (x) out.push(W_ONES[x]);
+      return out.join(' ');
+    }
+    var totalCents = Math.round(n * 100);
+    var dol = Math.floor(totalCents / 100), cents = totalCents % 100;
+    var parts = [];
+    if (dol >= 1000) parts.push(under1000(Math.floor(dol / 1000)) + ' Thousand');
+    if (dol % 1000 || !parts.length) parts.push(dol % 1000 ? under1000(dol % 1000) : 'Zero');
+    return parts.join(' ') + ' and ' + pad2(cents) + '/100';
+  }
+  function payHhmm(h) { var m = Math.round(h * 60); return Math.floor(m / 60) + ':' + pad2(m % 60); }
+  function payMoney(x) {
+    return (Math.round(x * 100) / 100 + 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  var PAY_YTD_KEYS = ['wage', 'bonus', 'vac', 'cpp', 'ei', 'tax', 'net'];
+  var PAY_COMPANY = '1131726 B.C., 1046A Austin Avenue, Coquitlam, BC, V3K3P3';
+  var payProfiles = [];
+  var payStubData = null; /* { start, end, rows, missing, late } */
+
+  async function loadPayProfiles() {
+    payProfiles = (await mgrRpcSafe('admin_payroll_profiles', {})) || [];
+    return payProfiles;
+  }
+
+  /* ----- 급여 정보 편집 ----- */
+  async function openPayProfiles() {
+    if (managerRole !== 'owner') return;
+    resetPayProfileForm();
+    openModal('ppModal');
+    await loadPayProfiles();
+    renderPayProfiles();
+  }
+  function renderPayProfiles() {
+    $('ppList').innerHTML = payProfiles.map(function (pf) {
+      var kind = pf.salary_cents != null ? t('ppSalaried') + ' $' + dollars(pf.salary_cents) : t('ppHourly');
+      return '<div class="emp-card" data-pp="' + esc(pf.id) + '"><span class="grow">' +
+        '<span class="emp-primary-line">' + esc(pf.name) + '</span>' +
+        '<small>' + esc(kind) + (pf.active === false ? ' · ' + esc(t('ppInactive')) : '') + '</small></span>' +
+        '<button type="button" class="btn btn-chip emp-edit-btn">' + esc(t('edit')) + '</button></div>';
+    }).join('') || '<p class="view-desc">' + esc(t('ppEmpty')) + '</p>';
+  }
+  function payEmpOptions(sel) {
+    var list = (allEmployees.length ? allEmployees : employees).filter(function (e) { return !e.pending; });
+    $('ppEmp').innerHTML = '<option value="">' + esc(t('ppNoEmp')) + '</option>' + empOptions(list);
+    $('ppEmp').value = sel || '';
+  }
+  function resetPayProfileForm() {
+    $('ppForm').reset();
+    $('ppId').value = '';
+    $('ppActive').checked = true;
+    $('ppFormTitle').textContent = t('ppNew');
+    payEmpOptions('');
+    setMsg('ppMsg');
+  }
+  function fillPayProfileForm(pf) {
+    resetPayProfileForm();
+    $('ppId').value = pf.id;
+    $('ppFormTitle').textContent = t('ppEditTitle') + pf.name;
+    $('ppName').value = pf.name || '';
+    payEmpOptions(pf.employee_id || '');
+    $('ppAddr').value = pf.address || '';
+    $('ppSalary').value = pf.salary_cents != null ? (pf.salary_cents / 100).toFixed(2) : '';
+    $('ppEiEx').checked = !!pf.ei_exempt;
+    $('ppCppEx').checked = !!pf.cpp_exempt;
+    $('ppActive').checked = pf.active !== false;
+    $('ppYtdAsOf').value = pf.ytd_as_of || '';
+    var y = pf.ytd || {};
+    PAY_YTD_KEYS.forEach(function (k) { $('ppYtd_' + k).value = y[k] != null ? y[k] : ''; });
+    $('ppName').focus();
+  }
+  async function savePayProfile(ev) {
+    ev.preventDefault();
+    var msg = setMsg('ppMsg');
+    var name = $('ppName').value.trim();
+    if (!name) { msg.textContent = t('needName'); return; }
+    var sal = parseFloat($('ppSalary').value);
+    var salaryCents = isNaN(sal) ? null : Math.round(sal * 100);
+    if (salaryCents == null && !$('ppEmp').value) { msg.textContent = t('ppNeedEmp'); return; }
+    var ytd = {};
+    PAY_YTD_KEYS.forEach(function (k) { var v = parseFloat($('ppYtd_' + k).value); ytd[k] = isNaN(v) ? 0 : r2(v); });
+    var row = {
+      employee_id: $('ppEmp').value || null,
+      name: name,
+      address: $('ppAddr').value.replace(/\r/g, '').trim(),
+      salary_cents: salaryCents,
+      ei_exempt: $('ppEiEx').checked,
+      cpp_exempt: $('ppCppEx').checked,
+      ytd_as_of: $('ppYtdAsOf').value || null,
+      ytd: ytd,
+      active: $('ppActive').checked
+    };
+    var r = await mgrRpcSafe('admin_save_payroll_profile', { p_id: $('ppId').value || null, p_row: row });
+    if (!r || !r.ok) { msg.textContent = t('saveFail'); return; }
+    await loadPayProfiles();
+    renderPayProfiles();
+    resetPayProfileForm();
+    toast(t('toastSaved'));
+  }
+
+  /* ----- 명세서 만들기 ----- */
+  /* 이번 기간 전까지의 올해 누계 = 프로필 YTD(기준일까지) + 기준일 이후·이번 기간 이전에 확정 저장한 기간들 */
+  function payPriorYtd(pf, runs, start) {
+    var year = start.slice(0, 4);
+    var asOf = pf.ytd_as_of ? String(pf.ytd_as_of).slice(0, 10) : '';
+    var useBase = !!asOf && asOf.slice(0, 4) === year && asOf < start;
+    var y = {};
+    PAY_YTD_KEYS.forEach(function (k) { y[k] = useBase ? (+(pf.ytd || {})[k] || 0) : 0; });
+    runs.forEach(function (r) {
+      if (r.profile_id !== pf.id || String(r.period_start).slice(0, 4) !== year) return;
+      if (String(r.period_end) >= start) return;              /* 이번 기간·이후는 제외 */
+      if (useBase && String(r.period_start) <= asOf) return;  /* 기준 YTD에 이미 포함 */
+      PAY_YTD_KEYS.forEach(function (k) { y[k] += +((r.data || {})[k]) || 0; });
+    });
+    PAY_YTD_KEYS.forEach(function (k) { y[k] = r2(y[k]); });
+    return { ytd: y, late: !!asOf && asOf.slice(0, 4) === year && asOf >= start };
+  }
+
+  async function buildPayStubs() {
+    var c = payrollCache.computed;
+    if (!c) { toast(t('psNeedLoad')); return null; }
+    var start = payrollCache.start, end = payrollCache.end;
+    var got = await Promise.all([
+      loadPayProfiles(),
+      mgrRpcSafe('admin_payroll_runs', { p_from: start.slice(0, 4) + '-01-01', p_to: end })
+    ]);
+    var runs = got[1] || [];
+    var byEmp = {}, linked = {};
+    c.rows.forEach(function (p) { byEmp[p.id] = p; });
+    var rows = [], late = [];
+    payProfiles.forEach(function (pf) {
+      if (pf.active === false) return;
+      if (pf.employee_id) linked[pf.employee_id] = true;
+      var p = pf.employee_id ? byEmp[pf.employee_id] : null;
+      var salaried = pf.salary_cents != null;
+      if (!salaried && !(p && p.hours > 0)) return;  /* 시급제인데 이번 기간 근무 없음 */
+      var wage = salaried ? pf.salary_cents / 100 : p.wage / 100;
+      var bonus = salaried ? 0 : (p.booster + p.holiday) / 100;
+      var vac = r2(wage * PAY_RULES.vacRate);
+      var prior = payPriorYtd(pf, runs, start);
+      if (prior.late) late.push(pf.name);
+      var st = payStub(wage + vac, bonus, {
+        eiExempt: !!pf.ei_exempt, cppExempt: !!pf.cpp_exempt, ytdCpp: prior.ytd.cpp, ytdEi: prior.ytd.ei
+      });
+      var cur = { wage: wage, bonus: bonus, vac: vac, cpp: st.cpp, ei: st.ei, tax: st.tax, net: st.net };
+      var ytd = {};
+      PAY_YTD_KEYS.forEach(function (k) { ytd[k] = r2(prior.ytd[k] + cur[k]); });
+      rows.push({
+        profile_id: pf.id, name: pf.name,
+        addr: String(pf.address || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
+        salary: salaried, hours: salaried ? null : p.hours, rate: salaried ? null : p.rate / 100,
+        wage: wage, bonus: bonus, vac: vac, gross: st.gross, cpp: st.cpp, ei: st.ei, tax: st.tax, net: st.net,
+        tips: p ? (p.tips + p.kshare) / 100 : 0, ytd: ytd
+      });
+    });
+    var missing = c.rows.filter(function (p) { return p.hours > 0 && !linked[p.id]; })
+      .map(function (p) { return p.name; });
+    payStubData = { start: start, end: end, rows: rows, missing: missing, late: late };
+    return payStubData;
+  }
+
+  async function openPayStubs() {
+    if (managerRole !== 'owner') return;
+    if (!payrollCache.computed) { toast(t('psNeedLoad')); return; }
+    $('psPeriod').textContent = payrollCache.start + ' ~ ' + payrollCache.end;
+    $('psChequeDate').value = payrollCache.end;
+    $('psTable').innerHTML = '';
+    $('psWarn').innerHTML = '';
+    setMsg('psMsg');
+    openModal('psModal');
+    var d = await buildPayStubs();
+    if (d) renderPayStubs(d);
+  }
+
+  function renderPayStubs(d) {
+    var warn = '';
+    if (d.missing.length) warn += '<p class="ps-warn">⚠ <b>' + esc(t('psNoProfile')) + '</b> · ' + esc(t('psNoProfileDesc')) + esc(d.missing.join(', ')) + '</p>';
+    if (d.late.length) warn += '<p class="ps-warn">⚠ ' + esc(t('psYtdLate')) + esc(d.late.join(', ')) + '</p>';
+    if (!d.rows.length) warn += '<p class="view-desc">' + esc(t('psNoRows')) + '</p>';
+    $('psWarn').innerHTML = warn;
+    $('psPrint').disabled = $('psFinalize').disabled = !d.rows.length;
+    if (!d.rows.length) { $('psTable').innerHTML = ''; return; }
+    var cols = ['gross', 'cpp', 'ei', 'tax', 'net', 'tips'], tot = {};
+    cols.forEach(function (k) { tot[k] = 0; });
+    var html = '<tr><th>' + esc(t('thEmployee')) + '</th><th>' + esc(t('thHours')) + '</th><th>' + esc(t('thWage')) +
+      '</th><th>' + esc(t('thBonus')) + '</th><th>' + esc(t('psVac')) + '</th><th>' + esc(t('psGross')) +
+      '</th><th>CPP</th><th>EI</th><th>' + esc(t('psTax')) + '</th><th>' + esc(t('psNet')) + '</th><th>' + esc(t('psTipCheque')) + '</th></tr>';
+    d.rows.forEach(function (r) {
+      cols.forEach(function (k) { tot[k] += r[k]; });
+      html += '<tr><td>' + esc(r.name) + '</td><td>' + (r.salary ? esc(t('psSalary')) : payHhmm(r.hours)) + '</td><td>' + payMoney(r.wage) +
+        '</td><td>' + payMoney(r.bonus) + '</td><td>' + payMoney(r.vac) + '</td><td>' + payMoney(r.gross) +
+        '</td><td>' + payMoney(r.cpp) + '</td><td>' + payMoney(r.ei) + '</td><td>' + payMoney(r.tax) +
+        '</td><td><strong>' + payMoney(r.net) + '</strong></td><td>' + payMoney(r.tips) + '</td></tr>';
+    });
+    html += '<tr class="total"><td>' + esc(t('total')) + '</td><td></td><td></td><td></td><td></td><td>' + payMoney(tot.gross) +
+      '</td><td>' + payMoney(tot.cpp) + '</td><td>' + payMoney(tot.ei) + '</td><td>' + payMoney(tot.tax) +
+      '</td><td>' + payMoney(tot.net) + '</td><td>' + payMoney(tot.tips) + '</td></tr>';
+    $('psTable').innerHTML = html;
+  }
+
+  /* ----- 인쇄용 새 탭 (회계사 양식: 직원마다 Letter 1장 = 수표 + 명세서 2장, 이어서 팁 수표) ----- */
+  function payStubHtml(r, memo, chequeDate) {
+    var y = r.ytd, m = payMoney;
+    var ytdGross = y.wage + y.bonus + y.vac;
+    var qty = r.salary ? '20:00' : payHhmm(r.hours);
+    var first = r.salary
+      ? '<tr><td>Salary</td><td>' + qty + '</td><td></td><td>' + m(r.wage) + '</td><td>' + m(y.wage) + '</td></tr>'
+      : '<tr><td>Hourly wage</td><td>' + qty + '</td><td>' + r.rate.toFixed(2) + '</td><td>' + m(r.wage) + '</td><td>' + m(y.wage) + '</td></tr>';
+    var bonus = (r.bonus || y.bonus) ? '<tr><td>Bonus</td><td></td><td></td><td>' + m(r.bonus) + '</td><td>' + m(y.bonus) + '</td></tr>' : '';
+    var ei = !r.salary ? '<tr><td>EI - Employee</td><td></td><td></td><td>-' + m(r.ei) + '</td><td>-' + m(y.ei) + '</td></tr>' : '';
+    var ded = r.cpp + r.ei + r.tax, ytdDed = y.cpp + y.ei + y.tax;
+    return '<div class="stub">' +
+      '<div class="hdr"><span>Employee</span><span>Occupation</span></div>' +
+      '<div class="who"><span>' + esc(r.name) + ', ' + esc(r.addr.join(', ')) + '</span>' +
+      '<span>' + esc(memo) + '</span><span>Cheque Date: ' + esc(chequeDate) + '</span></div>' +
+      '<table>' +
+      '<tr class="th"><td>Earnings and Hours</td><td>Qty</td><td>Rate</td><td>Current</td><td>YTD Amount</td></tr>' +
+      first + bonus +
+      '<tr><td>VacPay-Paid Out</td><td></td><td></td><td>' + m(r.vac) + '</td><td>' + m(y.vac) + '</td></tr>' +
+      '<tr class="sum"><td></td><td>' + qty + '</td><td></td><td>' + m(r.gross) + '</td><td>' + m(ytdGross) + '</td></tr>' +
+      '<tr class="th gap"><td>Taxes</td><td></td><td></td><td>Current</td><td>YTD Amount</td></tr>' +
+      '<tr><td>CPP - Employee</td><td></td><td></td><td>-' + m(r.cpp) + '</td><td>-' + m(y.cpp) + '</td></tr>' +
+      ei +
+      '<tr><td>Income Tax (Federal + BC)</td><td></td><td></td><td>' + (r.tax ? '-' : '') + m(r.tax) + '</td><td>-' + m(y.tax) + '</td></tr>' +
+      '<tr class="sum"><td></td><td></td><td></td><td>-' + m(ded) + '</td><td>-' + m(ytdDed) + '</td></tr>' +
+      '<tr class="net"><td>Net Pay</td><td></td><td></td><td>' + m(r.net) + '</td><td>' + m(y.net) + '</td></tr>' +
+      '</table>' +
+      '<div class="co">' + esc(PAY_COMPANY) + '</div>' +
+      '</div>';
+  }
+  function payChequeHtml(name, addr, amount, memoText, chequeDate) {
+    return '<div class="cheque">' +
+      '<div class="date">DATE <b>' + chequeDate.replace(/-/g, '').split('').join(' ') + '</b><small>Y Y Y Y M M D D</small></div>' +
+      '<div class="amt"><span>******' + amountWords(amount) + '</span><b>**' + payMoney(amount) + '</b></div>' +
+      '<div class="payee">' + esc(name) + '<br>' + addr.map(esc).join('<br>') + '</div>' +
+      '<div class="memo">MEMO &nbsp; ' + esc(memoText) + '</div>' +
+      '</div>';
+  }
+  var PAY_PRINT_CSS =
+    'body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;margin:0}' +
+    '.screen{max-width:1100px;margin:16px auto;padding:0 16px}' +
+    '.screen table{border-collapse:collapse;font-size:12px;width:100%}' +
+    '.screen td,.screen th{border:1px solid #bbb;padding:3px 6px;text-align:right}' +
+    '.screen td:first-child,.screen th:first-child{text-align:left}' +
+    '.btn{padding:8px 14px;font-size:14px;margin:8px 0}' +
+    '.page{width:8.5in;height:11in;box-sizing:border-box;padding:.45in .5in;position:relative;page-break-after:always;margin:16px auto;border:1px solid #ddd}' +
+    '.cheque{height:3.45in;position:relative;font-size:13px}' +
+    '.cheque .date{position:absolute;right:0;top:.35in;font-size:12px}' +
+    '.cheque .date b{font-size:15px;letter-spacing:1px;font-weight:normal}' +
+    '.cheque .date small{display:block;text-align:right;font-size:8px;letter-spacing:5px}' +
+    '.cheque .amt{position:absolute;left:.6in;right:.6in;top:.95in;display:flex;justify-content:space-between;font-size:14px}' +
+    '.cheque .amt b{font-weight:normal}' +
+    '.cheque .payee{position:absolute;left:.6in;top:1.55in;line-height:1.25}' +
+    '.cheque .memo{position:absolute;left:0;top:2.55in;font-size:12px}' +
+    '.stub{height:3.5in;font-size:9.5px;position:relative}' +
+    '.stub .hdr{display:flex;justify-content:space-between;border-bottom:1px solid #000;width:100%}' +
+    '.stub .hdr span:last-child{width:45%}' +
+    '.stub .who{display:grid;grid-template-columns:52% 30% 18%}' +
+    '.stub table{width:46%;border-collapse:collapse;margin-top:6px}' +
+    '.stub td{padding:0 2px;text-align:right} .stub td:first-child{text-align:left}' +
+    '.stub tr.th td{border-bottom:1px solid #000} .stub tr.sum td{border-top:1px solid #000}' +
+    '.stub tr.gap td{padding-top:8px} .stub tr.net td{padding-top:10px}' +
+    '.stub .co{position:absolute;bottom:.15in;left:0}' +
+    '@media print{.screen{display:none} .page{margin:0;border:0} @page{size:letter;margin:0}}';
+
+  function payPrintDoc(d, chequeDate) {
+    var memo = 'Pay Period: ' + d.start + ' - ' + d.end;
+    var pages = d.rows.map(function (r) {
+      return '<section class="page">' + payChequeHtml(r.name, r.addr, r.net, memo, chequeDate) +
+        payStubHtml(r, memo, chequeDate) + payStubHtml(r, memo, chequeDate) + '</section>';
+    }).join('');
+    var tipPages = d.rows.filter(function (r) { return r.tips > 0; }).map(function (r) {
+      return '<section class="page">' + payChequeHtml(r.name, r.addr, r.tips, 'tip ' + d.start + ' - ' + d.end, chequeDate) + '</section>';
+    }).join('');
+    var tot = { gross: 0, cpp: 0, ei: 0, tax: 0, net: 0, tips: 0 };
+    var summary = d.rows.map(function (r) {
+      Object.keys(tot).forEach(function (k) { tot[k] += r[k]; });
+      return '<tr><td>' + esc(r.name) + '</td><td>' + (r.salary ? 'salary' : payHhmm(r.hours)) + '</td><td>' + payMoney(r.wage) +
+        '</td><td>' + payMoney(r.bonus) + '</td><td>' + payMoney(r.vac) + '</td><td>' + payMoney(r.gross) + '</td><td>' + payMoney(r.cpp) +
+        '</td><td>' + payMoney(r.ei) + '</td><td>' + payMoney(r.tax) + '</td><td><b>' + payMoney(r.net) + '</b></td><td>' + payMoney(r.tips) + '</td></tr>';
+    }).join('');
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Payroll ' + d.start + ' to ' + d.end + '</title>' +
+      '<style>' + PAY_PRINT_CSS + '</style></head><body>' +
+      '<div class="screen"><h2>Payroll ' + d.start + ' – ' + d.end + '</h2>' +
+      '<p>Cheque date ' + esc(chequeDate) + '. Print = pay cheque + 2 stubs per employee, then tip cheques.</p>' +
+      '<button class="btn" onclick="window.print()">Print</button>' +
+      '<table><tr><th>Employee</th><th>Hours</th><th>Wage</th><th>Bonus</th><th>Vac 4%</th><th>Gross</th><th>CPP</th><th>EI</th><th>Tax</th><th>Net (cheque)</th><th>Tips (tip cheque)</th></tr>' +
+      summary +
+      '<tr><th>Total</th><th></th><th></th><th></th><th></th><th>' + payMoney(tot.gross) + '</th><th>' + payMoney(tot.cpp) + '</th><th>' + payMoney(tot.ei) +
+      '</th><th>' + payMoney(tot.tax) + '</th><th>' + payMoney(tot.net) + '</th><th>' + payMoney(tot.tips) + '</th></tr></table></div>' +
+      pages + tipPages + '</body></html>';
+  }
+
+  function openPayStubPrint() {
+    var d = payStubData;
+    if (!d || !d.rows.length) return;
+    var w = window.open('', '_blank');
+    if (!w) { setMsg('psMsg', t('psPopup')); return; }
+    w.document.open();
+    w.document.write(payPrintDoc(d, $('psChequeDate').value || d.end));
+    w.document.close();
+  }
+
+  async function finalizePayStubs() {
+    var d = payStubData;
+    if (!d || !d.rows.length || managerRole !== 'owner') return;
+    if (!(await appConfirm(t('psConfirm')))) return;
+    var rows = d.rows.map(function (r) {
+      return { profile_id: r.profile_id, data: {
+        name: r.name, salary: r.salary, hours: r.hours, rate: r.rate,
+        wage: r.wage, bonus: r.bonus, vac: r.vac, gross: r.gross,
+        cpp: r.cpp, ei: r.ei, tax: r.tax, net: r.net, tips: r.tips, ytd: r.ytd
+      } };
+    });
+    var ok = await mgrRpcSafe('admin_save_payroll_run', {
+      p_start: d.start, p_end: d.end, p_cheque_date: $('psChequeDate').value || d.end, p_rows: rows
+    });
+    if (!ok) { setMsg('psMsg', t('saveFail')); return; }
+    setMsg('psMsg', t('psSaved'), true);
   }
 
   /* ---------- 비밀번호 관리 (오너 전용: 조회 + 변경) ---------- */

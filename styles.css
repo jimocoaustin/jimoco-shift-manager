@@ -190,13 +190,14 @@ body {
 .modal-actions { display: flex; gap: 10px; margin: 4px 0 16px; flex-wrap: wrap; }
 
 label { display: block; margin: 12px 0; font-size: 15px; font-weight: 600; }
-input, select {
+input, select, textarea {
   display: block; width: 100%; margin-top: 6px;
   font-family: var(--font); font-size: 16px;
   padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px;
   background: #fff; color: var(--text);
 }
-input:focus, select:focus { outline: 2px solid var(--blue); border-color: var(--blue); }
+textarea { resize: vertical; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); border-color: var(--blue); }
 
 .msg { min-height: 20px; font-size: 14px; color: var(--red); margin: 8px 0 0; }
 .msg.ok { color: #1a7f37; }
@@ -621,3 +622,12 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
 .bd-add { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 .bd-yearly { display: flex; align-items: center; gap: 6px; }
 .pay .type-tag { display: inline-block; margin-left: 4px; white-space: nowrap; }
+
+/* 급여명세서 (오너 전용, v41) — 인쇄 화면은 새 탭에 자체 스타일 */
+.ps-buttons { margin-top: 4px; }
+.pp-ytd-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 12px; }
+.pp-ytd-grid label { margin: 6px 0; }
+.emp-card small { display: block; color: var(--text-2); font-size: 13px; margin-top: 2px; }
+.ps-warn { color: #b54708; font-size: 14px; margin: 8px 0; }
+table.ps-table { font-size: 13px; white-space: nowrap; }
+table.ps-table th, table.ps-table td { padding: 7px 9px; }
