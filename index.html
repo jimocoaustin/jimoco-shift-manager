@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jimoco 직원 관리</title>
-<link rel="stylesheet" href="styles.css?v=41">
+<link rel="stylesheet" href="styles.css?v=42">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.1/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -730,6 +730,33 @@
   </div>
 </div>
 
+<!-- 근무시간 확인 (세미먼슬리, 출퇴근 저장 후) -->
+<div id="hoursModal" class="modal hidden">
+  <div class="modal-box small">
+    <h2 data-i18n="hcTitle">근무시간 확인</h2>
+    <p id="hcWho" class="muted"></p>
+    <p class="view-desc" data-i18n="hcIntro">이번 급여 기간 근무 기록이에요.</p>
+    <div id="hcList"></div>
+    <p id="hcTotal" class="hist-total"></p>
+    <div id="hcBtns" class="modal-actions">
+      <button id="hcOk" class="btn btn-primary" data-i18n="hcOk">맞아요</button>
+      <button id="hcWrong" class="btn" data-i18n="hcWrong">틀린 게 있어요</button>
+      <button class="btn btn-ghost" data-close data-i18n="hcLater">나중에</button>
+    </div>
+    <div id="hcWrongBox" class="hidden">
+      <label><span data-i18n="hcNote">무엇이 틀렸나요?</span><textarea id="hcNote" rows="2" maxlength="300"></textarea></label>
+      <div class="modal-actions">
+        <button id="hcSendWrong" class="btn btn-primary" data-i18n="hcSend">보내기</button>
+        <button class="btn btn-ghost" data-close data-i18n="hcLater">나중에</button>
+      </div>
+    </div>
+    <div id="hcDone" class="modal-actions hidden">
+      <button class="btn btn-primary" data-close data-i18n="close">닫기</button>
+    </div>
+    <p id="hcMsg" class="msg"></p>
+  </div>
+</div>
+
 <!-- 앱 공용 확인 창 (window.confirm 대신) -->
 <div id="confirmModal" class="modal hidden">
   <div class="modal-box small">
@@ -746,7 +773,7 @@
 
 <div id="toast" class="toast hidden"></div>
 
-<script defer src="config.js?v=41"></script>
-<script defer src="app.js?v=41"></script>
+<script defer src="config.js?v=42"></script>
+<script defer src="app.js?v=42"></script>
 </body>
 </html>

@@ -13,6 +13,7 @@
   var mgrToken = sessionStorage.getItem('jimoco_mgr_token') || null; /* 매니저 세션 토큰 (RPC 인증) */
   var allEmployees = []; /* 승인 대기 포함 전체 직원 (관리자 세션에서만 채워짐) */
   var verifiedPin = null; /* PIN 게이트를 통과한 직원 PIN (기록·본인 정보 조회용) */
+  var verifiedPinEmpId = null; /* verifiedPin 이 어느 직원 것인지 (근무시간 확인에서 다른 직원 PIN 재사용 방지) */
   var ipCache = null;
   var payrollCache = { shifts: [], closeouts: [], start: '', end: '', computed: null };
   var tipTotalCents = null, tipAppCents = 0; /* null = 서버 팁 합계 기본값 */
@@ -411,7 +412,20 @@
       psTax: '소득세',
       psNet: '실수령 (수표)',
       psTipCheque: '팁 수표',
-      psSalary: '월급제'
+      psSalary: '월급제',
+      psHoursUnconfirmed: '근무시간 확인 안 됨/틀림: ',
+      hcTitle: '근무시간 확인',
+      hcIntro: '이번 급여 기간 근무 기록이에요. 맞는지 확인해 주세요.',
+      hcOk: '맞아요',
+      hcWrong: '틀린 게 있어요',
+      hcLater: '나중에',
+      hcNote: '무엇이 틀렸나요? (짧게)',
+      hcSend: '보내기',
+      hcThanks: '확인 고마워요!',
+      hcWrongSaved: '전달했어요. 내 기록에서 해당 근무를 직접 고치거나 매니저에게 말해 주세요.',
+      hcNone: '근무시간 확인 전',
+      hcOkLabel: '근무시간 확인 완료',
+      hcWrongLabel: '틀린 게 있다고 함'
     },
     en: {
       appTitle: 'Jimoco Staff Manager',
@@ -774,7 +788,20 @@
       psTax: 'Tax',
       psNet: 'Net (cheque)',
       psTipCheque: 'Tip cheque',
-      psSalary: 'Salary'
+      psSalary: 'Salary',
+      psHoursUnconfirmed: 'Hours not confirmed / reported wrong: ',
+      hcTitle: 'Confirm your hours',
+      hcIntro: 'These are your shifts for this pay period. Please check they are right.',
+      hcOk: 'Correct',
+      hcWrong: 'Something\'s wrong',
+      hcLater: 'Later',
+      hcNote: 'What is wrong? (short)',
+      hcSend: 'Send',
+      hcThanks: 'Thanks for confirming!',
+      hcWrongSaved: 'Sent. Please fix the shift in My records, or tell the manager.',
+      hcNone: 'Hours not confirmed yet',
+      hcOkLabel: 'Hours confirmed',
+      hcWrongLabel: 'Reported something wrong'
     }
   };
 
@@ -1273,6 +1300,18 @@
     $('psFinalize').addEventListener('click', finalizePayStubs);
     $('confirmOk').addEventListener('click', function () { closeConfirm(true); });
     $('confirmCancel').addEventListener('click', function () { closeConfirm(false); });
+    /* 근무시간 확인 */
+    $('hcOk').addEventListener('click', function () { saveHoursConfirm('ok'); });
+    $('hcWrong').addEventListener('click', function () {
+      $('hcBtns').classList.add('hidden');
+      $('hcWrongBox').classList.remove('hidden');
+      $('hcNote').focus();
+    });
+    $('hcSendWrong').addEventListener('click', function () { saveHoursConfirm('wrong'); });
+    $('wageTable').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-hc-note]');
+      if (b) toast(b.getAttribute('data-hc-note'));
+    });
   }
 
   /* 앱 공용 확인 창: appConfirm(문구).then(ok => ...) — window.confirm 대신 */
@@ -1419,7 +1458,7 @@
   /* PIN을 새로 만든 직원: 목록에도 PIN 있음 표시 + 이번 세션 확인된 PIN으로 */
   function markPinSet(emp, pin) {
     emp.has_pin = true;
-    verifiedPin = pin;
+    verifiedPin = pin; verifiedPinEmpId = emp.id;
     var e2 = empById(emp.id);
     if (e2) e2.has_pin = true;
   }
@@ -1443,6 +1482,7 @@
   function routeAfterPin(emp, purpose) {
     if (purpose === 'edit') openStaffEditForm(emp);
     else if (purpose === 'history') openHistoryModal(emp);
+    else if (purpose === 'hours') continueHoursCheck(emp);
     else openShiftForm(emp);
   }
   async function gateNoticesThenRoute(emp, purpose) {
@@ -1592,7 +1632,7 @@
     var pin = $('pinGateInput').value;
     var ok = await rpcSafe('check_emp_pin', { p_emp: pinGateEmp.id, p_pin: pin });
     if (ok) {
-      verifiedPin = pin;
+      verifiedPin = pin; verifiedPinEmpId = pinGateEmp.id;
       closeModal('pinGateModal');
       gateNoticesThenRoute(pinGateEmp, pinGatePurpose);
     } else if (pinGateAllowSetup) {
@@ -1687,7 +1727,7 @@
     if (pin) row.pin = pin;
     var ok = await rpcSafe('update_emp_self', { p_emp: staffEditEmp.id, p_pin: verifiedPin || '', p_row: row });
     if (!ok) { msg.textContent = t('saveFail'); return; }
-    if (pin) verifiedPin = pin;
+    if (pin) { verifiedPin = pin; verifiedPinEmpId = staffEditEmp.id; }
     staffEditEmp.has_pin = true;
     await reloadEmployees();
     renderClock();
@@ -2268,6 +2308,131 @@
     toast(t('toastSaved'));
     todayWorkedAt = 0;
     renderClock();
+    maybeConfirmHours(currentShiftEmp, date);
+  }
+
+  /* ---------- 근무시간 확인 (세미먼슬리 1–15 / 16–말일, v42) ----------
+     출퇴근 저장 후, 그 기간의 마지막 근무이거나(시간표 기준, 없으면 기간 마지막 2일)
+     지난 기간을 아직 확인 안 했으면 기간 근무 목록을 보여주고 맞는지 확인받는다. 급여 계산과는 무관. */
+  var hoursConfCache = null;   /* 관리자 급여 화면: { start, end, map: {employee_id: row} } */
+  var hoursPending = null;     /* PIN 게이트 뒤 이어서 확인할 { emp, workDate } */
+  var hoursCtx = null;         /* 확인 창: { emp, pin, per, totalMin } */
+
+  function addDays(ds, n) { var d = parseResDate(ds); d.setDate(d.getDate() + n); return fmtYMD(d); }
+  function periodOf(ds) {
+    var p = semiPeriod(parseResDate(ds));
+    return { start: fmtYMD(p.start), end: fmtYMD(p.end) };
+  }
+  function isSemiPeriod(start, end) {
+    var p = periodOf(start);
+    return p.start === start && p.end === end;
+  }
+  function firstName(s) { return String(s || '').trim().split(/\s+/)[0].toLowerCase(); }
+
+  /* 이 근무가 기간 안 마지막 예정 근무인가: 시간표(이번 주 일–토)에서 이름(이름 첫 단어)이 하나만 맞고
+     기간의 남은 날이 모두 이번 주 안이면 시간표로 판단, 아니면 기간 마지막 2일이면 마지막으로 본다 */
+  function isLastScheduledShift(emp, workDate, per) {
+    var dayAfter = addDays(workDate, 1);
+    if (dayAfter > per.end) return true;
+    var fn = firstName(emp.name);
+    var match = (schedData && fn) ? schedData.rows.filter(function (r) { return firstName(r.name) === fn; }) : [];
+    if (match.length === 1) {
+      var now = vancouverNow();
+      var weekStart = fmtYMD(new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()));
+      if (dayAfter >= weekStart && per.end <= addDays(weekStart, 6)) {
+        for (var d = dayAfter; d <= per.end; d = addDays(d, 1)) {
+          var v = match[0].cells[parseResDate(d).getDay()];
+          if (v && !/^x$/i.test(v)) return false;
+        }
+        return true;
+      }
+    }
+    return workDate >= addDays(per.end, -1);
+  }
+
+  async function maybeConfirmHours(emp, workDate) {
+    if (!emp || !workDate) return;
+    var per = periodOf(workDate);
+    if (!schedData) await loadSchedule();
+    var last = isLastScheduledShift(emp, workDate, per);
+    var pin = verifiedPinEmpId === emp.id ? verifiedPin : null;
+    if (!pin) {
+      /* PIN 없이는 확인 여부를 알 수 없어서, 마지막 근무이거나 새 기간 첫 3일일 때만 PIN 게이트 한 번 */
+      if (!last && workDate > addDays(per.start, 2)) return;
+      hoursPending = { emp: emp, workDate: workDate };
+      openPinGate(emp, 'hours', !emp.has_pin);
+      return;
+    }
+    runHoursCheck(emp, workDate, pin, last);
+  }
+  function continueHoursCheck(emp) {
+    var p = hoursPending;
+    hoursPending = null;
+    if (!p || p.emp.id !== emp.id || verifiedPinEmpId !== emp.id) return;
+    runHoursCheck(emp, p.workDate, verifiedPin, isLastScheduledShift(emp, p.workDate, periodOf(p.workDate)));
+  }
+  /* 지난 기간(미확인 + 근무 있음)을 먼저, 아니면 이번 기간(마지막 근무일 때) — 이미 확인했으면 건너뜀 */
+  async function runHoursCheck(emp, workDate, pin, last) {
+    var per = periodOf(workDate);
+    var targets = [periodOf(addDays(per.start, -1))];
+    if (last) targets.push(per);
+    for (var i = 0; i < targets.length; i++) {
+      var tp = targets[i];
+      var st = await rpcSafe('emp_period_status', { p_emp: emp.id, p_pin: pin, p_start: tp.start });
+      if (st) continue;
+      var h = await rpcSafe('emp_history', { p_emp: emp.id, p_pin: pin, p_from: tp.start, p_to: tp.end });
+      if (!h) return; /* PIN 불일치 등 */
+      var rows = h.mine || [];
+      if (!rows.length) continue;
+      showHoursModal(emp, pin, tp, rows);
+      return;
+    }
+  }
+  function showHoursModal(emp, pin, per, rows) {
+    var wd = t('wdays'), totalMin = 0;
+    $('hcList').innerHTML = rows.map(function (r) {
+      var min = Math.max(0, Math.round((new Date(r.clock_out) - new Date(r.clock_in)) / 60000));
+      totalMin += min;
+      var d = parseResDate(r.work_date);
+      return '<div class="hc-row"><span>' + (d.getMonth() + 1) + '/' + d.getDate() + ' (' + esc(wd[d.getDay()]) + ')</span>' +
+        '<span>' + fmtTime(r.clock_in) + ' ~ ' + fmtTime(r.clock_out) + '</span><span class="hist-h">' + payHhmm(min / 60) + '</span></div>';
+    }).join('');
+    hoursCtx = { emp: emp, pin: pin, per: per, totalMin: totalMin };
+    $('hcWho').textContent = emp.name + ' · ' + per.start + ' ~ ' + per.end;
+    $('hcTotal').textContent = t('histTotal') + ': ' + payHhmm(totalMin / 60);
+    $('hcNote').value = '';
+    $('hcBtns').classList.remove('hidden');
+    $('hcWrongBox').classList.add('hidden');
+    $('hcDone').classList.add('hidden');
+    setMsg('hcMsg');
+    openModal('hoursModal');
+  }
+  async function saveHoursConfirm(status) {
+    var c = hoursCtx;
+    if (!c) return;
+    var note = status === 'wrong' ? $('hcNote').value.trim() : '';
+    var ok = await rpcSafe('emp_confirm_hours', {
+      p_emp: c.emp.id, p_pin: c.pin, p_start: c.per.start, p_end: c.per.end,
+      p_status: status, p_note: note, p_total_minutes: c.totalMin
+    });
+    if (!ok) { setMsg('hcMsg', t('saveFail')); return; }
+    hoursCtx = null;
+    if (status === 'ok') { closeModal('hoursModal'); toast(t('hcThanks')); return; }
+    /* 틀림: 고치는 방법 안내를 창에 남김 */
+    $('hcBtns').classList.add('hidden');
+    $('hcWrongBox').classList.add('hidden');
+    $('hcDone').classList.remove('hidden');
+    setMsg('hcMsg', t('hcWrongSaved'), true);
+  }
+
+  /* 관리자 급여 표: 직원별 확인 상태 (세미먼슬리 기간을 조회했을 때만) */
+  function hoursBadge(empId) {
+    if (!hoursConfCache) return '';
+    var r = hoursConfCache.map[empId];
+    if (!r) return ' <span class="hc-badge" title="' + esc(t('hcNone')) + '">⏳</span>';
+    if (r.status === 'ok') return ' <span class="hc-badge" title="' + esc(t('hcOkLabel')) + '">✅</span>';
+    var note = t('hcWrongLabel') + (r.note ? ': ' + r.note : '');
+    return ' <button type="button" class="hc-badge" data-hc-note="' + esc(note) + '" title="' + esc(note) + '">⚠️</button>';
   }
 
   /* ---------- 관리자 로그인 (오너: 아이디+비번 / 매니저: 아이디+비번) ---------- */
@@ -2701,6 +2866,16 @@
     payrollCache = { shifts: rows || [], closeouts: cos || [], start: start, end: end, computed: null };
     tipTotalCents = null; tipAppCents = 0;
     payrollCache.computed = computePayroll(payrollCache.shifts, payrollCache.closeouts);
+    /* 세미먼슬리 기간(1–15 / 16–말일)을 정확히 조회했으면 직원 근무시간 확인 상태도 가져옴 */
+    hoursConfCache = null;
+    if (isSemiPeriod(start, end)) {
+      var hc = await mgrRpcSafe('admin_hours_confirmations', { p_start: start });
+      if (hc && payrollCache.start === start) {
+        var map = {};
+        hc.forEach(function (r) { map[r.employee_id] = r; });
+        hoursConfCache = { start: start, end: end, map: map };
+      }
+    }
     renderPayroll();
   }
 
@@ -3010,7 +3185,7 @@
       var bonusCells = showBonusDetail
         ? '<td>$' + dollars(p.booster) + '</td><td>$' + dollars(p.holiday) + '</td><td>$' + dollars(bTot) + '</td>'
         : '';
-      wh += '<tr><td>' + esc(p.name) + '</td><td>' + esc(roleName(p.role)) + '</td>' +
+      wh += '<tr><td>' + esc(p.name) + hoursBadge(p.id) + '</td><td>' + esc(roleName(p.role)) + '</td>' +
         '<td>' + p.hours.toFixed(2) + '</td><td>$' + dollars(p.rate) + '</td>' +
         '<td>$' + dollars(p.wage) + '</td>' + bonusCells +
         '<td><strong>$' + dollars(wTot) + '</strong></td></tr>';
@@ -3415,7 +3590,7 @@
   }
   function loadSchedule() {
     var url = 'https://docs.google.com/spreadsheets/d/' + SCHED_SHEET_ID + '/gviz/tq?tqx=out:json&gid=0&headers=0';
-    fetch(url).then(function (r) {
+    return fetch(url).then(function (r) { /* 근무시간 확인에서 await 할 수 있게 promise 반환 (실패해도 resolve) */
       if (!r.ok) throw new Error('http ' + r.status);
       return r.text();
     }).then(function (txt) {
@@ -3932,13 +4107,25 @@
       mgrRpcSafe('admin_payroll_runs', { p_from: start.slice(0, 4) + '-01-01', p_to: end })
     ]);
     var runs = got[1] || [];
-    var byEmp = {}, linked = {};
+    var byEmp = {}, linked = {}, linkedNames = {};
     c.rows.forEach(function (p) { byEmp[p.id] = p; });
+    /* 같은 사람이 서버·주방 직원으로 따로 등록된 경우(오너) 팁은 같은 이름의 기록을 모두 합친다 */
+    function nameKey(n) { return String(n || '').trim().toLowerCase(); }
+    function tipsFor(p) {
+      if (!p) return 0;
+      var key = nameKey(p.name), sum = 0;
+      c.rows.forEach(function (q) { if (nameKey(q.name) === key) sum += q.tips + q.kshare; });
+      return sum / 100;
+    }
     var rows = [], late = [];
     payProfiles.forEach(function (pf) {
       if (pf.active === false) return;
       if (pf.employee_id) linked[pf.employee_id] = true;
       var p = pf.employee_id ? byEmp[pf.employee_id] : null;
+      if (pf.employee_id) {
+        var le = (allEmployees.length ? allEmployees : employees).filter(function (e) { return e.id === pf.employee_id; })[0];
+        if (le) linkedNames[nameKey(le.name)] = true;
+      }
       var salaried = pf.salary_cents != null;
       if (!salaried && !(p && p.hours > 0)) return;  /* 시급제인데 이번 기간 근무 없음 */
       var wage = salaried ? pf.salary_cents / 100 : p.wage / 100;
@@ -3957,10 +4144,10 @@
         addr: String(pf.address || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
         salary: salaried, hours: salaried ? null : p.hours, rate: salaried ? null : p.rate / 100,
         wage: wage, bonus: bonus, vac: vac, gross: st.gross, cpp: st.cpp, ei: st.ei, tax: st.tax, net: st.net,
-        tips: p ? (p.tips + p.kshare) / 100 : 0, ytd: ytd
+        tips: p ? tipsFor(p) : 0, ytd: ytd
       });
     });
-    var missing = c.rows.filter(function (p) { return p.hours > 0 && !linked[p.id]; })
+    var missing = c.rows.filter(function (p) { return p.hours > 0 && !linked[p.id] && !linkedNames[nameKey(p.name)]; })
       .map(function (p) { return p.name; });
     payStubData = { start: start, end: end, rows: rows, missing: missing, late: late };
     return payStubData;
@@ -3983,6 +4170,19 @@
     var warn = '';
     if (d.missing.length) warn += '<p class="ps-warn">⚠ <b>' + esc(t('psNoProfile')) + '</b> · ' + esc(t('psNoProfileDesc')) + esc(d.missing.join(', ')) + '</p>';
     if (d.late.length) warn += '<p class="ps-warn">⚠ ' + esc(t('psYtdLate')) + esc(d.late.join(', ')) + '</p>';
+    /* 근무시간 확인이 안 됐거나 '틀림'인 직원 (막지는 않고 알림만) */
+    var hc = hoursConfCache;
+    if (hc && hc.start === d.start && hc.end === d.end && payrollCache.computed) {
+      var seen = {}, notOk = [];
+      payrollCache.computed.rows.forEach(function (p) {
+        if (!(p.hours > 0) || seen[p.name]) return;
+        seen[p.name] = true;
+        var r = hc.map[p.id];
+        if (!r) notOk.push('⏳ ' + p.name);
+        else if (r.status !== 'ok') notOk.push('⚠️ ' + p.name + (r.note ? ' (' + r.note + ')' : ''));
+      });
+      if (notOk.length) warn += '<p class="ps-warn">⚠ ' + esc(t('psHoursUnconfirmed')) + esc(notOk.join(', ')) + '</p>';
+    }
     if (!d.rows.length) warn += '<p class="view-desc">' + esc(t('psNoRows')) + '</p>';
     $('psWarn').innerHTML = warn;
     $('psPrint').disabled = $('psFinalize').disabled = !d.rows.length;
@@ -4068,6 +4268,8 @@
     '.stub tr.th td{border-bottom:1px solid #000} .stub tr.sum td{border-top:1px solid #000}' +
     '.stub tr.gap td{padding-top:8px} .stub tr.net td{padding-top:10px}' +
     '.stub .co{position:absolute;bottom:.15in;left:0}' +
+    '.tipstub{position:absolute;left:.5in;bottom:.9in;font-size:13px;line-height:1.6}' +
+    '.tipstub .amt{display:inline-block;min-width:1.6in;text-align:right;margin-left:.6in}' +
     '@media print{.screen{display:none} .page{margin:0;border:0} @page{size:letter;margin:0}}';
 
   function payPrintDoc(d, chequeDate) {
@@ -4077,7 +4279,10 @@
         payStubHtml(r, memo, chequeDate) + payStubHtml(r, memo, chequeDate) + '</section>';
     }).join('');
     var tipPages = d.rows.filter(function (r) { return r.tips > 0; }).map(function (r) {
-      return '<section class="page">' + payChequeHtml(r.name, r.addr, r.tips, 'tip ' + d.start + ' - ' + d.end, chequeDate) + '</section>';
+      /* 아래쪽 보관용 칸: 날짜 · tip · 이름 $ 금액 (구글시트 팁 수표와 같은 배치) */
+      var keep = '<div class="tipstub">' + esc(chequeDate) + '<br>tip ' + esc(d.start) + ' - ' + esc(d.end) +
+        '<br>' + esc(r.name) + '<span class="amt">$ ' + payMoney(r.tips) + '</span></div>';
+      return '<section class="page">' + payChequeHtml(r.name, r.addr, r.tips, 'tip ' + d.start + ' - ' + d.end, chequeDate) + keep + '</section>';
     }).join('');
     var tot = { gross: 0, cpp: 0, ei: 0, tax: 0, net: 0, tips: 0 };
     var summary = d.rows.map(function (r) {

@@ -631,3 +631,9 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
 .ps-warn { color: #b54708; font-size: 14px; margin: 8px 0; }
 table.ps-table { font-size: 13px; white-space: nowrap; }
 table.ps-table th, table.ps-table td { padding: 7px 9px; }
+
+/* 근무시간 확인 (v42) */
+.hc-row { display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.hc-row:last-child { border-bottom: none; }
+.hc-badge { background: none; border: none; padding: 0 2px; font-size: 14px; cursor: default; }
+button.hc-badge { cursor: pointer; }
