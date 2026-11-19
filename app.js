@@ -378,6 +378,7 @@
       ppSalary: '월급제 금액 ($, 기간당 · 비우면 시급제)',
       ppEiEx: 'EI 면제',
       ppCppEx: 'CPP 면제',
+      ppWkCap: '주 24시간 제한 (금·토·일 8시간, 나머지는 보너스)',
       ppActive: '명세서에 포함',
       ppYtdTitle: '연간 누계 (YTD)',
       ppYtdHint: '기준일까지의 올해 누계예요 (회계사 명세서 기준, 달러). 기준일 이후 확정 저장한 기간은 자동으로 더해집니다.',
@@ -754,6 +755,7 @@
       ppSalary: 'Salary per pay period ($, blank = hourly)',
       ppEiEx: 'EI exempt',
       ppCppEx: 'CPP exempt',
+      ppWkCap: '24h/week cap (Fri–Sun 8h each, rest as bonus)',
       ppActive: 'Include in pay stubs',
       ppYtdTitle: 'Year-to-date (YTD)',
       ppYtdHint: 'Totals for this year up to the as-of date (from the accountant\'s stub, in dollars). Periods finalized after that date are added automatically.',
@@ -4045,6 +4047,7 @@
     $('ppSalary').value = pf.salary_cents != null ? (pf.salary_cents / 100).toFixed(2) : '';
     $('ppEiEx').checked = !!pf.ei_exempt;
     $('ppCppEx').checked = !!pf.cpp_exempt;
+    $('ppWkCap').checked = !!pf.weekend_cap;
     $('ppActive').checked = pf.active !== false;
     $('ppYtdAsOf').value = pf.ytd_as_of || '';
     var y = pf.ytd || {};
@@ -4068,6 +4071,7 @@
       salary_cents: salaryCents,
       ei_exempt: $('ppEiEx').checked,
       cpp_exempt: $('ppCppEx').checked,
+      weekend_cap: $('ppWkCap').checked,
       ytd_as_of: $('ppYtdAsOf').value || null,
       ytd: ytd,
       active: $('ppActive').checked
@@ -4096,6 +4100,16 @@
     });
     PAY_YTD_KEYS.forEach(function (k) { y[k] = r2(y[k]); });
     return { ytd: y, late: !!asOf && asOf.slice(0, 4) === year && asOf >= start };
+  }
+
+  /* 기간(YYYY-MM-DD ~ YYYY-MM-DD) 안의 금·토·일 날짜 수 */
+  function payFriSatSunCount(start, end) {
+    var d = new Date(start + 'T12:00:00Z'), e = new Date(end + 'T12:00:00Z'), n = 0;
+    for (; d <= e; d.setUTCDate(d.getUTCDate() + 1)) {
+      var w = d.getUTCDay();
+      if (w === 5 || w === 6 || w === 0) n++;
+    }
+    return n;
   }
 
   async function buildPayStubs() {
@@ -4130,6 +4144,14 @@
       if (!salaried && !(p && p.hours > 0)) return;  /* 시급제인데 이번 기간 근무 없음 */
       var wage = salaried ? pf.salary_cents / 100 : p.wage / 100;
       var bonus = salaried ? 0 : (p.booster + p.holiday) / 100;
+      var stubHours = salaried ? null : p.hours;
+      /* 주 24시간 제한 직원: 명세서 시간 = 기간 안의 금·토·일 × 8시간, 나머지 시간 × 시급은 보너스로 (Jay Kim 2026-11-19, Anil) */
+      if (!salaried && pf.weekend_cap) {
+        var reg = Math.min(p.hours, 8 * payFriSatSunCount(start, end));
+        stubHours = reg;
+        wage = r2(reg * p.rate / 100);
+        bonus = r2(bonus + p.wage / 100 - wage);
+      }
       var vac = r2(wage * PAY_RULES.vacRate);
       var prior = payPriorYtd(pf, runs, start);
       if (prior.late) late.push(pf.name);
@@ -4142,7 +4164,7 @@
       rows.push({
         profile_id: pf.id, name: pf.name,
         addr: String(pf.address || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
-        salary: salaried, hours: salaried ? null : p.hours, rate: salaried ? null : p.rate / 100,
+        salary: salaried, hours: stubHours, rate: salaried ? null : p.rate / 100,
         wage: wage, bonus: bonus, vac: vac, gross: st.gross, cpp: st.cpp, ei: st.ei, tax: st.tax, net: st.net,
         tips: p ? tipsFor(p) : 0, ytd: ytd
       });

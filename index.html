@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jimoco 직원 관리</title>
-<link rel="stylesheet" href="styles.css?v=42">
+<link rel="stylesheet" href="styles.css?v=43">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.1/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -691,6 +691,7 @@
         <label><span data-i18n="ppSalary">월급제 금액</span><input type="number" id="ppSalary" min="0" step="0.01"></label>
         <label class="bonus-check"><input type="checkbox" id="ppEiEx"><span data-i18n="ppEiEx">EI 면제</span></label>
         <label class="bonus-check"><input type="checkbox" id="ppCppEx"><span data-i18n="ppCppEx">CPP 면제</span></label>
+        <label class="bonus-check"><input type="checkbox" id="ppWkCap"><span data-i18n="ppWkCap">주 24시간 제한 (금·토·일 8시간, 나머지는 보너스)</span></label>
         <label class="bonus-check"><input type="checkbox" id="ppActive"><span data-i18n="ppActive">사용 중</span></label>
         <h4 data-i18n="ppYtdTitle">연간 누계 (YTD)</h4>
         <p class="view-desc" data-i18n="ppYtdHint">기준일까지의 연간 누계</p>
@@ -773,7 +774,7 @@
 
 <div id="toast" class="toast hidden"></div>
 
-<script defer src="config.js?v=42"></script>
-<script defer src="app.js?v=42"></script>
+<script defer src="config.js?v=43"></script>
+<script defer src="app.js?v=43"></script>
 </body>
 </html>
