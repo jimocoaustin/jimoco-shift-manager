@@ -83,24 +83,6 @@ body {
 .emp-line-row:last-child { border-bottom: none; }
 .emp-line-row .emp-line { border-bottom: none; }
 .emp-line-row .grow { flex: 1; }
-.emp-self-edit {
-  flex-shrink: 0;
-  background: rgba(0,122,255,.12); color: var(--blue);
-  border: none; border-radius: 980px;
-  padding: 7px 16px; min-height: 34px;
-  font-size: 14px; font-weight: 600; font-family: var(--font);
-  cursor: pointer;
-}
-.emp-self-edit:active { background: rgba(0,122,255,.25); }
-.emp-history {
-  flex-shrink: 0;
-  background: rgba(120,120,128,.12); color: #3a3a3c;
-  border: none; border-radius: 980px;
-  padding: 7px 16px; min-height: 34px;
-  font-size: 14px; font-weight: 600; font-family: var(--font);
-  cursor: pointer;
-}
-.emp-history:active { background: rgba(120,120,128,.25); }
 .hist-nav { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; }
 .hist-nav-btn {
   background: rgba(0,122,255,.12); color: var(--blue);
@@ -276,8 +258,6 @@ input:focus, select:focus { outline: 2px solid var(--blue); border-color: var(--
 .tabbar .tab-icon { font-size: 24px; line-height: 1; }
 .tabbar .tab.active { color: var(--blue); background: none; border: none; }
 .tabbar .tab:active { opacity: .6; }
-/* 구형 상단 탭 (미사용) */
-.manager-tabs { display: none; }
 
 .period-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
 .period-row input[type="date"] { width: auto; margin: 0; }
@@ -306,20 +286,6 @@ table.pay tr.tip-section td { font-weight: 700; background: #e8f0fe; color: #1a5
 
 /* 언어 토글 */
 #langToggle { min-width: 56px; }
-
-/* 현재 시각 바 */
-.clock-bar {
-  background: var(--card); border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 16px 24px; margin-bottom: 20px;
-  display: flex; align-items: baseline; justify-content: center;
-  gap: 16px; flex-wrap: wrap;
-}
-.clock-bar-date { font-size: 16px; color: var(--text-2); font-weight: 600; }
-.clock-bar-time {
-  font-size: 34px; font-weight: 700;
-  font-variant-numeric: tabular-nums; letter-spacing: 1px;
-}
 
 /* 첫 화면 비밀번호 잠금 */
 .lock-overlay {
@@ -356,14 +322,9 @@ table.pay tr.tip-section td { font-weight: 700; background: #e8f0fe; color: #1a5
 .pw-eye:active { opacity: 1; }
 .shift-cols { display: flex; gap: 32px; align-items: flex-start; }
 .shift-col-main { flex: 1; min-width: 0; }
-.shift-col-co { flex: 1.25; min-width: 0; border-left: 1px solid var(--line); padding-left: 32px; }
 @media (max-width: 760px) {
   .shift-cols { flex-direction: column; }
-  .shift-col-co { border-left: none; padding-left: 0; border-top: 1px solid var(--line); padding-top: 20px; width: 100%; }
 }
-.co-hr { border: none; border-top: 1px solid var(--line); margin: 20px 0; }
-#closeoutSection h3 { margin: 0 0 8px; font-size: 20px; }
-#closeoutSection h4 { margin: 16px 0 8px; font-size: 16px; }
 .co-line {
   display: flex; justify-content: space-between; align-items: center;
   padding: 8px 0; font-size: 16px; border-bottom: 1px solid var(--line);
@@ -422,7 +383,6 @@ table.pay tr.tip-section td { font-weight: 700; background: #e8f0fe; color: #1a5
 .mgr-field input { margin-top: 4px; }
 .mgr-card .btn-row { margin: 12px 0 0; }
 .mgr-sub { font-size: 14px; color: #666; margin: 12px 0 4px; }
-.mgr-email { width: 170px; padding: 6px 8px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; }
 .mgr-add-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .mgr-add-row input { padding: 8px 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; }
 #newMgrUser { width: 130px; }
@@ -434,11 +394,6 @@ table.pay tr.tip-section td { font-weight: 700; background: #e8f0fe; color: #1a5
 /* 마감 정산 행 액션 */
 .row-actions { white-space: nowrap; }
 .row-actions .btn { margin: 2px; }
-
-/* 팁 분배 서버 선택 */
-.tip-servers { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
-.tip-servers label { display: flex; gap: 6px; align-items: center; font-size: 14px; }
-.tip-servers select { padding: 6px 8px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; }
 
 /* 직원 정보 목록 (오너 전용) */
 .emp-info-scroll { overflow-x: auto; margin-top: 10px; -webkit-overflow-scrolling: touch; }
@@ -457,8 +412,6 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
 
 /* 예약 탭 */
 .res-month-nav { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0 4px; flex-wrap: wrap; }
-.res-month-nav #resPrintDate { font-size: 15px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: inherit; }
-.res-print-hint { text-align: center; font-size: 13px; color: var(--text-2); margin: 2px 0 6px; }
 .res-month-nav #resMonthLabel { font-weight: 700; font-size: 17px; min-width: 130px; text-align: center; }
 .res-form-title { margin: 20px 0 8px; font-size: 16px; }
 .res-form { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 4px 20px 16px; margin-bottom: 14px; }
@@ -468,18 +421,12 @@ table.cal-emp-tips td { padding: 4px 16px 4px 2px; text-align: left; }
 .res-time { font-weight: 700; min-width: 74px; }
 .res-name { font-weight: 600; }
 .res-party { color: var(--text-2); }
-.res-meta { color: var(--text-2); font-size: 14px; }
 .res-badge { display: inline-block; font-size: 12px; font-weight: 600; color: var(--blue); background: rgba(0,122,255,.12); border-radius: 8px; padding: 2px 8px; }
 .res-badge-today { color: #fff; background: var(--blue); vertical-align: middle; }
 .res-row .row-actions { margin-left: auto; }
 
-/* 예약 인쇄 (POS 롤프린터 80mm 영수증) — 목록/전표 공통 */
+/* 예약 전표 인쇄 (POS 롤프린터 80mm, 1건) */
 #resPrintArea { display: none; }
-#resPrintArea .rp-title { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 4px; }
-#resPrintArea .rp-date { font-size: 17px; font-weight: 700; margin: 10px 0 3px; }
-#resPrintArea .rp-item { font-size: 16px; font-weight: 700; }
-#resPrintArea .rp-sub2 { font-size: 14px; padding-left: 12px; }
-/* 예약 전표 (1건, POS 전표 형식) */
 #resPrintArea .slip-head { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 8px; }
 #resPrintArea .slip-label { font-size: 12px; margin-top: 12px; }
 #resPrintArea .slip-value { font-size: 21px; font-weight: 800; line-height: 1.35; }

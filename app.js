@@ -16,7 +16,6 @@
   var ipCache = null;
   var payrollCache = { shifts: [], closeouts: [], start: '', end: '', computed: null };
   var tipTotalCents = null, tipAppCents = 0; /* null = 서버 팁 합계 기본값 */
-  var tipServer1Id = null, tipServer2Id = null, tipShowServer2 = false;
   var payrollRoleFilter = 'all';
   var showBonusDetail = true;
   var lang = 'en';
@@ -57,9 +56,9 @@
       lockDesc: '비밀번호를 입력하세요.',
       lockPh: '비밀번호',
       unlock: '확인',
+      confirm: '확인',
       headerTitle: '직원 관리',
       admin: '관리자',
-      clockDesc: '이름을 눌러 출퇴근 시간을 입력하세요.',
       servers: '서버',
       kitchen: '주방',
       tabPayroll: '급여',
@@ -80,7 +79,6 @@
       mgrPwTitle: '오너 비밀번호',
       mgrAcctTitle: '관리자 권한 계정',
       mgrUserPh: '새 아이디',
-      newPwPh: '비밀번호 (4자 이상)',
       mgrPwPh: '비밀번호 (8자+, 대문자+특수문자)',
       mgrPwRule: '비밀번호는 8자 이상이며 대문자와 특수문자를 포함해야 합니다.',
       show: '보기',
@@ -106,10 +104,8 @@
       mgrPwEditPh: '새 비번 (변경 시만 입력)',
       needEmail: '이메일을 입력해주세요.',
       badEmail: '올바른 이메일 형식이 아닙니다.',
-      pwMismatch: '비밀번호가 일치하지 않습니다.',
       dupUser: '이미 사용 중인 아이디입니다.',
       signupPending: '가입 신청 완료! 오너 승인 후 로그인할 수 있습니다.',
-      noAccount: '등록되지 않은 아이디입니다.',
       noEmail: '등록된 이메일이 없습니다. 오너에게 문의하세요.',
       codeFail: '코드가 올바르지 않거나 만료되었습니다.',
       resetDone: '비밀번호가 변경되었습니다. 로그인해주세요.',
@@ -126,9 +122,6 @@
       empPendingTitle: '승인 대기 중인 직원',
       empApproveTitle: '승인: ',
       empApprove: '승인하고 저장',
-      tipServer1: '서버 1',
-      tipServer2: '서버 2',
-      tipAddServer: '+ 다른 서버 추가',
       noPendingEmp: '대기 중인 직원이 없습니다.',
       needUsername: '아이디를 입력하세요.',
       mgrUserExists: '이미 있는 아이디입니다.',
@@ -139,18 +132,15 @@
       ownerUser: '아이디',
       staffPinTitle: '직원 PIN',
       curVal: '현재 비밀번호',
-      curPw: '현재 비밀번호',
       newPw: '새 비밀번호 (4자 이상)',
       newPw2: '새 비밀번호 확인',
       change: '변경',
       add: '추가',
       screenPwTitle: '출근 화면 비밀번호',
-      curScreenPw: '현재 출근 화면 비밀번호',
       workDate: '근무 날짜',
       clockIn: '출근 시간',
       clockOut: '퇴근 시간',
       tips: '팁 ($)',
-      boosterCheck: '부스터 보너스 (임금의 10%)',
       fulltimeCheck: '풀타임 근무 (부스터는 저녁 시간만)',
       fulltimeShort: '풀타임',
       eveningStart: '저녁 쉬프트 시작 시간',
@@ -171,8 +161,6 @@
       masterPinDesc: '모든 직원의 기록·수정을 열 수 있는 오너 전용 번호입니다.',
       masterPinNew: '새 마스터 PIN (4~8자리 숫자)',
       eveOrder: '저녁 시작 시간은 출근과 퇴근 사이여야 합니다.',
-      holidayCheck: '홀리데이 보너스 (임금의 50%)',
-      tipsPh: '서버만 입력',
       timePh: '14:00',
       save: '저장',
       cancel: '취소',
@@ -189,7 +177,6 @@
       ratePh: '예: 19.00',
       empPin: '직원 PIN (4~8자리, 출근용)',
       empPinPh: '비워두면 미설정',
-      email: '이메일',
       phone: '연락처',
       address: '주소',
       sin: 'SIN 번호',
@@ -262,17 +249,12 @@
       confirmPin: 'PIN 확인',
       changePin: 'PIN 변경',
       pinWrong: 'PIN이 틀렸습니다.',
-      pinChanged: 'PIN이 변경되었습니다.',
       noEmailForPin: '등록된 이메일이 없습니다. 관리자에게 문의하세요.',
       delFail: '삭제 실패: ',
       changeFail: '변경 실패: ',
-      curPwWrong: '현재 비밀번호가 틀렸습니다.',
-      curScreenPwWrong: '현재 출근 화면 비밀번호가 틀렸습니다.',
       pwShort: '새 비밀번호는 4자 이상이어야 합니다.',
       pwMismatch: '새 비밀번호 확인이 일치하지 않습니다.',
-      pwSame: '현재 비밀번호와 다른 값을 입력하세요.',
       pwChanged: '비밀번호가 변경됐습니다.',
-      screenPwChanged: '출근 화면 비밀번호가 변경됐습니다.',
       confirmDelEmp: '이 직원을 삭제할까요? 근무 기록도 함께 삭제됩니다.',
       confirmDelShift: '이 근무 기록을 삭제할까요?',
       needInfo: '추가 정보가 필요합니다.',
@@ -282,19 +264,15 @@
       tipPoolTitle: '주방 팁 풀',
       tipPoolTotalTips: '서버 팁 합계 ($)',
       tipPoolAppTips: '배달앱 팁 ($)',
-      tipPoolDistributable: '분배 대상',
       poolServerTips: '서버 팁 합계',
       poolKitchenFormula: '주방 팁 (서버팁 ÷7 × 3)',
       poolGrandTotal: '총팁',
-      tipPoolServerShare: '서버 70%',
-      tipPoolKitchenShare: '주방 30%',
       tipPoolNote: '(주방 근무시간 비율로 배분)',
       thEmployee: '직원',
       thRole: '역할',
       thHours: '시간',
       thRate: '시급',
       thWage: '임금',
-      thVacation: '휴가수당',
       thBooster: '부스터',
       thHoliday: '홀리데이',
       thBonus: '보너스',
@@ -317,7 +295,6 @@
       salesCash: '현금 매출',
       wdays: ['일', '월', '화', '수', '목', '금', '토'],
       coSection: '마감 정산',
-      coWorkedHours: '근무 시간',
       coTotalSales: '총매출 ($)',
       coCashSales: '현금 매출 ($) (팁 포함)',
       coPurchases: '물품 구매비 ($)',
@@ -362,7 +339,6 @@
       coNoData: '정산 기록이 없습니다.',
       todayCo: '정산 내역',
       todayCoEmpty: '이 날짜에 입력된 정산이 아직 없습니다.',
-      coSaveFail: '마감 정산 저장 실패: ',
       setupTitle: '설정이 필요합니다',
       setupBody: 'config.js 파일에 Supabase URL과 anon key를 입력한 뒤 다시 열어주세요.<br>자세한 순서는 README.md를 참고하세요.',
       tabReservations: '예약',
@@ -376,14 +352,9 @@
       resAdd: '예약 추가',
       resSaveEdit: '수정 저장',
       resNew: '새 예약',
-      resThisMonth: '이번달',
-      resPrint: '인쇄',
       resPrintBtn: '인쇄',
-      resPrintDateHint: '날짜를 고르면 그날만 인쇄',
       resFormTitle: '새 예약 받기',
       resEmpty: '예약이 없습니다',
-      resWeb: '웹 예약',
-      resManual: '직접 입력',
       resEdit: '수정',
       resDelete: '삭제',
       resDelConfirm: '이 예약을 삭제할까요?',
@@ -391,8 +362,6 @@
       resToday: '오늘',
       resTodayTitle: '오늘 예약',
       resNoToday: '오늘 예약이 없습니다',
-      resCountUnit: '건',
-      resGuests: '명',
       resPartyUnit: '명',
       resOpen: '예약 열기',
       resTabDesc: '예약 목록을 보고 추가·수정합니다',
@@ -404,9 +373,9 @@
       lockDesc: 'Enter your password.',
       lockPh: 'Password',
       unlock: 'Unlock',
+      confirm: 'OK',
       headerTitle: 'Staff Manager',
       admin: 'Admin',
-      clockDesc: 'Tap a name to enter clock in/out times.',
       servers: 'Servers',
       kitchen: 'Kitchen',
       tabPayroll: 'Payroll',
@@ -427,7 +396,6 @@
       mgrPwTitle: 'Owner password',
       mgrAcctTitle: 'Admin accounts',
       mgrUserPh: 'New username',
-      newPwPh: 'Password (4+ characters)',
       mgrPwPh: 'Password (8+, uppercase + symbol)',
       mgrPwRule: 'Password must be at least 8 characters and include an uppercase letter and a special character.',
       show: 'Show',
@@ -453,10 +421,8 @@
       mgrPwEditPh: 'New password (only to change)',
       needEmail: 'Enter your email.',
       badEmail: 'Enter a valid email address.',
-      pwMismatch: 'Passwords do not match.',
       dupUser: 'Username already in use.',
       signupPending: 'Sign-up requested! You can log in after the owner approves.',
-      noAccount: 'Unknown username.',
       noEmail: 'No registered email. Ask the owner.',
       codeFail: 'Code is invalid or expired.',
       resetDone: 'Password changed. Please log in.',
@@ -473,9 +439,6 @@
       empPendingTitle: 'Employees pending approval',
       empApproveTitle: 'Approve: ',
       empApprove: 'Approve & save',
-      tipServer1: 'Server 1',
-      tipServer2: 'Server 2',
-      tipAddServer: '+ Add another server',
       noPendingEmp: 'No employees pending approval.',
       needUsername: 'Enter a username.',
       mgrUserExists: 'Username already exists.',
@@ -486,18 +449,15 @@
       ownerUser: 'Username',
       staffPinTitle: 'Staff PINs',
       curVal: 'Current password',
-      curPw: 'Current password',
       newPw: 'New password (4+ characters)',
       newPw2: 'Confirm new password',
       change: 'Change',
       add: 'Add',
       screenPwTitle: 'Clock-in screen password',
-      curScreenPw: 'Current clock-in screen password',
       workDate: 'Work date',
       clockIn: 'Clock in',
       clockOut: 'Clock out',
       tips: 'Tips ($)',
-      boosterCheck: 'Booster bonus (10% of wages)',
       fulltimeCheck: 'Full-time shift (booster on evening hours only)',
       fulltimeShort: 'Full-time',
       eveningStart: 'Evening shift start',
@@ -518,8 +478,6 @@
       masterPinDesc: 'Owner-only number that opens any employee\'s records and profile.',
       masterPinNew: 'New master PIN (4-8 digits)',
       eveOrder: 'Evening start must be between clock-in and clock-out.',
-      holidayCheck: 'Holiday bonus (50% of wages)',
-      tipsPh: 'Servers only',
       timePh: '14:00',
       save: 'Save',
       cancel: 'Cancel',
@@ -536,7 +494,6 @@
       ratePh: 'e.g. 19.00',
       empPin: 'Employee PIN (4–8 digits, for clock-in)',
       empPinPh: 'Leave blank for none',
-      email: 'Email',
       phone: 'Phone',
       address: 'Address',
       sin: 'SIN',
@@ -609,17 +566,12 @@
       confirmPin: 'Confirm PIN',
       changePin: 'Change PIN',
       pinWrong: 'Wrong PIN.',
-      pinChanged: 'PIN changed.',
       noEmailForPin: 'No registered email. Please ask your manager.',
       delFail: 'Delete failed: ',
       changeFail: 'Change failed: ',
-      curPwWrong: 'Current password is incorrect.',
-      curScreenPwWrong: 'Current clock-in screen password is incorrect.',
       pwShort: 'New password must be at least 4 characters.',
       pwMismatch: 'New passwords do not match.',
-      pwSame: 'Enter a different password from the current one.',
       pwChanged: 'Password changed.',
-      screenPwChanged: 'Clock-in screen password changed.',
       confirmDelEmp: 'Delete this employee? Their shift records will also be deleted.',
       confirmDelShift: 'Delete this shift record?',
       needInfo: 'More info needed.',
@@ -629,19 +581,15 @@
       tipPoolTitle: 'Kitchen tip pool',
       tipPoolTotalTips: 'Server tips total ($)',
       tipPoolAppTips: 'Delivery app tips ($)',
-      tipPoolDistributable: 'Distributable',
       poolServerTips: 'Server tips total',
       poolKitchenFormula: 'Kitchen tips (server tips ÷7 × 3)',
       poolGrandTotal: 'Total tips',
-      tipPoolServerShare: 'Servers 70%',
-      tipPoolKitchenShare: 'Kitchen 30%',
       tipPoolNote: '(distributed by kitchen hours worked)',
       thEmployee: 'Employee',
       thRole: 'Role',
       thHours: 'Hours',
       thRate: 'Hourly rate',
       thWage: 'Wages',
-      thVacation: 'Vacation',
       thBooster: 'Booster',
       thHoliday: 'Holiday',
       thBonus: 'Bonus',
@@ -664,7 +612,6 @@
       salesCash: 'Cash sales',
       wdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       coSection: 'Register close-out',
-      coWorkedHours: 'Hours worked',
       coTotalSales: 'Total sales ($)',
       coCashSales: 'Cash sales ($) (incl. tips)',
       coPurchases: 'Supply purchases ($)',
@@ -709,7 +656,6 @@
       coNoData: 'No close-out records.',
       todayCo: 'Close-out records',
       todayCoEmpty: 'No close-out entered for this date yet.',
-      coSaveFail: 'Close-out save failed: ',
       setupTitle: 'Setup required',
       setupBody: 'Enter your Supabase URL and anon key in config.js, then reload.<br>See README.md for the steps.',
       tabReservations: 'Reservations',
@@ -723,14 +669,9 @@
       resAdd: 'Add reservation',
       resSaveEdit: 'Save changes',
       resNew: 'New reservation',
-      resThisMonth: 'This month',
-      resPrint: 'Print',
       resPrintBtn: 'Print',
-      resPrintDateHint: 'Pick a date to print that day only',
       resFormTitle: 'New reservation',
       resEmpty: 'No reservations.',
-      resWeb: 'Web booking',
-      resManual: 'Manual entry',
       resEdit: 'Edit',
       resDelete: 'Delete',
       resDelConfirm: 'Delete this reservation?',
@@ -738,8 +679,6 @@
       resToday: 'Today',
       resTodayTitle: "Today's reservations",
       resNoToday: 'No reservations today.',
-      resCountUnit: '',
-      resGuests: 'guests',
       resPartyUnit: ' guests',
       resOpen: 'Open reservations',
       resTabDesc: 'View, add and edit reservations',
@@ -800,6 +739,14 @@
   function openModal(id) { $(id).classList.remove('hidden'); }
   function closeModal(id) { $(id).classList.add('hidden'); }
 
+  /* 메시지 줄 표시 (ok=true면 초록). el은 요소 또는 id */
+  function setMsg(el, text, ok) {
+    if (typeof el === 'string') el = $(el);
+    el.className = ok ? 'msg ok' : 'msg';
+    el.textContent = text || '';
+    return el;
+  }
+
   /* ---------- 날짜/시간 (밴쿠버 기준, 24시간제) ----------
      BC주는 2026-03-08부터 서머타임 연중 고정 (Pacific Time, UTC-7).
      기기·브라우저의 시간대 DB가 옛 규칙(11월 첫 일요일 PST 복귀)을 갖고 있으면
@@ -820,22 +767,23 @@
       v.getUTCHours(), v.getUTCMinutes(), v.getUTCSeconds());
   }
 
+  /* 로컬 Date의 연·월·일 → 'YYYY-MM-DD' (vancouverNow()·new Date(y, m, d)와 함께 사용) */
   function fmtYMD(d) {
-    var m = String(d.getMonth() + 1).padStart(2, '0');
-    var day = String(d.getDate()).padStart(2, '0');
-    return d.getFullYear() + '-' + m + '-' + day;
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
   }
 
-  function vancouverOffsetMs(date) {
-    return VAN_OFFSET_MS;
+  /* 월 라벨: ko "2026년 11월" / en "November 2026" (m은 0부터) */
+  var EN_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+  function monthLabel(y, m) {
+    return lang === 'ko' ? y + '년 ' + (m + 1) + '월' : EN_MONTHS[m] + ' ' + y;
   }
 
   // "2026-10-16" + "09:00" -> 밴쿠버 현지시간 기준 epoch ms
   function toMs(dateStr, timeStr) {
     var dp = dateStr.split('-').map(Number);
     var tp = timeStr.split(':').map(Number);
-    var guess = new Date(Date.UTC(dp[0], dp[1] - 1, dp[2], tp[0], tp[1] || 0));
-    return guess.getTime() - vancouverOffsetMs(guess);
+    return Date.UTC(dp[0], dp[1] - 1, dp[2], tp[0], tp[1] || 0) - VAN_OFFSET_MS;
   }
 
   // 24시간제 검증 + 정규화 ("9:00" -> "09:00", "1400" -> "14:00"), 실패 시 null
@@ -855,12 +803,6 @@
     return pad2(v.getUTCHours()) + ':' + pad2(v.getUTCMinutes());
   }
 
-  function fmtDateV(isoOrDate) {
-    var d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
-    var v = vanShift(d);
-    return v.getUTCFullYear() + '-' + pad2(v.getUTCMonth() + 1) + '-' + pad2(v.getUTCDate());
-  }
-
   function dollars(cents) {
     return (Math.round(cents) / 100).toFixed(2);
   }
@@ -874,10 +816,8 @@
   function tickClock() {
     try {
       var v = vanShift(new Date());
-      var wdKo = ['일', '월', '화', '수', '목', '금', '토'];
-      var wdEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       var y = v.getUTCFullYear(), mo = pad2(v.getUTCMonth() + 1), da = pad2(v.getUTCDate());
-      var wd = (lang === 'ko' ? wdKo : wdEn)[v.getUTCDay()];
+      var wd = t('wdays')[v.getUTCDay()];
       var dateStr = (lang === 'ko')
         ? y + '. ' + mo + '. ' + da + '. (' + wd + ')'
         : mo + '/' + da + '/' + y + ' ' + wd;
@@ -913,6 +853,13 @@
     if (data === null || data === false) { toast(t('sessionExpired')); throw new Error('session'); }
     return data;
   }
+  /* 오류를 던지지 않는 버전: 실패(세션 만료 포함)면 null */
+  async function rpcSafe(name, args) {
+    try { return await rpc(name, args); } catch (e) { return null; }
+  }
+  async function mgrRpcSafe(name, args) {
+    try { return await mgrRpc(name, args); } catch (e) { return null; }
+  }
   /* 로그인 세션이 있으면 개인정보 포함 전체 직원 목록으로 교체 */
   async function refreshFullEmployees() {
     if (!mgrToken) return;
@@ -947,8 +894,7 @@
 
   function showLock() {
     $('screenPw').value = '';
-    $('screenMsg').textContent = '';
-    $('screenMsg').className = 'msg';
+    setMsg('screenMsg');
     $('lockOverlay').classList.remove('hidden');
     setTimeout(function () { $('screenPw').focus(); }, 100);
   }
@@ -957,8 +903,9 @@
     sessionStorage.setItem('jimoco_unlocked', '1');
     resetFailCount();
     $('lockOverlay').classList.add('hidden');
-    await loadEmployees();
+    /* 관리자 세션이면 전체 직원 RPC 한 번으로 끝; 실패(세션 만료 등)할 때만 기본 목록 */
     if (managerAuthed && mgrToken) await refreshFullEmployees();
+    if (!allEmployees.length) await loadEmployees();
     renderClock();
     if (managerAuthed) showManager(false);
     setPeriod('month');
@@ -973,7 +920,7 @@
       if (managerAuthed) { showManager(true); return; }
       $('loginUser').value = '';
       $('loginPin').value = '';
-      $('loginMsg').textContent = '';
+      setMsg('loginMsg');
       openModal('loginModal');
       setTimeout(function () { $('loginPin').focus(); }, 100);
     });
@@ -994,14 +941,51 @@
     });
 
     $('shiftSave').addEventListener('click', saveShift);
-    document.querySelectorAll('[data-shift-type]').forEach(function (b) {
-      b.addEventListener('click', function () { setShiftType(b.getAttribute('data-shift-type')); });
+    /* 쉬프트 유형 버튼 3세트 (출퇴근 입력 · 마감 정산 · 관리자 근무 수정) */
+    [['data-shift-type', setShiftType], ['data-co-shift-type', setCoShiftType],
+      ['data-edit-shift-type', setEditShiftType]].forEach(function (p) {
+      document.querySelectorAll('[' + p[0] + ']').forEach(function (b) {
+        b.addEventListener('click', function () { p[1](b.getAttribute(p[0])); });
+      });
     });
-    document.querySelectorAll('[data-co-shift-type]').forEach(function (b) {
-      b.addEventListener('click', function () { setCoShiftType(b.getAttribute('data-co-shift-type')); });
+    /* 출퇴근 화면 직원 행: 렌더할 때마다 다시 묶지 않도록 한 번만 위임 */
+    $('view-clock').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-io], [data-self-edit], [data-history], .emp-line');
+      if (!b) return;
+      var emp = empById(b.getAttribute('data-io') || b.getAttribute('data-self-edit') ||
+        b.getAttribute('data-history') || b.getAttribute('data-id'));
+      if (!emp) return;
+      if (b.hasAttribute('data-self-edit')) openStaffEdit(emp);
+      else if (b.hasAttribute('data-history')) openEmpHistory(emp);
+      else openShiftModal(emp);
     });
-    document.querySelectorAll('[data-edit-shift-type]').forEach(function (b) {
-      b.addEventListener('click', function () { setEditShiftType(b.getAttribute('data-edit-shift-type')); });
+    $('view-records').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-rec]');
+      var emp = b && empById(b.getAttribute('data-rec'));
+      if (emp) openEmpHistory(emp);
+    });
+    /* 직원 관리 모달: 카드(또는 수정 버튼) 누르면 폼에 채우기 */
+    ['mKitchenList', 'mServerList'].forEach(function (id) {
+      $(id).addEventListener('click', function (e) {
+        var c = e.target.closest('.emp-card');
+        var emp = c && empById(c.getAttribute('data-id'));
+        if (emp) fillEmpForm(emp);
+      });
+    });
+    /* 관리자 권한 계정 목록 (오너 전용) */
+    $('managerList').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-toggle-mgr], [data-save-mgr], [data-approve-mgr], [data-del-mgr]');
+      if (!b) return;
+      if (b.hasAttribute('data-toggle-mgr')) {
+        var body = $('mgrBody_' + b.getAttribute('data-toggle-mgr'));
+        if (!body) return;
+        var open = body.hidden;
+        body.hidden = !open;
+        var chev = b.querySelector('.mgr-chev');
+        if (chev) chev.textContent = open ? '▾' : '▸';
+      } else if (b.hasAttribute('data-save-mgr')) saveManager(b.getAttribute('data-save-mgr'));
+      else if (b.hasAttribute('data-approve-mgr')) approveManager(b.getAttribute('data-approve-mgr'));
+      else delManager(b.getAttribute('data-del-mgr'), b.getAttribute('data-username'));
     });
     $('openCloseout').addEventListener('click', openCloseoutModal);
     $('openTodayCo').addEventListener('click', openTodayCoModal);
@@ -1098,6 +1082,13 @@
     $('histNext').addEventListener('click', function () { histPeriod = shiftSemiPeriod(histPeriod, 1); renderHistory(); });
     $('calPrev').addEventListener('click', function () { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); calSelected = null; $('calDetail').innerHTML = ''; loadCalendar(); });
     $('calNext').addEventListener('click', function () { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); calSelected = null; $('calDetail').innerHTML = ''; loadCalendar(); });
+    $('calGrid').addEventListener('click', function (e) {
+      var cell = e.target.closest('[data-cal-day]');
+      if (!cell) return;
+      calSelected = cell.getAttribute('data-cal-day');
+      renderCalendar();
+      renderCalDetail();
+    });
     /* 새 직원 등록 (출근 화면) */
     $('openEmpReg').addEventListener('click', openEmpReg);
     $('closeEmpReg').addEventListener('click', function () { closeModal('empRegModal'); });
@@ -1106,15 +1097,14 @@
     if (eab) eab.addEventListener('click', doApproveEmployee);
     $('screenUnlockBtn').addEventListener('click', tryUnlock);
     $('screenPw').addEventListener('keydown', function (e) { if (e.key === 'Enter') tryUnlock(); });
-    // 비밀번호 눈알 토글
-    document.querySelectorAll('.pw-eye').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var inp = btn.parentElement.querySelector('input');
-        if (!inp) return;
-        var show = inp.type === 'password';
-        inp.type = show ? 'text' : 'password';
-        btn.textContent = show ? '🙈' : '👁';
-      });
+    // 비밀번호 눈알 토글 (정적 입력칸 + 직원 PIN·관리자 계정 목록의 동적 입력칸 모두)
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('.pw-eye');
+      var inp = btn && btn.parentElement.querySelector('input');
+      if (!inp) return;
+      var show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      btn.textContent = show ? '🙈' : '👁';
     });
     $('editShiftSave').addEventListener('click', saveEditedShift);
     $('editShiftDelete').addEventListener('click', deleteShift);
@@ -1143,8 +1133,6 @@
     resetResForm(); /* 날짜 기본값 = 오늘 */
     $('resSave').addEventListener('click', saveReservation);
     $('resReset').addEventListener('click', resetResForm);
-    $('resPrevMonth').addEventListener('click', function () { moveResMonth(-1); });
-    $('resNextMonth').addEventListener('click', function () { moveResMonth(1); });
     $('resPrevMonth').addEventListener('click', function () { moveResMonth(-1); });
     $('resNextMonth').addEventListener('click', function () { moveResMonth(1); });
     $('resList').addEventListener('click', function (e) {
@@ -1221,10 +1209,12 @@
 
   function servers() { return employees.filter(function (e) { return e.role === 'server'; }); }
   function kitchen() { return employees.filter(function (e) { return e.role !== 'server'; }); }
+  function empById(id) { return employees.find(function (x) { return x.id === id; }); }
 
   var todayWorked = {};
   var todayWorkedAt = 0;
   async function loadTodayWorked() {
+    if (!supabase) return; /* 시작 직후(잠금 화면 전) 첫 렌더에서는 아직 연결 전 */
     try {
       var res = await supabase.from('shifts').select('employee_id').eq('work_date', todayStr());
       if (res.error) return;
@@ -1254,38 +1244,12 @@
     $('kitchenCount').textContent = countLabel(kt.length);
     $('serverList').innerHTML = sv.map(empRowHtml).join('');
     $('kitchenList').innerHTML = kt.map(empRowHtml).join('');
-    document.querySelectorAll('.emp-line').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var emp = employees.find(function (x) { return x.id === b.dataset.id; });
-        if (emp) openShiftModal(emp);
-      });
-    });
-    document.querySelectorAll('[data-io]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var emp = employees.find(function (x) { return x.id === b.getAttribute('data-io'); });
-        if (emp) openShiftModal(emp);
-      });
-    });
-    document.querySelectorAll('[data-self-edit]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var emp = employees.find(function (x) { return x.id === btn.getAttribute('data-self-edit'); });
-        if (emp) openStaffEdit(emp);
-      });
-    });
-    document.querySelectorAll('[data-history]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var emp = employees.find(function (x) { return x.id === btn.getAttribute('data-history'); });
-        if (emp) openEmpHistory(emp);
-      });
-    });
     if (Date.now() - todayWorkedAt > 20000) loadTodayWorked();
   }
 
   /* ---------- 하단 탭 (출퇴근 껍데기) ---------- */
-  var clockTab = 'clock';
   function switchClockTab(tab) {
     if (tab === 'closeout') { openCloseoutModal(); return; }
-    clockTab = tab;
     $('view-clock').classList.toggle('hidden', tab !== 'clock');
     $('view-records').classList.toggle('hidden', tab !== 'records');
     $('view-more').classList.toggle('hidden', tab !== 'more');
@@ -1304,12 +1268,6 @@
     };
     $('recServerList').innerHTML = sv.map(html).join('');
     $('recKitchenList').innerHTML = kt.map(html).join('');
-    document.querySelectorAll('[data-rec]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var emp = employees.find(function (x) { return x.id === b.getAttribute('data-rec'); });
-        if (emp) openEmpHistory(emp);
-      });
-    });
   }
 
   /* ---------- 출퇴근 입력 ---------- */
@@ -1334,24 +1292,26 @@
     $('pinSetupName').textContent = emp.name;
     $('pinSetupInput').value = '';
     $('pinSetupInput2').value = '';
-    $('pinSetupMsg').className = 'msg'; $('pinSetupMsg').textContent = '';
+    setMsg('pinSetupMsg');
     openModal('pinSetupModal');
     setTimeout(function () { $('pinSetupInput').focus(); }, 50);
   }
+  /* PIN을 새로 만든 직원: 목록에도 PIN 있음 표시 + 이번 세션 확인된 PIN으로 */
+  function markPinSet(emp, pin) {
+    emp.has_pin = true;
+    verifiedPin = pin;
+    var e2 = empById(emp.id);
+    if (e2) e2.has_pin = true;
+  }
   async function doPinSetup() {
-    var msg = $('pinSetupMsg');
-    msg.className = 'msg';
+    var msg = setMsg('pinSetupMsg');
     if (!pinSetupEmp) return;
     var pin = $('pinSetupInput').value.trim(), pin2 = $('pinSetupInput2').value.trim();
-    if (!/^\d{4,8}$/.test(pin)) { msg.textContent = t('badPin'); return; }
+    if (!validPin(pin)) { msg.textContent = t('badPin'); return; }
     if (pin !== pin2) { msg.textContent = t('pwMismatch'); return; }
-    var ok = false;
-    try { ok = await rpc('set_emp_pin_initial', { p_emp: pinSetupEmp.id, p_new_pin: pin }); } catch (e) {}
+    var ok = await rpcSafe('set_emp_pin_initial', { p_emp: pinSetupEmp.id, p_new_pin: pin });
     if (!ok) { msg.textContent = t('saveFail'); return; }
-    pinSetupEmp.has_pin = true;
-    verifiedPin = pin;
-    var idx = employees.findIndex(function (x) { return x.id === pinSetupEmp.id; });
-    if (idx >= 0) employees[idx].has_pin = true;
+    markPinSet(pinSetupEmp, pin);
     closeModal('pinSetupModal');
     gateNoticesThenRoute(pinSetupEmp, pinSetupPurpose);
   }
@@ -1366,8 +1326,7 @@
     else openShiftForm(emp);
   }
   async function gateNoticesThenRoute(emp, purpose) {
-    var list = null;
-    try { list = await rpc('pending_notices', { p_emp: emp.id, p_pin: verifiedPin || '' }); } catch (e) {}
+    var list = await rpcSafe('pending_notices', { p_emp: emp.id, p_pin: verifiedPin || '' });
     if (list && list.length) {
       noticeQueue = list.slice();
       noticeRoute = { emp: emp, purpose: purpose };
@@ -1389,14 +1348,13 @@
       p.textContent = line;
       body.appendChild(p);
     });
-    $('noticeMsg').className = 'msg'; $('noticeMsg').textContent = '';
+    setMsg('noticeMsg');
     openModal('noticeModal');
   }
   async function ackCurrentNotice() {
     var n = noticeQueue[0];
     if (!n || !noticeRoute) return;
-    var ok = false;
-    try { ok = await rpc('ack_notice', { p_emp: noticeRoute.emp.id, p_pin: verifiedPin || '', p_notice: n.id }); } catch (e) {}
+    var ok = await rpcSafe('ack_notice', { p_emp: noticeRoute.emp.id, p_pin: verifiedPin || '', p_notice: n.id });
     if (!ok) { $('noticeMsg').textContent = t('saveFail'); return; }
     noticeQueue.shift();
     if (noticeQueue.length) { showNextNotice(); return; }
@@ -1409,8 +1367,7 @@
   async function loadBlockedDates() {
     var box = $('bdList');
     if (!box) return;
-    var rows = null;
-    try { rows = await mgrRpc('admin_list_blocked_dates', {}); } catch (e) {}
+    var rows = await mgrRpcSafe('admin_list_blocked_dates', {});
     if (!rows) { box.innerHTML = ''; return; }
     if (!rows.length) { box.innerHTML = '<p class="view-desc">' + esc(t('bdEmpty')) + '</p>'; return; }
     box.innerHTML = rows.map(function (r) {
@@ -1425,43 +1382,37 @@
     });
   }
   async function addBlockedDate() {
-    var msg = $('bdMsg');
-    msg.className = 'msg'; msg.textContent = '';
+    var msg = setMsg('bdMsg');
     var v = $('bdDate').value;
     if (!v) { msg.textContent = t('bdNeedDate'); return; }
     var stored = $('bdYearly').checked ? v.slice(5) : v;
-    var ok = false;
-    try { ok = await mgrRpc('admin_add_blocked_date', { p_date: stored, p_note: '' }); } catch (e) {}
+    var ok = await mgrRpcSafe('admin_add_blocked_date', { p_date: stored, p_note: '' });
     if (!ok) { msg.textContent = t('saveFail'); return; }
     $('bdDate').value = '';
     $('bdYearly').checked = false;
     loadBlockedDates();
   }
   async function removeBlockedDate(d) {
-    var ok = false;
-    try { ok = await mgrRpc('admin_remove_blocked_date', { p_date: d }); } catch (e) {}
-    if (ok) loadBlockedDates();
+    if (await mgrRpcSafe('admin_remove_blocked_date', { p_date: d })) loadBlockedDates();
   }
 
-  /* 쉬프트 유형 선택 (오픈/마감/마감 같이) — 하나를 골라야 저장 가능 */
-  var shiftTypeSel = null;
-  function setShiftType(v) {
-    shiftTypeSel = v || null;
-    document.querySelectorAll('[data-shift-type]').forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-shift-type') === shiftTypeSel);
+  /* 쉬프트 유형 버튼 (오픈/마감/마감 같이): attr 세트에서 v만 활성화하고 선택값 반환 */
+  function pickShiftType(attr, v) {
+    v = v || null;
+    document.querySelectorAll('[' + attr + ']').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute(attr) === v);
     });
+    return v;
   }
+  /* 출퇴근 입력 쉬프트 유형 — 하나를 골라야 저장 가능 */
+  var shiftTypeSel = null;
+  function setShiftType(v) { shiftTypeSel = pickShiftType('data-shift-type', v); }
   function shiftTypeLabel(v) {
     return t(v === 'open' ? 'shiftOpen' : v === 'close' ? 'shiftClose' : 'shiftCloseTogether');
   }
   /* 마감 정산 쉬프트 유형 (v37): 쉬프트 기록과 같은 3가지. 표시·구분용 라벨일 뿐 급여·팁·부스터 계산에는 쓰지 않음 */
   var coShiftTypeSel = null;
-  function setCoShiftType(v) {
-    coShiftTypeSel = v || null;
-    document.querySelectorAll('[data-co-shift-type]').forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-co-shift-type') === coShiftTypeSel);
-    });
-  }
+  function setCoShiftType(v) { coShiftTypeSel = pickShiftType('data-co-shift-type', v); }
   function coTypeTag(v) {
     return v ? ' <span class="type-tag">' + esc(shiftTypeLabel(v)) + '</span>' : '';
   }
@@ -1479,8 +1430,7 @@
     $('shiftEveningRow').classList.add('hidden');
     $('shiftFulltimeRow').classList.toggle('hidden', emp.role !== 'server');
     $('shiftTypeRow').classList.toggle('hidden', emp.role !== 'server');
-    $('shiftMsg').textContent = '';
-    $('shiftMsg').className = 'msg';
+    setMsg('shiftMsg');
     $('shiftModalBox').classList.toggle('wide', false);
     openModal('shiftModal');
   }
@@ -1489,23 +1439,18 @@
     if (!histEmp) return;
     currentShiftEmp = histEmp;
     editingShiftId = r.id;
-    function hmL(iso) {
-      var dt = new Date(iso);
-      function p(n) { return (n < 10 ? '0' : '') + n; }
-      return p(dt.getHours()) + ':' + p(dt.getMinutes());
-    }
+    /* 저장(toMs)과 같은 밴쿠버 고정 시각으로 표시 — 기기 시간대와 무관 */
     $('shiftEmpName').textContent = histEmp.name + ' · ' + t('editShiftTitle');
     setShiftType(r.shift_type || null);
     $('shiftDate').value = r.work_date || '';
-    $('shiftIn').value = r.clock_in ? hmL(r.clock_in) : '';
-    $('shiftOut').value = r.clock_out ? hmL(r.clock_out) : '';
+    $('shiftIn').value = r.clock_in ? fmtTime(r.clock_in) : '';
+    $('shiftOut').value = r.clock_out ? fmtTime(r.clock_out) : '';
     $('shiftFulltime').checked = !!r.is_fulltime;
-    $('shiftEveningStart').value = r.evening_start ? hmL(r.evening_start) : '';
+    $('shiftEveningStart').value = r.evening_start ? fmtTime(r.evening_start) : '';
     $('shiftEveningRow').classList.toggle('hidden', !r.is_fulltime);
     $('shiftFulltimeRow').classList.toggle('hidden', histEmp.role !== 'server');
     $('shiftTypeRow').classList.toggle('hidden', histEmp.role !== 'server');
-    $('shiftMsg').textContent = '';
-    $('shiftMsg').className = 'msg';
+    setMsg('shiftMsg');
     $('shiftModalBox').classList.toggle('wide', false);
     openModal('shiftModal');
   }
@@ -1517,17 +1462,15 @@
     pinGateAllowSetup = !!allowSetup;
     $('pinGateName').textContent = emp.name;
     $('pinGateInput').value = '';
-    $('pinGateMsg').className = 'msg'; $('pinGateMsg').textContent = '';
+    setMsg('pinGateMsg');
     openModal('pinGateModal');
     setTimeout(function () { $('pinGateInput').focus(); }, 50);
   }
   async function checkPinGate() {
-    var msg = $('pinGateMsg');
-    msg.className = 'msg';
+    var msg = setMsg('pinGateMsg');
     if (!pinGateEmp) return;
     var pin = $('pinGateInput').value;
-    var ok = false;
-    try { ok = await rpc('check_emp_pin', { p_emp: pinGateEmp.id, p_pin: pin }); } catch (e) {}
+    var ok = await rpcSafe('check_emp_pin', { p_emp: pinGateEmp.id, p_pin: pin });
     if (ok) {
       verifiedPin = pin;
       closeModal('pinGateModal');
@@ -1541,53 +1484,52 @@
     }
   }
 
-  /* ---------- 직원 PIN 찾기 (이메일 인증 코드) ---------- */
+  /* ---------- 비밀번호·PIN 찾기 공용 (이메일 인증 코드) ----------
+     prefix 'reset' = 관리자 비밀번호, 'pinReset' = 직원 PIN (각각 #prefixModal/Step1/Step2/Msg) */
+  function openResetModal(prefix) {
+    $(prefix + 'Step1').classList.remove('hidden');
+    $(prefix + 'Step2').classList.add('hidden');
+    setMsg(prefix + 'Msg');
+    openModal(prefix + 'Modal');
+  }
+  async function requestResetCode(prefix, key, noEmailKey) {
+    var msg = setMsg(prefix + 'Msg');
+    var r = await rpcSafe('request_reset_code', { p_key: key });
+    if (!r || !r.ok) { msg.textContent = (r && r.no_email) ? t(noEmailKey) : t('saveFail'); return; }
+    $(prefix + 'Step1').classList.add('hidden');
+    $(prefix + 'Step2').classList.remove('hidden');
+    setMsg(msg, t('codeSent'), true);
+  }
+  /* 새 값 검사 + 코드 확인 후 저장. 성공하면 true (메시지는 호출한 쪽에서) */
+  async function completeResetCode(prefix, key, code, secret, secret2, isValid, ruleKey) {
+    var msg = setMsg(prefix + 'Msg');
+    if (!isValid(secret)) { msg.textContent = t(ruleKey); return false; }
+    if (secret !== secret2) { msg.textContent = t('pwMismatch'); return false; }
+    var ok = await rpcSafe('complete_reset', { p_key: key, p_code: code, p_new_secret: secret });
+    if (!ok) { msg.textContent = t('codeFail'); return false; }
+    return true;
+  }
+  function validPin(v) { return /^\d{4,8}$/.test(v); }
+
+  /* 직원 PIN 찾기 */
   var pinResetEmp = null;
-  function pinResetKey(emp) { return 'pin:' + emp.id; }
   function openPinReset() {
     if (!pinGateEmp) return;
     pinResetEmp = pinGateEmp;
     closeModal('pinGateModal');
     $('pinResetName').textContent = pinResetEmp.name;
-    $('pinResetStep1').classList.remove('hidden');
-    $('pinResetStep2').classList.add('hidden');
-    $('pinResetMsg').className = 'msg'; $('pinResetMsg').textContent = '';
-    openModal('pinResetModal');
+    openResetModal('pinReset');
   }
-  async function sendPinResetCode() {
-    var msg = $('pinResetMsg');
-    msg.className = 'msg';
-    if (!pinResetEmp) return;
-    var r = null;
-    try { r = await rpc('request_reset_code', { p_key: pinResetKey(pinResetEmp) }); } catch (e) {}
-    if (!r || !r.ok) {
-      msg.textContent = (r && r.no_email) ? t('noEmailForPin') : t('saveFail');
-      return;
-    }
-    $('pinResetStep1').classList.add('hidden');
-    $('pinResetStep2').classList.remove('hidden');
-    msg.className = 'msg ok';
-    msg.textContent = t('codeSent');
+  function sendPinResetCode() {
+    if (pinResetEmp) requestResetCode('pinReset', 'pin:' + pinResetEmp.id, 'noEmailForPin');
   }
   async function doPinReset() {
-    var msg = $('pinResetMsg');
-    msg.className = 'msg';
     if (!pinResetEmp) return;
-    var code = $('pinRsCode').value.trim();
-    var pin = $('pinRsPin').value.trim(), pin2 = $('pinRsPin2').value.trim();
-    if (!/^\d{4,8}$/.test(pin)) { msg.textContent = t('badPin'); return; }
-    if (pin !== pin2) { msg.textContent = t('pwMismatch'); return; }
-    var ok = false;
-    try {
-      ok = await rpc('complete_reset', {
-        p_key: pinResetKey(pinResetEmp), p_code: code, p_new_secret: pin
-      });
-    } catch (e) {}
-    if (!ok) { msg.textContent = t('codeFail'); return; }
-    pinResetEmp.has_pin = true;
-    verifiedPin = pin;
-    var idx = employees.findIndex(function (x) { return x.id === pinResetEmp.id; });
-    if (idx >= 0) employees[idx].has_pin = true;
+    var pin = $('pinRsPin').value.trim();
+    var ok = await completeResetCode('pinReset', 'pin:' + pinResetEmp.id, $('pinRsCode').value.trim(),
+      pin, $('pinRsPin2').value.trim(), validPin, 'badPin');
+    if (!ok) return;
+    markPinSet(pinResetEmp, pin);
     closeModal('pinResetModal');
     gateNoticesThenRoute(pinResetEmp, pinGatePurpose);
   }
@@ -1596,11 +1538,7 @@
   var staffEditEmp = null;
   async function openStaffEditForm(emp) {
     staffEditEmp = emp;
-    var d = emp;
-    try {
-      var self = await rpc('get_emp_self', { p_emp: emp.id, p_pin: verifiedPin || '' });
-      if (self) d = self;
-    } catch (e) {}
+    var d = (await rpcSafe('get_emp_self', { p_emp: emp.id, p_pin: verifiedPin || '' })) || emp;
     $('seName').value = d.name || '';
     $('sePhone').value = d.phone || '';
     $('seEmail').value = d.email || '';
@@ -1608,17 +1546,16 @@
     $('seSin').value = d.sin || '';
     $('seBirthday').value = d.birthday || '';
     $('sePin').value = '';
-    $('staffEditMsg').className = 'msg'; $('staffEditMsg').textContent = '';
+    setMsg('staffEditMsg');
     openModal('staffEditModal');
   }
   async function saveStaffEdit() {
-    var msg = $('staffEditMsg');
-    msg.className = 'msg';
+    var msg = setMsg('staffEditMsg');
     if (!staffEditEmp) return;
     var name = $('seName').value.trim();
     if (!name) { msg.textContent = t('needName'); return; }
     var pin = $('sePin').value.trim();
-    if (pin && !/^\d{4,8}$/.test(pin)) { msg.textContent = t('badPin'); return; }
+    if (pin && !validPin(pin)) { msg.textContent = t('badPin'); return; }
     var row = {
       name: name,
       phone: val('sePhone'),
@@ -1628,12 +1565,7 @@
       birthday: val('seBirthday') || null
     };
     if (pin) row.pin = pin;
-    var ok = false;
-    try {
-      ok = await rpc('update_emp_self', {
-        p_emp: staffEditEmp.id, p_pin: verifiedPin || '', p_row: row
-      });
-    } catch (e) {}
+    var ok = await rpcSafe('update_emp_self', { p_emp: staffEditEmp.id, p_pin: verifiedPin || '', p_row: row });
     if (!ok) { msg.textContent = t('saveFail'); return; }
     if (pin) verifiedPin = pin;
     staffEditEmp.has_pin = true;
@@ -1662,10 +1594,6 @@
     if (p.start.getDate() === 1) return { start: new Date(y, m, 16), end: new Date(y, m + 1, 0) };
     return { start: new Date(y, m + 1, 1), end: new Date(y, m + 1, 15) };
   }
-  function fmtDate(d) {
-    function p(n) { return (n < 10 ? '0' : '') + n; }
-    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
-  }
 
   function openEmpHistory(emp) {
     /* PIN이 없으면 게이트부터: 마스터 PIN이면 바로 통과, 아니면 최초 설정으로 안내 */
@@ -1674,7 +1602,7 @@
 
   function openHistoryModal(emp) {
     histEmp = emp;
-    histPeriod = semiPeriod(new Date());
+    histPeriod = semiPeriod(vancouverNow());
     $('histEmpName').textContent = emp.name;
     openModal('historyModal');
     renderHistory();
@@ -1686,31 +1614,26 @@
     if (!histEmp || !histPeriod) return;
     var s = histPeriod.start, e = histPeriod.end;
     $('histPeriod').textContent = (s.getMonth() + 1) + '/' + s.getDate() + ' ~ ' + (e.getMonth() + 1) + '/' + e.getDate();
-    var cur = semiPeriod(new Date());
+    var cur = semiPeriod(vancouverNow());
     $('histNext').disabled = (s.getTime() === cur.start.getTime());
     $('histList').innerHTML = '';
     $('histTotal').textContent = '';
-    var data = null;
-    try {
-      data = await rpc('emp_history', {
-        p_emp: histEmp.id, p_pin: verifiedPin || '',
-        p_from: fmtDate(s), p_to: fmtDate(e)
-      });
-    } catch (e) {}
+    var data = await rpcSafe('emp_history', {
+      p_emp: histEmp.id, p_pin: verifiedPin || '', p_from: fmtYMD(s), p_to: fmtYMD(e)
+    });
     var rows = (data && data.mine) || [];
     histCtx = data || { day_shifts: [], closeouts: [] };
     if (!rows.length) {
       $('histList').innerHTML = '<p class="muted">' + esc(t('histNone')) + '</p>';
       return;
     }
-    var wd = lang === 'ko' ? ['일', '월', '화', '수', '목', '금', '토'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    var wd = t('wdays');
     var totalH = 0, totalBoost = 0, totalWage = 0;
     $('histList').innerHTML = rows.map(function (r) {
       var ci = new Date(r.clock_in), co = new Date(r.clock_out);
       var h = (co - ci) / 3600000;
       totalH += h;
       var d = new Date(r.work_date + 'T12:00:00');
-      function hm(dt) { function p(n) { return (n < 10 ? '0' : '') + n; } return p(dt.getHours()) + ':' + p(dt.getMinutes()); }
       var probe = Object.assign({}, r, { employees: { name: histEmp.name, role: histEmp.role, hourly_rate_cents: histEmp.hourly_rate_cents } });
       var boostC = effectiveBoosterCents(probe, histCtx.day_shifts, histCtx.closeouts);
       var ftC = isStatHoliday(r.work_date) ? 0 : fulltimeBoosterCents(probe);
@@ -1718,7 +1641,7 @@
       if (boostC > 0) {
         totalBoost += boostC;
         tag = '<span class="boost-tag">' + esc(t('boostMark')) +
-          (ftC > 0 && r.evening_start ? ' +' + esc(t('fulltimeShort')) + ' ' + hm(new Date(r.evening_start)) + '~' + hm(co) : '') +
+          (ftC > 0 && r.evening_start ? ' +' + esc(t('fulltimeShort')) + ' ' + fmtTime(r.evening_start) + '~' + fmtTime(r.clock_out) : '') +
           ' · $' + dollars(boostC) + '</span>';
       }
       var rateC = histEmp.hourly_rate_cents || 0;
@@ -1727,7 +1650,7 @@
       totalWage += wageC;
       var typeTag = r.shift_type ? '<span class="type-tag">' + esc(shiftTypeLabel(r.shift_type)) + '</span>' : '';
       return '<div class="hist-row' + (boostC > 0 ? ' boost' : '') + '"><span>' + (d.getMonth() + 1) + '/' + d.getDate() + ' (' + wd[d.getDay()] + ')</span>' +
-        '<span>' + hm(ci) + ' ~ ' + hm(co) + '</span>' +
+        '<span>' + fmtTime(r.clock_in) + ' ~ ' + fmtTime(r.clock_out) + '</span>' +
         '<span class="hist-h">' + h.toFixed(1) + 'h</span>' + typeTag + tag +
         '<span class="hist-wage">' + esc(t('calDailyPay')) + ' $' + dollars(wageC) + '</span>' +
         '<button class="btn btn-chip" data-edit-shift="' + r.id + '">' + esc(t('edit')) + '</button></div>';
@@ -1749,23 +1672,32 @@
   var calSelected = null; /* 'YYYY-MM-DD' */
 
   async function loadCalendar() {
-    if (!calMonth) { var n = new Date(); calMonth = new Date(n.getFullYear(), n.getMonth(), 1); }
+    if (!calMonth) { var n = vancouverNow(); calMonth = new Date(n.getFullYear(), n.getMonth(), 1); }
     var y = calMonth.getFullYear(), m = calMonth.getMonth();
-    var first = fmtDate(new Date(y, m, 1)), last = fmtDate(new Date(y, m + 1, 0));
-    $('calMonthLabel').textContent = lang === 'ko' ? (y + '년 ' + (m + 1) + '월') : (calMonth.toLocaleString('en-US', { month: 'long' }) + ' ' + y);
+    var first = fmtYMD(new Date(y, m, 1)), last = fmtYMD(new Date(y, m + 1, 0));
+    $('calMonthLabel').textContent = monthLabel(y, m);
     var srows = [], crows = [];
     try {
-      srows = await mgrRpc('admin_shifts', { p_from: first, p_to: last });
-      crows = await mgrRpc('admin_closeouts', { p_from: first, p_to: last });
+      var both = await Promise.all([
+        mgrRpc('admin_shifts', { p_from: first, p_to: last }),
+        mgrRpc('admin_closeouts', { p_from: first, p_to: last })
+      ]);
+      srows = both[0]; crows = both[1];
     } catch (e) {}
     calData.shifts = srows || [];
     calData.closeouts = crows || [];
     calData.names = {};
     calData.rates = {};
     calData.roles = {};
+    calTipCache = {};
+    /* 이름은 퇴사·비활성 직원까지 (과거 기록에 '?' 대신 이름). 시급·직군은 기존대로 재직 직원 기준 */
+    allEmployees.forEach(function (e) { calData.names[e.id] = e.name; });
     employees.forEach(function (e) { calData.names[e.id] = e.name; calData.rates[e.id] = e.hourly_rate_cents; calData.roles[e.id] = e.role; });
     renderCalendar();
   }
+  /* 그날 팁은 데이터가 바뀔 때(loadCalendar)까지 날짜당 한 번만 계산 */
+  var calTipCache = {};
+  function calDayTipsOnce(ds) { return calTipCache[ds] || (calTipCache[ds] = calDayTips(ds)); }
 
   /* 그날 직원별 팁: 근무 기록 팁 우선, 없는 직원만 마감 정산 팁 사용 (이중 계산 방지)
      마감 정산이 하루 2건 이상이면 정산끼리는 먼저 합산한 뒤 근무 기록 없는 직원에게만 적용 */
@@ -1822,7 +1754,7 @@
     calData.shifts.forEach(function (s) {
       if (s.work_date === dateStr) hours += (new Date(s.clock_out) - new Date(s.clock_in)) / 3600000;
     });
-    var dt = calDayTips(dateStr);
+    var dt = calDayTipsOnce(dateStr);
     return { hours: hours, tips: dt.server, kitchenTips: dt.pool };
   }
 
@@ -1830,13 +1762,13 @@
     var y = calMonth.getFullYear(), m = calMonth.getMonth();
     var firstDow = new Date(y, m, 1).getDay();
     var daysInMonth = new Date(y, m + 1, 0).getDate();
-    var todayStr = fmtDate(new Date());
+    var today = todayStr();
     var html = '';
     for (var i = 0; i < firstDow; i++) html += '<div class="cal-cell empty"></div>';
     for (var d = 1; d <= daysInMonth; d++) {
-      var ds = fmtDate(new Date(y, m, d));
+      var ds = fmtYMD(new Date(y, m, d));
       var st = calDayStats(ds);
-      var cls = 'cal-cell' + (ds === todayStr ? ' today' : '') + (ds === calSelected ? ' selected' : '');
+      var cls = 'cal-cell' + (ds === today ? ' today' : '') + (ds === calSelected ? ' selected' : '');
       html += '<button type="button" class="' + cls + '" data-cal-day="' + ds + '">' +
         '<span class="cal-day">' + d + '</span>' +
         (st.hours > 0 ? '<span class="cal-h">' + st.hours.toFixed(1) + 'h</span>' : '') +
@@ -1846,13 +1778,6 @@
     }
     $('calGrid').innerHTML = html;
     renderCalSummary();
-    document.querySelectorAll('[data-cal-day]').forEach(function (cell) {
-      cell.addEventListener('click', function () {
-        calSelected = cell.getAttribute('data-cal-day');
-        renderCalendar();
-        renderCalDetail();
-      });
-    });
     if (calSelected) renderCalDetail();
   }
 
@@ -1865,7 +1790,7 @@
     function aggEmp(from, to) {
       var per = {};
       for (var d = from; d <= to; d++) {
-        var dt = calDayTips(fmtDate(new Date(y, m, d)));
+        var dt = calDayTipsOnce(fmtYMD(new Date(y, m, d)));
         Object.keys(dt.byEmp).forEach(function (eid) {
           if (calData.roles[eid] === 'server') per[eid] = (per[eid] || 0) + dt.byEmp[eid];
         });
@@ -1878,7 +1803,7 @@
     function block(from, to) {
       var s = 0, k = 0;
       for (var d = from; d <= to; d++) {
-        var dt = calDayTips(fmtDate(new Date(y, m, d)));
+        var dt = calDayTipsOnce(fmtYMD(new Date(y, m, d)));
         s += dt.server; k += dt.pool;
       }
       if (s + k <= 0) return '';
@@ -1898,7 +1823,7 @@
   function renderCalDetail() {
     if (!calSelected) { $('calDetail').innerHTML = ''; return; }
     var d = new Date(calSelected + 'T12:00:00');
-    var wd = lang === 'ko' ? ['일', '월', '화', '수', '목', '금', '토'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    var wd = t('wdays');
     var dayShifts = calData.shifts.filter(function (s) { return s.work_date === calSelected; });
     var dayCloseouts = calData.closeouts.filter(function (c) { return c.work_date === calSelected; });
     var title = (d.getMonth() + 1) + '/' + d.getDate() + ' (' + wd[d.getDay()] + ')';
@@ -1907,9 +1832,8 @@
       return;
     }
     var totalH = 0, totalPayCents = 0, totalTips = 0;
-    function hm(dt) { function p(n) { return (n < 10 ? '0' : '') + n; } return p(dt.getHours()) + ':' + p(dt.getMinutes()); }
     /* 그날 팁: 서버는 본인 팁, 주방은 서버팁 30% 풀을 근무시간 비율로 분배 */
-    var dayTips = calDayTips(calSelected);
+    var dayTips = calDayTipsOnce(calSelected);
     var tipByEmp = dayTips.byEmp;
     totalTips = dayTips.server + dayTips.pool;
     /* 직원별 합치기 (근무 기록 + 마감만 있는 직원도 포함) */
@@ -1923,7 +1847,7 @@
         if (s.employee_id !== eid) return;
         var sh = (new Date(s.clock_out) - new Date(s.clock_in)) / 3600000;
         h += sh;
-        sub.push(hm(new Date(s.clock_in)) + ' ~ ' + hm(new Date(s.clock_out)) + ' · ' + sh.toFixed(1) + 'h');
+        sub.push(fmtTime(s.clock_in) + ' ~ ' + fmtTime(s.clock_out) + ' · ' + sh.toFixed(1) + 'h');
       });
       totalH += h;
       var rate = calData.rates[eid];
@@ -1949,27 +1873,33 @@
 
   /* ---------- 마감 정산 (별도 모달) ---------- */
   /* 두 번째 서버 선택지: 첫 번째 서버를 제외한 서버 목록 + "없음" */
+  function empOptions(list) {
+    return list.map(function (e) { return '<option value="' + e.id + '">' + esc(e.name) + '</option>'; }).join('');
+  }
   function syncCoEmp2(sel) {
     var first = $('coEmp').value;
-    var opts = '<option value="">' + esc(t('coNone')) + '</option>';
-    servers().forEach(function (e) {
-      if (e.id !== first) opts += '<option value="' + e.id + '">' + esc(e.name) + '</option>';
-    });
-    $('coEmp2').innerHTML = opts;
+    $('coEmp2').innerHTML = '<option value="">' + esc(t('coNone')) + '</option>' +
+      empOptions(servers().filter(function (e) { return e.id !== first; }));
     $('coEmp2').value = (sel && sel !== first) ? sel : '';
+  }
+  /* 정산 차이 표시: ±$2 이내면 '일치' */
+  function diffHtml(d) {
+    d = d || 0;
+    return Math.abs(d) <= 200
+      ? '<span class="diff-ok">' + esc(t('coMatch')) + '</span>'
+      : '<span class="diff-bad">' + (d > 0 ? '+' : '') + '$' + dollars(d) + '</span>';
+  }
+  function statTile(k, v) {
+    return '<div class="co-stat"><div class="k">' + esc(k) + '</div><div class="v">' + v + '</div></div>';
   }
 
   function openCloseoutModal() {
     coReturnToToday = false;
-    var sv = servers();
-    $('coEmp').innerHTML = sv.map(function (e) {
-      return '<option value="' + e.id + '">' + esc(e.name) + '</option>';
-    }).join('');
+    $('coEmp').innerHTML = empOptions(servers());
     syncCoEmp2('');
     $('coDate').value = todayStr();
     $('coTips').value = '';
-    $('coMsg').textContent = '';
-    $('coMsg').className = 'msg';
+    setMsg('coMsg');
     resetCloseout();
     fetchPrevCounted($('coDate').value);
     openModal('closeoutModal');
@@ -1977,8 +1907,7 @@
 
   async function saveCloseoutModal() {
     var empId = $('coEmp').value, date = $('coDate').value;
-    var msg = $('coMsg');
-    msg.className = 'msg';
+    var msg = setMsg('coMsg');
     if (!empId || !date) { msg.textContent = t('needAll'); return; }
     if (!coShiftTypeSel) { msg.textContent = t('needShiftType'); return; }
     var tipsCents = Math.round((parseFloat($('coTips').value) || 0) * 100);
@@ -2003,8 +1932,7 @@
     DENOMS.forEach(function (d) {
       row[d.key] = parseInt($(d.id).value, 10) || 0;
     });
-    var okCo = false;
-    try { okCo = await rpc('staff_upsert_closeout', { p_row: row }); } catch (e) {}
+    var okCo = await rpcSafe('staff_upsert_closeout', { p_row: row });
     if (!okCo) { msg.textContent = t('saveFail'); return; }
     msg.textContent = '';
     closeModal('closeoutModal');
@@ -2024,12 +1952,7 @@
 
   async function loadTodayCo(d) {
     $('todayCoList').innerHTML = '';
-    try {
-      var rows = await rpc('staff_day_closeouts', { p_date: d });
-      todayCoCache = { rows: rows || [] };
-    } catch (e) {
-      todayCoCache = { rows: [] };
-    }
+    todayCoCache = { rows: (await rpcSafe('staff_day_closeouts', { p_date: d })) || [] };
     renderTodayCloseouts();
   }
 
@@ -2043,16 +1966,12 @@
       '</th><th>' + esc(t('coThCash')) + '</th><th>' + esc(t('coThPurchases')) + '</th><th>' + esc(t('coThTips')) + '</th><th>' +
       esc(t('coThCounted')) + '</th><th>' + esc(t('coThDiff')) + '</th><th></th></tr>';
     rows.forEach(function (r) {
-      var d = r.diff_cents || 0;
-      var dHtml = Math.abs(d) <= 200
-        ? '<span class="diff-ok">' + esc(t('coMatch')) + '</span>'
-        : '<span class="diff-bad">' + (d > 0 ? '+' : '') + '$' + dollars(d) + '</span>';
       html += '<tr><td>' + esc((r.employees && r.employees.name) || '?') +
         (r.employees2 ? ' · ' + esc(r.employees2.name) : '') + coTypeTag(r.shift_type) + '</td><td>$' + dollars(r.total_sales_cents) +
         '</td><td>$' + dollars(r.cash_sales_cents) + '</td><td>' +
         (r.purchases_cents ? '$' + dollars(r.purchases_cents) : '–') +
         '</td><td>$' + dollars(r.tips_cents) +
-        '</td><td>$' + dollars(r.counted_cents) + '</td><td>' + dHtml + '</td>' +
+        '</td><td>$' + dollars(r.counted_cents) + '</td><td>' + diffHtml(r.diff_cents) + '</td>' +
         '<td class="row-actions"><button class="btn btn-chip" data-edit-today-co="' + r.id + '">' + esc(t('edit')) +
         '</button></td></tr>';
     });
@@ -2066,9 +1985,7 @@
   /* 정산 입력 폼에 기존 정산 행 채우기 (관리자 수정·오늘의 정산 수정 공용) */
   function fillCloseoutForm(r) {
     var sv = servers();
-    var opts = sv.map(function (e) {
-      return '<option value="' + e.id + '">' + esc(e.name) + '</option>';
-    }).join('');
+    var opts = empOptions(sv);
     if (r.employee_id && !sv.some(function (e) { return e.id === r.employee_id; })) {
       opts += '<option value="' + r.employee_id + '">' + esc((r.employees && r.employees.name) || '?') + '</option>';
     }
@@ -2084,8 +2001,7 @@
     DENOMS.forEach(function (d) {
       $(d.id).value = r[d.key] != null ? r[d.key] : '';
     });
-    $('coMsg').textContent = '';
-    $('coMsg').className = 'msg';
+    setMsg('coMsg');
     coOpeningFromRecord = r.opening_cents != null ? r.opening_cents : null;
     coEditingId = r.id || null;
     setCoShiftType(r.shift_type || null);
@@ -2119,22 +2035,18 @@
 
   async function fetchPrevCounted(date) {
     coPrevCounted = 0;
-    try {
-      /* 같은 날 먼저 저장된 정산이 있으면 그 실사 금액이 기본 시작 캐쉬 (하루 2회 정산 대응) */
-      var v = await rpc('prev_closeout_counted2', { p_date: date, p_exclude_id: coEditingId || null });
-      coPrevCounted = v || 0;
-    } catch (e) {
-      try { coPrevCounted = (await rpc('prev_closeout_counted', { p_date: date })) || 0; } catch (e2) {}
-    }
+    coWithdrawCents = 0; coWithdrawItems = [];
+    /* 같은 날 먼저 저장된 정산이 있으면 그 실사 금액이 기본 시작 캐쉬 (하루 2회 정산 대응, 구버전 RPC로 대체 가능)
+       + 그날 오너 인출 합계(예상 금액에서 자동 차감) — 두 조회는 서로 무관하므로 동시에 */
+    var prevP = rpc('prev_closeout_counted2', { p_date: date, p_exclude_id: coEditingId || null })
+      .catch(function () { return rpcSafe('prev_closeout_counted', { p_date: date }); });
+    var got = await Promise.all([prevP, rpcSafe('day_withdrawals', { p_date: date })]);
+    coPrevCounted = got[0] || 0;
     /* 시작 캐쉬 기본값: 수정 중인 기록에 저장된 시작 캐쉬가 있으면 그것, 없으면 전날 실사 금액 */
     var oc = coOpeningFromRecord != null ? coOpeningFromRecord : coPrevCounted;
     $('coOpening').value = oc ? (oc / 100) : '';
-    /* 그날 오너 인출 합계 (예상 금액에서 자동 차감) */
-    coWithdrawCents = 0; coWithdrawItems = [];
-    try {
-      var wd = await rpc('day_withdrawals', { p_date: date });
-      if (wd) { coWithdrawCents = wd.total_cents || 0; coWithdrawItems = wd.items || []; }
-    } catch (e) {}
+    var wd = got[1];
+    if (wd) { coWithdrawCents = wd.total_cents || 0; coWithdrawItems = wd.items || []; }
     recalcCloseout();
   }
 
@@ -2169,21 +2081,15 @@
       (purchases > 0 ? ' − ' + t('coPurchases') + ' $' + dollars(purchases) : '') +
       (coWithdrawCents > 0 ? ' − ' + t('coWithdraw') + ' $' + dollars(coWithdrawCents) : '');
     var diff = counted - expected;
-    var dEl = $('coDiff');
-    if (Math.abs(diff) <= 200) {
-      dEl.textContent = t('coMatch');
-      dEl.className = 'diff-ok';
-    } else {
-      dEl.textContent = (diff > 0 ? '+' : '') + '$' + dollars(diff);
-      dEl.className = 'diff-bad';
-    }
+    var ok = Math.abs(diff) <= 200;
+    $('coDiff').textContent = ok ? t('coMatch') : (diff > 0 ? '+' : '') + '$' + dollars(diff);
+    $('coDiff').className = ok ? 'diff-ok' : 'diff-bad';
     return { counted: counted, expected: expected, diff: diff, opening: opening, purchases: purchases, withdrawals: coWithdrawCents };
   }
 
   async function saveShift() {
     var date = $('shiftDate').value, ci = $('shiftIn').value, co = $('shiftOut').value;
-    var msg = $('shiftMsg');
-    msg.className = 'msg';
+    var msg = setMsg('shiftMsg');
     if (!date || !ci || !co) { msg.textContent = t('needAll'); return; }
     /* 쉬프트 유형(오픈/마감/마감 같이)은 서버만 (v38, 사장님 2026-11-17). 주방은 버튼 숨김·유형 없이 저장 */
     var srvType = currentShiftEmp.role === 'server';
@@ -2205,7 +2111,6 @@
     }
     /* 수정 모드: 기록 화면에서 본인 기록을 고치는 경우 (PIN 검증 RPC) */
     if (editingShiftId) {
-      var okEdit = false;
       var editRow = {
         work_date: date,
         clock_in: new Date(inMs).toISOString(),
@@ -2214,12 +2119,9 @@
         evening_start: eveIso || ''
       };
       if (srvType) editRow.shift_type = shiftTypeSel;
-      try {
-        okEdit = await rpc('emp_update_shift', {
-          p_emp: currentShiftEmp.id, p_pin: verifiedPin || '', p_id: editingShiftId,
-          p_row: editRow
-        });
-      } catch (e) {}
+      var okEdit = await rpcSafe('emp_update_shift', {
+        p_emp: currentShiftEmp.id, p_pin: verifiedPin || '', p_id: editingShiftId, p_row: editRow
+      });
       if (!okEdit) { msg.textContent = t('saveFail'); return; }
       editingShiftId = null;
       msg.textContent = '';
@@ -2252,10 +2154,8 @@
   async function tryLogin() {
     var user = $('loginUser').value.trim();
     var pw = $('loginPin').value.trim();
-    var msg = $('loginMsg');
-    msg.className = 'msg';
-    var r = null;
-    try { r = await rpc('app_login', { p_username: user, p_password: pw }); } catch (e) {}
+    var msg = setMsg('loginMsg');
+    var r = await rpcSafe('app_login', { p_username: user, p_password: pw });
     if (r && r.ok) { loginOk(r.role, r.username, r.token); return; }
     if (r && r.pending) { msg.textContent = t('pendingLogin'); return; }
     msg.textContent = t('wrongPw');
@@ -2281,7 +2181,7 @@
   /* ---------- 관리자 권한 회원가입 (오너 승인제) ---------- */
   function openSignup() {
     closeModal('loginModal');
-    $('signupMsg').className = 'msg'; $('signupMsg').textContent = '';
+    setMsg('signupMsg');
     openModal('signupModal');
   }
 
@@ -2289,71 +2189,44 @@
     var user = $('suUser').value.trim();
     var email = $('suEmail').value.trim();
     var pw = $('suPw').value, pw2 = $('suPw2').value;
-    var msg = $('signupMsg');
-    msg.className = 'msg';
+    var msg = setMsg('signupMsg');
     if (!user) { msg.textContent = t('needUsername'); return; }
     if (!email) { msg.textContent = t('needEmail'); return; }
     if (!validEmail(email)) { msg.textContent = t('badEmail'); return; }
     if (!validManagerPw(pw)) { msg.textContent = t('mgrPwRule'); return; }
     if (pw !== pw2) { msg.textContent = t('pwMismatch'); return; }
-    var r = null;
-    try { r = await rpc('signup_manager', { p_username: user, p_email: email, p_password: pw }); } catch (e) {}
+    var r = await rpcSafe('signup_manager', { p_username: user, p_email: email, p_password: pw });
     if (!r || !r.ok) {
       msg.textContent = (r && r.dup) ? t('dupUser') : t('saveFail');
       return;
     }
-    msg.className = 'msg ok';
-    msg.textContent = t('signupPending');
+    setMsg(msg, t('signupPending'), true);
     $('suUser').value = ''; $('suEmail').value = ''; $('suPw').value = ''; $('suPw2').value = '';
   }
 
-  /* ---------- 비밀번호 찾기 (이메일 인증 코드) ---------- */
+  /* ---------- 관리자 비밀번호 찾기 (공용 흐름은 위 openResetModal 등) ---------- */
   function openReset() {
     closeModal('loginModal');
-    $('resetStep1').classList.remove('hidden');
-    $('resetStep2').classList.add('hidden');
-    $('resetMsg').className = 'msg'; $('resetMsg').textContent = '';
-    openModal('resetModal');
+    openResetModal('reset');
   }
 
-  async function sendResetCode() {
+  function sendResetCode() {
     var user = $('rsUser').value.trim();
-    var msg = $('resetMsg');
-    msg.className = 'msg';
-    if (!user) { msg.textContent = t('needUsername'); return; }
-    var r = null;
-    try { r = await rpc('request_reset_code', { p_key: user }); } catch (e) {}
-    if (!r || !r.ok) {
-      msg.textContent = (r && r.no_email) ? t('noEmail') : t('saveFail');
-      return;
-    }
-    $('resetStep1').classList.add('hidden');
-    $('resetStep2').classList.remove('hidden');
-    msg.className = 'msg ok';
-    msg.textContent = t('codeSent');
+    if (!user) { setMsg('resetMsg', t('needUsername')); return; }
+    requestResetCode('reset', user, 'noEmail');
   }
 
   async function doResetPassword() {
-    var user = $('rsUser').value.trim();
-    var code = $('rsCode').value.trim();
-    var pw = $('rsPw').value, pw2 = $('rsPw2').value;
-    var msg = $('resetMsg');
-    msg.className = 'msg';
-    if (!validManagerPw(pw)) { msg.textContent = t('mgrPwRule'); return; }
-    if (pw !== pw2) { msg.textContent = t('pwMismatch'); return; }
-    var ok = false;
-    try {
-      ok = await rpc('complete_reset', { p_key: user, p_code: code, p_new_secret: pw });
-    } catch (e) {}
-    if (!ok) { msg.textContent = t('codeFail'); return; }
-    msg.className = 'msg ok';
-    msg.textContent = t('resetDone');
+    var ok = await completeResetCode('reset', $('rsUser').value.trim(), $('rsCode').value.trim(),
+      $('rsPw').value, $('rsPw2').value, validManagerPw, 'mgrPwRule');
+    if (!ok) return;
+    setMsg('resetMsg', t('resetDone'), true);
     $('resetStep2').classList.add('hidden');
   }
 
   /* ---------- 새 직원 등록 (본인 입력 → 오너 승인제) ---------- */
   function openEmpReg() {
-    $('empRegMsg').className = 'msg'; $('empRegMsg').textContent = '';
+    setMsg('empRegMsg');
     openModal('empRegModal');
   }
 
@@ -2363,21 +2236,16 @@
     var email = $('regEmail').value.trim();
     var role = $('regRole').value;
     var pin = $('regPin').value.trim();
-    var msg = $('empRegMsg');
-    msg.className = 'msg';
+    var msg = setMsg('empRegMsg');
     if (!name) { msg.textContent = t('needName'); return; }
     if (!phone) { msg.textContent = t('needPhone'); return; }
     if (email && !validEmail(email)) { msg.textContent = t('badEmail'); return; }
-    if (!/^\d{4,8}$/.test(pin)) { msg.textContent = t('badPin'); return; }
-    var ok = false;
-    try {
-      ok = await rpc('register_employee', {
-        p_row: { name: name, phone: phone, email: email || null, role: role, pin: pin }
-      });
-    } catch (e) {}
+    if (!validPin(pin)) { msg.textContent = t('badPin'); return; }
+    var ok = await rpcSafe('register_employee', {
+      p_row: { name: name, phone: phone, email: email || null, role: role, pin: pin }
+    });
     if (!ok) { msg.textContent = t('saveFail'); return; }
-    msg.className = 'msg ok';
-    msg.textContent = t('empRegDone');
+    setMsg(msg, t('empRegDone'), true);
     $('regName').value = ''; $('regPhone').value = ''; $('regEmail').value = ''; $('regPin').value = '';
   }
 
@@ -2389,22 +2257,15 @@
     var isOwner = managerRole === 'owner';
     var sec = $('empPendingSec');
     var rowsP = allEmployees.filter(function (e) { return e.pending; });
+    var label = rowsP.length ? countLabel(rowsP.length) : '';
+    if (sec) sec.classList.remove('hidden');
+    $('empPendingCount').textContent = label;
+    $('empPendingTabCount').textContent = label;
+    updateEmpPendingBadge(rowsP.length);
     if (!rowsP.length) {
-      if (sec) sec.classList.remove('hidden');
-      var cEl0 = $('empPendingCount');
-      if (cEl0) cEl0.textContent = '';
-      var tc0 = $('empPendingTabCount');
-      if (tc0) tc0.textContent = '';
       box.innerHTML = '<p class="view-desc">' + esc(t('noPendingEmp')) + '</p>';
-      updateEmpPendingBadge(0);
       return;
     }
-    if (sec) sec.classList.remove('hidden');
-    var cEl = $('empPendingCount');
-    if (cEl) cEl.textContent = countLabel(rowsP.length);
-    var tc = $('empPendingTabCount');
-    if (tc) tc.textContent = countLabel(rowsP.length);
-    updateEmpPendingBadge(rowsP.length);
     rowsP.forEach(function (e) {
       var row = document.createElement('div');
       row.className = 'staff-pin-row';
@@ -2455,30 +2316,12 @@
   async function doApproveEmployee() {
     var id = $('empId').value;
     if (!id) return;
-    var msg = $('empMsg');
-    msg.className = 'msg';
-    var name = val('empName');
-    if (!name) { msg.textContent = t('needName'); return; }
-    var rate = parseFloat($('empRate').value);
-    var pin = $('empPin').value.trim();
-    if (pin && !/^\d{4,8}$/.test(pin)) { msg.textContent = t('badPin'); return; }
-    var row = {
-      name: name,
-      role: $('empRole').value,
-      hourly_rate_cents: isNaN(rate) ? null : Math.round(rate * 100),
-      email: val('empEmail'),
-      phone: val('empPhone'),
-      address: val('empAddress'),
-      sin: val('empSin'),
-      birthday: val('empBirthday'),
-      first_shift_date: val('empFirstShift'),
-      active: true,
-      pending: false
-    };
-    if (pin) row.pin = pin;
-    var r = null;
-    try { r = await mgrRpc('admin_save_employee', { p_id: id, p_row: row }); } catch (e) {}
-    if (!r || !r.ok) { msg.textContent = t('saveFail'); return; }
+    var row = readEmpForm();
+    if (!row) return;
+    row.active = true;
+    row.pending = false;
+    var r = await mgrRpcSafe('admin_save_employee', { p_id: id, p_row: row });
+    if (!r || !r.ok) { $('empMsg').textContent = t('saveFail'); return; }
     await reloadEmployees();
     renderClock();
     renderEmpList();
@@ -2491,8 +2334,7 @@
 
   async function rejectEmployee(id, name) {
     if (!confirm(t('confirmDelEmp') + '\n' + name)) return;
-    var ok = false;
-    try { ok = await mgrRpc('admin_delete_employee', { p_id: id }); } catch (e) {}
+    var ok = await mgrRpcSafe('admin_delete_employee', { p_id: id });
     if (!ok) { toast(t('delFail')); return; }
     await reloadEmployees();
     renderEmpPending();
@@ -2502,10 +2344,8 @@
   /* ---------- 첫 화면 잠금 ---------- */
   async function tryUnlock() {
     var pw = $('screenPw').value.trim();
-    var msg = $('screenMsg');
-    msg.className = 'msg';
-    var ok = false;
-    try { ok = await rpc('check_screen_password', { p_pw: pw }); } catch (e) {}
+    var msg = setMsg('screenMsg');
+    var ok = await rpcSafe('check_screen_password', { p_pw: pw });
     if (ok) {
       await unlockScreen();
       return;
@@ -2592,19 +2432,6 @@
     $('mServerCount').textContent = countLabel(sv.length);
     $('mKitchenList').innerHTML = kt.map(empCard).join('') || '<p class="view-desc">' + esc(t('none')) + '</p>';
     $('mServerList').innerHTML = sv.map(empCard).join('') || '<p class="view-desc">' + esc(t('none')) + '</p>';
-    document.querySelectorAll('.emp-card').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var emp = employees.find(function (x) { return x.id === b.dataset.id; });
-        if (emp) fillEmpForm(emp);
-      });
-    });
-    document.querySelectorAll('[data-edit-emp]').forEach(function (btn) {
-      btn.addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        var emp = employees.find(function (x) { return x.id === btn.getAttribute('data-edit-emp'); });
-        if (emp) fillEmpForm(emp);
-      });
-    });
     renderEmpInfo();
   }
 
@@ -2639,18 +2466,10 @@
   }
   function exportEmpCsv() {
     if (managerRole !== 'owner') return;
-    function q(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
     var heads = [t('thEmployee'), t('thRole'), t('hourlyRate'), t('phone'), t('email'), t('address'), t('sin'), t('birthday'), t('firstShift')];
-    var lines = [heads.map(q).join(',')];
-    empInfoRows().forEach(function (e) { lines.push(empInfoCells(e).map(q).join(',')); });
-    var blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'jimoco-employees-' + new Date().toISOString().slice(0, 10) + '.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    var lines = [heads.map(csvCell).join(',')];
+    empInfoRows().forEach(function (e) { lines.push(empInfoCells(e).map(csvCell).join(',')); });
+    downloadCsv('jimoco-employees-' + todayStr() + '.csv', lines);
   }
 
   function fillEmpForm(e) {
@@ -2673,15 +2492,14 @@
 
   function val(id) { var v = $(id).value.trim(); return v === '' ? null : v; }
 
-  async function saveEmployee(ev) {
-    ev.preventDefault();
-    var msg = $('empMsg');
-    msg.className = 'msg';
+  /* 직원 폼 → 저장용 행 (새로 추가·수정·승인 공용). 입력 오류면 #empMsg에 표시하고 null */
+  function readEmpForm() {
+    var msg = setMsg('empMsg');
     var name = val('empName');
-    if (!name) { msg.textContent = t('needName'); return; }
+    if (!name) { msg.textContent = t('needName'); return null; }
     var rate = parseFloat($('empRate').value);
     var pin = $('empPin').value.trim();
-    if (pin && !/^\d{4,8}$/.test(pin)) { msg.textContent = t('badPin'); return; }
+    if (pin && !validPin(pin)) { msg.textContent = t('badPin'); return null; }
     var row = {
       name: name,
       role: $('empRole').value,
@@ -2694,15 +2512,19 @@
       first_shift_date: val('empFirstShift')
     };
     if (pin) row.pin = pin;
-    var id = $('empId').value;
-    var r = null;
-    try { r = await mgrRpc('admin_save_employee', { p_id: id || null, p_row: row }); } catch (e) {}
-    if (!r || !r.ok) { msg.textContent = t('saveFail'); return; }
+    return row;
+  }
+
+  async function saveEmployee(ev) {
+    ev.preventDefault();
+    var row = readEmpForm();
+    if (!row) return;
+    var r = await mgrRpcSafe('admin_save_employee', { p_id: $('empId').value || null, p_row: row });
+    if (!r || !r.ok) { $('empMsg').textContent = t('saveFail'); return; }
     await reloadEmployees();
     renderClock();
     renderEmpList();
     resetEmpForm();
-    msg.textContent = '';
     toast(t('toastSaved'));
   }
 
@@ -2710,8 +2532,7 @@
     var id = $('empId').value;
     if (!id) return;
     if (!confirm(t('confirmDelEmp'))) return;
-    var ok = false;
-    try { ok = await mgrRpc('admin_delete_employee', { p_id: id }); } catch (e) {}
+    var ok = await mgrRpcSafe('admin_delete_employee', { p_id: id });
     if (!ok) { $('empMsg').textContent = t('delFail'); return; }
     await reloadEmployees();
     renderClock();
@@ -2751,8 +2572,11 @@
     }
     var rows, cos;
     try {
-      rows = await mgrRpc('admin_shifts', { p_from: start, p_to: end });
-      cos = await mgrRpc('admin_closeouts', { p_from: start, p_to: end });
+      var both = await Promise.all([
+        mgrRpc('admin_shifts', { p_from: start, p_to: end }),
+        mgrRpc('admin_closeouts', { p_from: start, p_to: end })
+      ]);
+      rows = both[0]; cos = both[1];
     } catch (e) { toast(t('toastPayrollFail')); return; }
     payrollCache = { shifts: rows || [], closeouts: cos || [], start: start, end: end, computed: null };
     tipTotalCents = null; tipAppCents = 0;
@@ -3081,7 +2905,7 @@
     $('shiftList').innerHTML = payrollCache.shifts.map(function (s) {
       var emp = s.employees || {};
       return '<div class="shift-row"><span class="grow"><strong>' + esc(emp.name || '?') + '</strong> ' +
-        fmtDateV(s.work_date) + ' ' + fmtTime(s.clock_in) + '–' + fmtTime(s.clock_out) +
+        esc(s.work_date) + ' ' + fmtTime(s.clock_in) + '–' + fmtTime(s.clock_out) +
         (s.shift_type ? ' · ' + esc(shiftTypeLabel(s.shift_type)) : '') +
         (s.tips_cents ? ' · ' + esc(t('tipsWord')) + ' $' + dollars(s.tips_cents) : '') + '</span>' +
         '<button class="btn btn-chip" data-shift="' + s.id + '">' + esc(t('edit')) + '</button></div>';
@@ -3093,12 +2917,7 @@
 
   var editShiftCur = null;
   var editShiftTypeSel = null;
-  function setEditShiftType(v) {
-    editShiftTypeSel = v || null;
-    document.querySelectorAll('[data-edit-shift-type]').forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-edit-shift-type') === editShiftTypeSel);
-    });
-  }
+  function setEditShiftType(v) { editShiftTypeSel = pickShiftType('data-edit-shift-type', v); }
   function openEditShift(id) {
     var s = payrollCache.shifts.find(function (x) { return x.id === id; });
     if (!s) return;
@@ -3115,16 +2934,14 @@
     $('editFulltime').checked = !!s.is_fulltime;
     $('editEveningStart').value = s.evening_start ? fmtTime(s.evening_start) : '';
     $('editEveningRow').classList.toggle('hidden', !(isSrv && s.is_fulltime));
-    $('editShiftMsg').textContent = '';
-    $('editShiftMsg').className = 'msg';
+    setMsg('editShiftMsg');
     openModal('editShiftModal');
   }
 
   async function saveEditedShift() {
     var id = $('editShiftId').value;
     var date = $('editShiftDate').value, ci = $('editShiftIn').value, co = $('editShiftOut').value;
-    var msg = $('editShiftMsg');
-    msg.className = 'msg';
+    var msg = setMsg('editShiftMsg');
     if (!date || !ci || !co) { msg.textContent = t('needAll'); return; }
     var ciN = normTime24(ci), coN = normTime24(co);
     if (!ciN || !coN) { msg.textContent = t('badTime'); return; }
@@ -3153,8 +2970,7 @@
         upd.evening_start = null;
       }
     }
-    var okUp = false;
-    try { okUp = await rpc('admin_update_shift', { p_token: mgrToken, p_id: id, p_row: upd }); } catch (e) {}
+    var okUp = await mgrRpcSafe('admin_update_shift', { p_id: id, p_row: upd });
     if (!okUp) { msg.textContent = t('saveFail'); return; }
     closeModal('editShiftModal');
     toast(t('toastSaved'));
@@ -3164,8 +2980,7 @@
   async function deleteShift() {
     var id = $('editShiftId').value;
     if (!confirm(t('confirmDelShift'))) return;
-    var okDel = false;
-    try { okDel = await rpc('admin_delete_shift', { p_token: mgrToken, p_id: id }); } catch (e) {}
+    var okDel = await mgrRpcSafe('admin_delete_shift', { p_id: id });
     if (!okDel) { $('editShiftMsg').textContent = t('delFail'); return; }
     closeModal('editShiftModal');
     toast(t('toastDeleted'));
@@ -3212,12 +3027,8 @@
       tTips += r.tips_cents || 0;
       tPurch += r.purchases_cents || 0;
       tWd += r.withdrawal_cents || 0;
-      var d = r.diff_cents || 0;
-      if (Math.abs(d) > 200) mism++;
-      var dHtml = Math.abs(d) <= 200
-        ? '<span class="diff-ok">' + esc(t('coMatch')) + '</span>'
-        : '<span class="diff-bad">' + (d > 0 ? '+' : '') + '$' + dollars(d) + '</span>';
-      html += '<tr><td>' + esc(fmtDateV(r.work_date)) + '</td><td>' +
+      if (Math.abs(r.diff_cents || 0) > 200) mism++;
+      html += '<tr><td>' + esc(r.work_date) + '</td><td>' +
         esc((r.employees && r.employees.name) || '?') + coTypeTag(r.shift_type) + '</td><td>$' + dollars(r.total_sales_cents) +
         '</td><td>$' + dollars(r.cash_sales_cents) + '</td><td>' +
         (r.purchases_cents ? '$' + dollars(r.purchases_cents) +
@@ -3228,7 +3039,7 @@
         (r.opening_cents != null ? '$' + dollars(r.opening_cents) : '–') +
         '</td><td>$' + dollars(r.tips_cents) +
         '</td><td>$' + dollars(r.expected_cents) + '</td><td>$' + dollars(r.counted_cents) +
-        '</td><td>' + dHtml + '</td>' +
+        '</td><td>' + diffHtml(r.diff_cents) + '</td>' +
         '<td class="row-actions"><button class="btn btn-chip" data-edit-co="' + r.id + '">' + esc(t('edit')) +
         '</button> <button class="btn btn-chip btn-danger" data-del-co="' + r.id + '">' + esc(t('del')) + '</button></td></tr>';
     });
@@ -3243,12 +3054,12 @@
     $('coSummary').innerHTML =
       '<h3>' + esc(t('coSummary')) + '</h3>' +
       '<div class="co-stat-grid">' +
-      '<div class="co-stat"><div class="k">' + esc(t('coThTotalSales')) + '</div><div class="v">$' + dollars(tSales) + '</div></div>' +
-      '<div class="co-stat"><div class="k">' + esc(t('coThCash')) + '</div><div class="v">$' + dollars(tCash) + '</div></div>' +
-      '<div class="co-stat"><div class="k">' + esc(t('coThTips')) + '</div><div class="v">$' + dollars(tTips) + '</div></div>' +
-      '<div class="co-stat"><div class="k">' + esc(t('coThPurchases')) + '</div><div class="v">$' + dollars(tPurch) + '</div></div>' +
-      '<div class="co-stat"><div class="k">' + esc(t('coThWithdraw')) + '</div><div class="v">$' + dollars(tWd) + '</div></div>' +
-      '<div class="co-stat"><div class="k">' + esc(t('coMismatch')) + '</div><div class="v">' + mism + '</div></div>' +
+      statTile(t('coThTotalSales'), '$' + dollars(tSales)) +
+      statTile(t('coThCash'), '$' + dollars(tCash)) +
+      statTile(t('coThTips'), '$' + dollars(tTips)) +
+      statTile(t('coThPurchases'), '$' + dollars(tPurch)) +
+      statTile(t('coThWithdraw'), '$' + dollars(tWd)) +
+      statTile(t('coMismatch'), mism) +
       '</div>';
   }
 
@@ -3261,9 +3072,11 @@
     if (!mv) { toast(t('toastPickPeriod')); return; }
     var start = mv + '-01';
     var end = fmtYMD(new Date(+mv.slice(0, 4), +mv.slice(5, 7), 0));
-    var cos = [], dvs = [];
-    try { cos = await mgrRpc('admin_closeouts', { p_from: start, p_to: end }) || []; } catch (e) { cos = []; }
-    try { dvs = await mgrRpc('admin_delivery_sales', { p_from: start, p_to: end }) || []; } catch (e) { dvs = []; }
+    var both = await Promise.all([
+      mgrRpcSafe('admin_closeouts', { p_from: start, p_to: end }),
+      mgrRpcSafe('admin_delivery_sales', { p_from: start, p_to: end })
+    ]);
+    var cos = both[0] || [], dvs = both[1] || [];
     var fd = $('salesDate').value;
     salesCache = { store: cos, delivery: dvs, month: mv, openDate: (fd && fd.slice(0, 7) === mv) ? fd : salesCache.openDate };
     renderSales();
@@ -3333,10 +3146,10 @@
     var tAll = tStore + tDel;
     $('salesSummary').innerHTML =
       '<div class="co-stat-grid">' +
-      '<div class="co-stat"><div class="k">' + esc(t('salesStore')) + '</div><div class="v">$' + dollars(tStore) + '</div></div>' +
-      '<div class="co-stat"><div class="k">' + esc(t('salesDelivery')) + '</div><div class="v">$' + dollars(tDel) + '</div></div>' +
-      '<div class="co-stat"><div class="k">' + esc(t('salesTotal')) + '</div><div class="v">$' + dollars(tAll) + '</div></div>' +
-      '<div class="co-stat"><div class="k">' + esc(t('salesAvg')) + '</div><div class="v">$' + dollars(daysWith ? Math.round(tAll / daysWith) : 0) + '</div></div>' +
+      statTile(t('salesStore'), '$' + dollars(tStore)) +
+      statTile(t('salesDelivery'), '$' + dollars(tDel)) +
+      statTile(t('salesTotal'), '$' + dollars(tAll)) +
+      statTile(t('salesAvg'), '$' + dollars(daysWith ? Math.round(tAll / daysWith) : 0)) +
       '</div>';
   }
 
@@ -3351,8 +3164,7 @@
 
   async function deleteCloseout(id) {
     if (!confirm(t('confirmDelCo'))) return;
-    var okDc = false;
-    try { okDc = await rpc('admin_delete_closeout', { p_token: mgrToken, p_id: id }); } catch (e) {}
+    var okDc = await mgrRpcSafe('admin_delete_closeout', { p_id: id });
     if (!okDc) { toast(t('delFail')); return; }
     toast(t('toastDeleted'));
     loadCloseouts();
@@ -3364,28 +3176,24 @@
     $('wdAmount').value = '';
     $('wdNote').value = '';
     $('wdPw').value = '';
-    $('wdMsg').textContent = '';
-    $('wdMsg').className = 'msg';
+    setMsg('wdMsg');
     openModal('withdrawModal');
     setTimeout(function () { $('wdAmount').focus(); }, 50);
   }
 
   async function saveWithdrawal() {
-    var msg = $('wdMsg');
-    msg.className = 'msg';
+    var msg = setMsg('wdMsg');
     var amt = parseCents($('wdAmount').value);
     if (!amt || amt <= 0) { msg.textContent = t('wdAmountNeed'); return; }
     var pw = $('wdPw').value;
     if (!pw) { msg.textContent = t('wdPwNeed'); return; }
     var date = $('wdDate').value;
     if (!date) { msg.textContent = t('needAll'); return; }
-    var ok = false;
-    try {
-      ok = await rpc('admin_add_withdrawal', {
-        p_token: mgrToken, p_pw: pw, p_date: date,
-        p_amount_cents: amt, p_note: ($('wdNote').value || '').trim()
-      });
-    } catch (e) {}
+    /* false = 비밀번호 틀림이므로 mgrRpc(세션 만료 알림) 대신 rpc 그대로 */
+    var ok = await rpcSafe('admin_add_withdrawal', {
+      p_token: mgrToken, p_pw: pw, p_date: date,
+      p_amount_cents: amt, p_note: ($('wdNote').value || '').trim()
+    });
     if (!ok) { msg.textContent = t('wdPwWrong'); return; }
     closeModal('withdrawModal');
     toast(t('toastSaved'));
@@ -3393,12 +3201,8 @@
   }
 
   async function loadWithdrawals(start, end) {
-    try {
-      var rows = await rpc('admin_withdrawals', { p_token: mgrToken, p_from: start, p_to: end });
-      wdCache = rows || [];
-    } catch (e) {
-      wdCache = [];
-    }
+    /* 빈 달이면 null이 올 수 있어 mgrRpc(세션 만료 알림) 대신 rpc 그대로 */
+    wdCache = (await rpcSafe('admin_withdrawals', { p_token: mgrToken, p_from: start, p_to: end })) || [];
     renderWithdrawals();
   }
 
@@ -3414,7 +3218,7 @@
       esc(t('coThWithdraw')) + '</th><th>' + esc(t('wdNote')) + '</th><th></th></tr>';
     wdCache.forEach(function (r) {
       tot += r.amount_cents || 0;
-      html += '<tr><td>' + esc(fmtDateV(r.work_date)) + '</td><td>$' + dollars(r.amount_cents) +
+      html += '<tr><td>' + esc(r.work_date) + '</td><td>$' + dollars(r.amount_cents) +
         '</td><td>' + (r.note ? esc(r.note) : '–') + '</td>' +
         '<td class="row-actions"><button class="btn btn-chip btn-danger" data-del-wd="' + r.id + '">' +
         esc(t('del')) + '</button></td></tr>';
@@ -3429,8 +3233,7 @@
 
   async function deleteWithdrawal(id) {
     if (!confirm(t('confirmDelWd'))) return;
-    var ok = false;
-    try { ok = await rpc('admin_delete_withdrawal', { p_token: mgrToken, p_id: id }); } catch (e) {}
+    var ok = await mgrRpcSafe('admin_delete_withdrawal', { p_id: id });
     if (!ok) { toast(t('delFail')); return; }
     toast(t('toastDeleted'));
     if ($('coMonth').value) loadCloseouts();
@@ -3525,7 +3328,7 @@
   }
   function renderSchedule() {
     if (!schedData) return;
-    var today = new Date().getDay(); /* 0=Sun … 6=Sat, 시트 열 순서와 동일 */
+    var today = vancouverNow().getDay(); /* 밴쿠버 기준 요일, 0=Sun … 6=Sat, 시트 열 순서와 동일 */
     var workers = schedData.rows.filter(function (r) {
       var v = r.cells[today];
       return v && !/^x$/i.test(v);
@@ -3553,33 +3356,22 @@
   }
 
   /* 예약 모달 열기 (출퇴근 화면·매니저 예약 탭 공용) */
-  function openResModal() {
+  /* 예약 달력의 보고 있는 달 (없으면 밴쿠버 기준 이번 달) */
+  function ensureResMonth() {
     if (!resViewMonth) {
-      var n = new Date();
+      var n = vancouverNow();
       resViewMonth = new Date(n.getFullYear(), n.getMonth(), 1);
     }
+  }
+  function openResModal() {
+    ensureResMonth();
     $('resModal').classList.remove('hidden');
     resetResForm();
     loadReservations();
   }
 
-  /* 월 라벨: ko "2026년 11월" / en "November 2026" */
-  function renderResMonthLabel() {
-    if (!resViewMonth) return;
-    var y = resViewMonth.getFullYear();
-    var m = resViewMonth.getMonth();
-    var enMonths = ['January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'];
-    $('resMonthLabel').textContent = lang === 'ko'
-      ? y + '년 ' + (m + 1) + '월'
-      : enMonths[m] + ' ' + y;
-  }
-
   function moveResMonth(delta) {
-    if (!resViewMonth) {
-      var n = new Date();
-      resViewMonth = new Date(n.getFullYear(), n.getMonth(), 1);
-    }
+    ensureResMonth();
     resViewMonth = new Date(resViewMonth.getFullYear(), resViewMonth.getMonth() + delta, 1);
     renderReservations();
   }
@@ -3600,16 +3392,11 @@
   }
 
   function renderReservations() {
-    if (!resViewMonth) {
-      var n = new Date();
-      resViewMonth = new Date(n.getFullYear(), n.getMonth(), 1);
-    }
-    renderResMonthLabel();
+    ensureResMonth();
+    $('resMonthLabel').textContent = monthLabel(resViewMonth.getFullYear(), resViewMonth.getMonth());
     var today = todayStr();
     var prefix = resMonthPrefix();
-    var wdNames = lang === 'ko'
-      ? ['일', '월', '화', '수', '목', '금', '토']
-      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    var wdNames = t('wdays');
     function resRowsHtml(list) {
       var h = '';
       list.forEach(function (r) {
@@ -3664,69 +3451,13 @@
     /* 3) 선택한 날짜의 예약 */
     var selRows = resCache.filter(function (r) { return r.res_date === resSelDate; });
     var sd = parseResDate(resSelDate);
-    var enMonShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     var selTitle = lang === 'ko'
       ? (sd.getMonth() + 1) + '월 ' + sd.getDate() + '일 (' + wdNames[sd.getDay()] + ')'
-      : enMonShort[sd.getMonth()] + ' ' + sd.getDate() + ' (' + wdNames[sd.getDay()] + ')';
+      : EN_MONTHS[sd.getMonth()].slice(0, 3) + ' ' + sd.getDate() + ' (' + wdNames[sd.getDay()] + ')';
     html += '<h3 class="res-group">' + esc(selTitle) +
       (resSelDate === today ? ' <span class="res-badge res-badge-today">' + esc(t('resToday')) + '</span>' : '') + '</h3>';
     html += selRows.length ? resRowsHtml(selRows) : '<p class="view-desc">' + esc(t('resEmpty')) + '</p>';
     $('resList').innerHTML = html;
-  }
-
-  /* 예약 목록 인쇄 (POS 롤프린터 80mm 영수증 형식, #resPrintArea + @media print)
-     - 날짜 입력(resPrintDate)에 값이 있으면 그 날짜만, 없으면 보고 있는 달 전체.
-       인쇄물에는 예약 내용만: 제목 한 줄 + 날짜별 예약 목록 (가게명·인쇄시각 등 제외) */
-  function printReservations() {
-    var wdNames = lang === 'ko'
-      ? ['일', '월', '화', '수', '목', '금', '토']
-      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    var enMonths = ['January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'];
-    var dateVal = $('resPrintDate') ? $('resPrintDate').value : '';
-    var rows, titleTxt, withDateHeaders;
-    if (dateVal) {
-      rows = resCache.filter(function (r) { return r.res_date === dateVal; });
-      if (!rows.length) { toast(t('resEmpty')); return; }
-      var dd = parseResDate(dateVal);
-      titleTxt = lang === 'ko'
-        ? dd.getFullYear() + '년 ' + (dd.getMonth() + 1) + '월 ' + dd.getDate() + '일 (' + wdNames[dd.getDay()] + ') 예약'
-        : 'Reservations — ' + enMonths[dd.getMonth()] + ' ' + dd.getDate() + ', ' + dd.getFullYear() + ' (' + wdNames[dd.getDay()] + ')';
-      withDateHeaders = false;
-    } else {
-      if (!resViewMonth) {
-        var n0 = new Date();
-        resViewMonth = new Date(n0.getFullYear(), n0.getMonth(), 1);
-      }
-      var prefix = resMonthPrefix();
-      rows = resCache.filter(function (r) { return String(r.res_date || '').slice(0, 7) === prefix; });
-      if (!rows.length) { toast(t('resEmpty')); return; }
-      var monthTxt = lang === 'ko'
-        ? resViewMonth.getFullYear() + '년 ' + (resViewMonth.getMonth() + 1) + '월'
-        : enMonths[resViewMonth.getMonth()] + ' ' + resViewMonth.getFullYear();
-      titleTxt = lang === 'ko' ? monthTxt + ' 예약' : 'Reservations — ' + monthTxt;
-      withDateHeaders = true;
-    }
-    rows = rows.slice().sort(function (a, b) {
-      var d = String(a.res_date).localeCompare(String(b.res_date));
-      return d !== 0 ? d : String(a.res_time || '').localeCompare(String(b.res_time || ''));
-    });
-    var html = '<div class="rp-title">' + esc(titleTxt) + '</div>';
-    var curDate = null;
-    rows.forEach(function (r) {
-      if (withDateHeaders && r.res_date !== curDate) {
-        curDate = r.res_date;
-        var d = parseResDate(curDate);
-        html += '<div class="rp-date">' + esc(curDate) + ' (' + wdNames[d.getDay()] + ')</div>';
-      }
-      var guestsTxt = (r.party_size || 0) + (lang === 'en' ? ' guests' : t('resGuests'));
-      html += '<div class="rp-item">' + esc(fmtTime12(r.res_time)) + ' ' + esc(r.guest_name) +
-        ' · ' + guestsTxt + '</div>';
-      if (r.phone) html += '<div class="rp-sub2">' + esc(t('resPhoneLbl')) + ' ' + esc(r.phone) + '</div>';
-      if (r.note) html += '<div class="rp-sub2">' + esc(t('resNoteLbl')) + ': ' + esc(r.note) + '</div>';
-    });
-    $('resPrintArea').innerHTML = html;
-    window.print();
   }
 
   /* 예약 1건 전표 인쇄 (POS 전표 형식: 라벨 작게·값 크고 굵게, 요일은 날짜 아래 줄.
@@ -3734,11 +3465,9 @@
   function printOneReservation(id) {
     var r = resCache.find(function (x) { return String(x.id) === String(id); });
     if (!r) return;
-    var enMon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     var enDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     var d = parseResDate(r.res_date);
-    var dom = d.getDate();
-    var dateTxt = d.getFullYear() + '-' + enMon[d.getMonth()] + '-' + (dom < 10 ? '0' : '') + dom;
+    var dateTxt = d.getFullYear() + '-' + EN_MONTHS[d.getMonth()].slice(0, 3) + '-' + pad2(d.getDate());
     var html = '<div class="slip">' +
       '<div class="slip-head">&gt;&gt;&gt; RESERVATION &lt;&lt;&lt;</div>' +
       '<div class="slip-label">Date &amp; Time:</div>' +
@@ -3832,13 +3561,24 @@
 
   /* ---------- CSV ---------- */
   function csvCell(v) {
-    return '"' + String(v).replace(/"/g, '""') + '"';
+    return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  }
+  /* CSV \ud30c\uc77c \uc800\uc7a5 (\uc5d1\uc140 \ud55c\uae00 \uae68\uc9d0 \ubc29\uc9c0 BOM \ud3ec\ud568) */
+  function downloadCsv(filename, lines) {
+    var blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
   }
 
   function exportCSV() {
     var c = payrollCache.computed;
     if (!c || !c.rows.length) { toast(t('toastNoCsv')); return; }
-    var lines = ['\ufeff' + t('csvDateRange') + ',' + payrollCache.start + ' ~ ' + payrollCache.end];
+    var lines = [t('csvDateRange') + ',' + payrollCache.start + ' ~ ' + payrollCache.end];
     lines.push([t('thEmployee'), t('thRole'), t('thHours'),
       t('thRate') + ' ($)', t('thWage') + ' ($)',
       t('thBooster') + ' ($)', t('thHoliday') + ' ($)', t('thBonus') + ' ($)',
@@ -3850,21 +3590,13 @@
         dollars(p.tips), dollars(p.kshare), dollars(p.total)
       ].map(csvCell).join(','));
     });
-    var blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'jimoco-payroll-' + payrollCache.start + '_' + payrollCache.end + '.csv';
-    a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+    downloadCsv('jimoco-payroll-' + payrollCache.start + '_' + payrollCache.end + '.csv', lines);
   }
 
-  /* ---------- 관리자 비밀번호 변경 ---------- */
   /* ---------- 비밀번호 관리 (오너 전용: 조회 + 변경) ---------- */
   async function getSetting(key) {
-    try {
-      var v = await rpc('view_secret', { p_token: mgrToken, p_key: key });
-      return v || '';
-    } catch (e) { return ''; }
+    /* 값이 비어 있어도 null이 오므로 mgrRpc(세션 만료 알림) 대신 rpc 그대로 */
+    return (await rpcSafe('view_secret', { p_token: mgrToken, p_key: key })) || '';
   }
 
   async function loadPwManager() {
@@ -3905,16 +3637,17 @@
     });
   }
 
+  /* change_secret: false는 세션 문제 외에 허용 안 된 키일 때도 오므로 rpc 그대로 (세션 만료 알림 없음) */
+  function changeSecret(key, value) {
+    return rpcSafe('change_secret', { p_token: mgrToken, p_key: key, p_value: value });
+  }
+
   async function saveOwnerUsername() {
-    var msg = $('pinMsg');
-    msg.className = 'msg';
+    var msg = setMsg('pinMsg');
     var user = $('viewOwnerUser').value.trim();
     if (!user) { msg.textContent = t('needUsername'); return; }
-    var ok = false;
-    try { ok = await rpc('change_secret', { p_token: mgrToken, p_key: 'owner_username', p_value: user }); } catch (e) {}
-    if (!ok) { msg.textContent = t('saveFail'); return; }
-    msg.textContent = t('pwChanged');
-    msg.className = 'msg ok';
+    if (!(await changeSecret('owner_username', user))) { msg.textContent = t('saveFail'); return; }
+    setMsg(msg, t('pwChanged'), true);
   }
 
   function renderStaffPinList() {
@@ -3929,15 +3662,6 @@
         '<button class="btn btn-chip" data-save-pin="' + e.id + '">' + esc(t('save')) + '</button></div>';
     });
     $('staffPinList').innerHTML = html || '<p class="view-desc">' + esc(t('noShifts')) + '</p>';
-    $('staffPinList').querySelectorAll('[data-eye-for]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var inp = $(btn.getAttribute('data-eye-for'));
-        if (!inp) return;
-        var show = inp.type === 'password';
-        inp.type = show ? 'text' : 'password';
-        btn.textContent = show ? '🙈' : '👁';
-      });
-    });
     $('staffPinList').querySelectorAll('[data-save-pin]').forEach(function (btn) {
       btn.addEventListener('click', function () { saveStaffPin(btn.getAttribute('data-save-pin')); });
     });
@@ -3945,32 +3669,24 @@
 
   async function saveStaffPin(empId) {
     var inp = $('staffPin_' + empId);
-    var msg = $('staffPinMsg');
-    msg.className = 'msg';
+    var msg = setMsg('staffPinMsg');
     var pin = inp.value.trim();
-    if (pin && !/^\d{4,8}$/.test(pin)) { msg.textContent = t('badPin'); return; }
-    var ok = false;
-    try { ok = await mgrRpc('admin_set_pin', { p_emp: empId, p_pin: pin }); } catch (e) {}
+    if (pin && !validPin(pin)) { msg.textContent = t('badPin'); return; }
+    var ok = await mgrRpcSafe('admin_set_pin', { p_emp: empId, p_pin: pin });
     if (!ok) { msg.textContent = t('saveFail'); return; }
-    var emp = employees.find(function (e) { return e.id === empId; });
+    var emp = empById(empId);
     if (emp) { emp.pin = pin || null; emp.has_pin = !!pin; }
-    msg.textContent = t('pwChanged');
-    msg.className = 'msg ok';
+    setMsg(msg, t('pwChanged'), true);
   }
 
-  async function changePw(key, newId, new2Id, msgId, afterFn) {
+  async function changePw(key, newId, new2Id, msgId) {
     var np = $(newId).value.trim(), np2 = $(new2Id).value.trim();
-    var msg = $(msgId);
-    msg.className = 'msg';
+    var msg = setMsg(msgId);
     if (np.length < 4) { msg.textContent = t('pwShort'); return; }
     if (np !== np2) { msg.textContent = t('pwMismatch'); return; }
-    var ok = false;
-    try { ok = await rpc('change_secret', { p_token: mgrToken, p_key: key, p_value: np }); } catch (e) {}
-    if (!ok) { msg.textContent = t('changeFail'); return; }
-    if (afterFn) afterFn(np);
+    if (!(await changeSecret(key, np))) { msg.textContent = t('changeFail'); return; }
     $(newId).value = ''; $(new2Id).value = '';
-    msg.textContent = t('pwChanged');
-    msg.className = 'msg ok';
+    setMsg(msg, t('pwChanged'), true);
     loadPwManager();
   }
 
@@ -3981,15 +3697,11 @@
   /* 마스터 PIN 변경 (오너 전용; 모든 직원 기록·수정 게이트 통과용) */
   async function changeMasterPin() {
     var np = $('newMasterPin').value.trim();
-    var msg = $('masterPinMsg');
-    msg.className = 'msg';
-    if (!/^\d{4,8}$/.test(np)) { msg.textContent = t('badPin'); return; }
-    var ok = false;
-    try { ok = await rpc('change_secret', { p_token: mgrToken, p_key: 'master_pin', p_value: np }); } catch (e) {}
-    if (!ok) { msg.textContent = t('changeFail'); return; }
+    var msg = setMsg('masterPinMsg');
+    if (!validPin(np)) { msg.textContent = t('badPin'); return; }
+    if (!(await changeSecret('master_pin', np))) { msg.textContent = t('changeFail'); return; }
     $('newMasterPin').value = '';
-    msg.textContent = t('pwChanged');
-    msg.className = 'msg ok';
+    setMsg(msg, t('pwChanged'), true);
     loadPwManager();
   }
 
@@ -4032,10 +3744,8 @@
 
   async function renderManagerList() {
     var box = $('managerList');
-    var msg = $('mgrMsg');
-    msg.className = 'msg';
-    var rows = null;
-    try { rows = await rpc('admin_managers', { p_token: mgrToken }); } catch (e) {}
+    $('mgrMsg').className = 'msg'; /* 직전 저장 메시지 글자는 그대로 둠 */
+    var rows = await mgrRpcSafe('admin_managers', {});
     if (!rows) { box.innerHTML = '<p class="msg">' + esc(t('loadFail')) + '</p>'; return; }
     var pending = rows.filter(function (m) { return !m.active; });
     var active = rows.filter(function (m) { return m.active; });
@@ -4049,36 +3759,6 @@
       active.forEach(function (m) { html += mgrRowHtml(m, false); });
     }
     box.innerHTML = html || '<p class="view-desc">' + esc(t('noManagers')) + '</p>';
-    box.querySelectorAll('[data-toggle-mgr]').forEach(function (head) {
-      head.addEventListener('click', function () {
-        var body = $('mgrBody_' + head.getAttribute('data-toggle-mgr'));
-        if (!body) return;
-        var open = body.hidden;
-        body.hidden = !open;
-        var chev = head.querySelector('.mgr-chev');
-        if (chev) chev.textContent = open ? '▾' : '▸';
-      });
-    });
-    box.querySelectorAll('[data-eye-for]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var inp = $(btn.getAttribute('data-eye-for'));
-        if (!inp) return;
-        var show = inp.type === 'password';
-        inp.type = show ? 'text' : 'password';
-        btn.textContent = show ? '🙈' : '👁';
-      });
-    });
-    box.querySelectorAll('[data-save-mgr]').forEach(function (btn) {
-      btn.addEventListener('click', function () { saveManager(btn.getAttribute('data-save-mgr')); });
-    });
-    box.querySelectorAll('[data-approve-mgr]').forEach(function (btn) {
-      btn.addEventListener('click', function () { approveManager(btn.getAttribute('data-approve-mgr')); });
-    });
-    box.querySelectorAll('[data-del-mgr]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        delManager(btn.getAttribute('data-del-mgr'), btn.getAttribute('data-username'));
-      });
-    });
   }
 
   /* 매니저 비밀번호 규칙: 8자 이상 + 대문자 + 특수문자 */
@@ -4092,24 +3772,17 @@
     var user = $('newMgrUser').value.trim();
     var email = $('newMgrEmail').value.trim();
     var pw = $('newMgrPw').value.trim();
-    var msg = $('mgrMsg');
-    msg.className = 'msg';
+    var msg = setMsg('mgrMsg');
     if (!user) { msg.textContent = t('needUsername'); return; }
     if (email && !validEmail(email)) { msg.textContent = t('badEmail'); return; }
     if (!validManagerPw(pw)) { msg.textContent = t('mgrPwRule'); return; }
-    var r = null;
-    try {
-      r = await mgrRpc('admin_add_manager', {
-        p_username: user, p_email: email, p_password: pw
-      });
-    } catch (e) {}
+    var r = await mgrRpcSafe('admin_add_manager', { p_username: user, p_email: email, p_password: pw });
     if (!r || !r.ok) {
       msg.textContent = (r && r.dup) ? t('mgrUserExists') : t('saveFail');
       return;
     }
     $('newMgrUser').value = ''; $('newMgrEmail').value = ''; $('newMgrPw').value = '';
-    msg.textContent = t('pwChanged');
-    msg.className = 'msg ok';
+    setMsg(msg, t('pwChanged'), true);
     renderManagerList();
   }
 
@@ -4117,38 +3790,28 @@
   async function saveManager(id) {
     var pwInp = $('mgrPw_' + id);
     var emInp = $('mgrEmail_' + id);
-    var msg = $('mgrMsg');
-    msg.className = 'msg';
+    var msg = setMsg('mgrMsg');
     var pw = pwInp.value.trim();
     var email = emInp.value.trim();
     if (pw && !validManagerPw(pw)) { msg.textContent = t('mgrPwRule'); return; }
     if (email && !validEmail(email)) { msg.textContent = t('badEmail'); return; }
-    var ok = false;
-    try {
-      ok = await mgrRpc('admin_update_manager', { p_id: id, p_email: email, p_password: pw });
-    } catch (e) {}
+    var ok = await mgrRpcSafe('admin_update_manager', { p_id: id, p_email: email, p_password: pw });
     if (!ok) { msg.textContent = t('saveFail'); return; }
-    msg.textContent = t('pwChanged');
-    msg.className = 'msg ok';
+    setMsg(msg, t('pwChanged'), true);
     renderManagerList();
   }
 
   async function approveManager(id) {
-    var msg = $('mgrMsg');
-    var ok = false;
-    try { ok = await mgrRpc('admin_set_manager_active', { p_id: id, p_active: true }); } catch (e) {}
-    if (!ok) { msg.textContent = t('saveFail'); msg.className = 'msg'; return; }
-    msg.textContent = t('approved');
-    msg.className = 'msg ok';
+    var ok = await mgrRpcSafe('admin_set_manager_active', { p_id: id, p_active: true });
+    if (!ok) { setMsg('mgrMsg', t('saveFail')); return; }
+    setMsg('mgrMsg', t('approved'), true);
     renderManagerList();
   }
 
   async function delManager(id, username) {
     if (!confirm(t('confirmDelMgr') + '\n' + username)) return;
-    var msg = $('mgrMsg');
-    var ok = false;
-    try { ok = await mgrRpc('admin_delete_manager', { p_id: id }); } catch (e) {}
-    if (!ok) { msg.textContent = t('delFail'); msg.className = 'msg'; return; }
+    var ok = await mgrRpcSafe('admin_delete_manager', { p_id: id });
+    if (!ok) { setMsg('mgrMsg', t('delFail')); return; }
     renderManagerList();
   }
 
