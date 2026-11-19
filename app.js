@@ -2803,10 +2803,11 @@
   /* ---------- 부스터 판정 (Jo 룰, 2026-10-20 최종) ----------
      기존 룰 유지 + 풀타임 부스터 추가 (합산):
      (a) 월–목 16:00 이후 시작 + 그날 서버 중 마지막 퇴근 + 20:30 이후 퇴근 (혼자 마감)
-     (b) 본인 마감 정산 매출 $800 이상
-     → (a)/(b) 중 하나라도 해당하면 그날 임금 전액 ×1.04 ×10%. 해당 없으면 저장된 수동 부스터.
+     (b) 본인 마감 정산 1인당 매출 $800 이상 (2명이 같이 마감하면 매출을 반으로 나눠 각자 판정)
+     → (a)/(b) 중 하나라도 해당하면 그날 임금 소계 ×10%. 해당 없으면 저장된 수동 부스터.
      (c) 풀타임 부스터 (추가): 근무 입력에서 풀타임 체크 + 저녁 시작 시간을 넣으면
-         저녁 시작~퇴근 구간 임금 ×1.04 ×10% 를 위에 더한다.
+         저녁 시작~퇴근 구간 임금 ×10% 를 위에 더한다.
+     (Jay Kim 2026-11-18: 보너스는 임금 소계의 10%, ×1.04 없음. 베케이션페이는 회계사가 따로 계산하므로 앱에서 계산 안 함)
      스탯 홀리데이에는 부스터 전부 미적용 (1.5배로 대체, 중복 금지). 오너 본인은 대상 아님. */
   function isServerFloorShift(s) {
     var emp = s.employees;
@@ -2819,19 +2820,23 @@
     if (!isServerFloorShift(s)) return false;
     if (s.employees.name === 'jun sik kim') return false; /* 오너 본인은 부스터 대상 아님 */
     if (isStatHoliday(s.work_date)) return false;
-    /* (b) 매출 룰: 요일 무관, 본인 마감 매출 $800 이상 */
+    /* (b) 매출 룰: 요일 무관, 1인당 마감 매출 $800 이상 (공동 마감은 반씩) */
     var cos = closeouts || [];
     for (var i = 0; i < cos.length; i++) {
       var c = cos[i];
-      if (c.employee_id === s.employee_id && c.work_date === s.work_date &&
-          (c.total_sales_cents || 0) >= 80000) return true;
+      if (c.work_date !== s.work_date) continue;
+      var shared = c.employee_id2 && c.employee_id2 !== c.employee_id;
+      if (c.employee_id !== s.employee_id && !(shared && c.employee_id2 === s.employee_id)) continue;
+      var perPerson = (c.total_sales_cents || 0) / (shared ? 2 : 1);
+      if (perPerson >= 80000) return true;
     }
-    /* (a) 월–목 저녁 혼자 마감 룰 */
+    /* (a) 월–목 저녁 혼자 마감 룰 (기기 시간대와 무관하게 밴쿠버 시각으로 판정) */
     var dow = new Date(s.work_date + 'T12:00:00').getDay();
     if (dow < 1 || dow > 4) return false;
-    var ci = new Date(s.clock_in), co = new Date(s.clock_out);
-    var inMin = ci.getHours() * 60 + ci.getMinutes();
-    var outMin = co.getHours() * 60 + co.getMinutes();
+    var co = new Date(s.clock_out);
+    var ciV = vanShift(new Date(s.clock_in)), coV = vanShift(co);
+    var inMin = ciV.getUTCHours() * 60 + ciV.getUTCMinutes();
+    var outMin = coV.getUTCHours() * 60 + coV.getUTCMinutes();
     if (outMin <= inMin) outMin += 1440;
     if (inMin < 960) return false;   /* 16:00 이전 시작 제외 */
     if (outMin < 1230) return false; /* 20:30 이전 퇴근 제외 */
@@ -2847,7 +2852,7 @@
   function segmentBoosterCents(rateCents, eveningStartIso, clockOutIso) {
     var h = (new Date(clockOutIso) - new Date(eveningStartIso)) / 3600000;
     if (!(h > 0)) return 0;
-    return Math.round(h * (rateCents || 0) * 1.04 * 0.10);
+    return Math.round(h * (rateCents || 0) * 0.10);
   }
   function fulltimeBoosterCents(s) {
     if (!s.is_fulltime || !s.evening_start || !s.employees) return 0;
@@ -2861,7 +2866,7 @@
         boosterApplies(s, dayShifts, closeouts)) {
       var h = (new Date(s.clock_out) - new Date(s.clock_in)) / 3600000;
       if (h < 0) h = 0;
-      base = Math.round(h * (s.employees.hourly_rate_cents || 0) * 1.04 * 0.10);
+      base = Math.round(h * (s.employees.hourly_rate_cents || 0) * 0.10);
     } else {
       base = s.booster_cents || 0;
     }
@@ -2939,7 +2944,7 @@
     Object.keys(per).forEach(function (k) {
       var p = per[k];
       p.wage = Math.round(p.hours * p.rate);
-      p.vacation = Math.round((p.wage + p.booster + p.holiday) * 0.04);
+      p.vacation = 0; /* 베케이션페이는 회계사가 계산 (Jay Kim 2026-11-18) */
       p.total = p.wage + p.vacation + p.booster + p.holiday + p.tips + p.kshare;
     });
     return { rows: Object.keys(per).map(function (k) { return per[k]; }),
@@ -3045,7 +3050,7 @@
       return (payrollRoleFilter === 'all' || p.role === payrollRoleFilter) && hideOwnerRow(p);
     }).sort(function (a, b) { return b.wage - a.wage; });
     var bonusCols = showBonusDetail
-      ? '<th>' + esc(t('thBooster')) + '</th><th>' + esc(t('thHoliday')) + '</th><th>' + esc(t('thBonus')) + '</th><th>' + esc(t('thVacation')) + '</th>'
+      ? '<th>' + esc(t('thBooster')) + '</th><th>' + esc(t('thHoliday')) + '</th><th>' + esc(t('thBonus')) + '</th>'
       : '';
     var wh = '<table class="pay"><tr><th>' + esc(t('thEmployee')) + '</th><th>' + esc(t('thRole')) +
       '</th><th>' + esc(t('thHours')) + '</th><th>' + esc(t('thRate')) + '</th>' +
@@ -3057,7 +3062,7 @@
       var wTot = p.wage + p.vacation + bTot;
       tH += p.hours; tW += p.wage; tV += p.vacation; tB += p.booster; tHl += p.holiday; tBn += bTot; tWT += wTot;
       var bonusCells = showBonusDetail
-        ? '<td>$' + dollars(p.booster) + '</td><td>$' + dollars(p.holiday) + '</td><td>$' + dollars(bTot) + '</td><td>$' + dollars(p.vacation) + '</td>'
+        ? '<td>$' + dollars(p.booster) + '</td><td>$' + dollars(p.holiday) + '</td><td>$' + dollars(bTot) + '</td>'
         : '';
       wh += '<tr><td>' + esc(p.name) + '</td><td>' + esc(roleName(p.role)) + '</td>' +
         '<td>' + p.hours.toFixed(2) + '</td><td>$' + dollars(p.rate) + '</td>' +
@@ -3065,7 +3070,7 @@
         '<td><strong>$' + dollars(wTot) + '</strong></td></tr>';
     });
     var bonusTotalCells = showBonusDetail
-      ? '<td>$' + dollars(tB) + '</td><td>$' + dollars(tHl) + '</td><td>$' + dollars(tBn) + '</td><td>$' + dollars(tV) + '</td>'
+      ? '<td>$' + dollars(tB) + '</td><td>$' + dollars(tHl) + '</td><td>$' + dollars(tBn) + '</td>'
       : '';
     wh += '<tr class="total"><td>' + esc(t('total')) + '</td><td></td><td>' + tH.toFixed(2) + '</td><td></td>' +
       '<td>$' + dollars(tW) + '</td>' + bonusTotalCells +
@@ -3836,12 +3841,12 @@
     var lines = ['\ufeff' + t('csvDateRange') + ',' + payrollCache.start + ' ~ ' + payrollCache.end];
     lines.push([t('thEmployee'), t('thRole'), t('thHours'),
       t('thRate') + ' ($)', t('thWage') + ' ($)',
-      t('thBooster') + ' ($)', t('thHoliday') + ' ($)', t('thBonus') + ' ($)', t('thVacation') + ' ($)',
+      t('thBooster') + ' ($)', t('thHoliday') + ' ($)', t('thBonus') + ' ($)',
       t('thTips') + ' ($)', t('thKShare') + ' ($)', t('thTotal') + ' ($)'].map(csvCell).join(','));
     c.rows.forEach(function (p) {
       lines.push([p.name, roleName(p.role), p.hours.toFixed(2),
         dollars(p.rate), dollars(p.wage),
-        dollars(p.booster), dollars(p.holiday), dollars(p.booster + p.holiday), dollars(p.vacation),
+        dollars(p.booster), dollars(p.holiday), dollars(p.booster + p.holiday),
         dollars(p.tips), dollars(p.kshare), dollars(p.total)
       ].map(csvCell).join(','));
     });
