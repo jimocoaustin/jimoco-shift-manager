@@ -3078,10 +3078,13 @@
     var base = Math.max(0, totalTips - appTips);
     /* 마감 팁 = 전체 팁: 서버는 본인 팁의 70%, 주방 풀 = 전체의 30% (Jay Kim 2026-11-19, 시트 방식)
        예전 '서버 100% + 주방 ÷7×3 추가'는 과지급이었음 */
-    var pool = Math.round(base * (1 - PAY_SERVER_TIP_SHARE));
+    var serverShare = 0;
     Object.keys(per).forEach(function (k) {
-      if (per[k].role === 'server') per[k].tips = Math.round(per[k].tips * PAY_SERVER_TIP_SHARE);
+      if (per[k].role === 'server') { per[k].tips = Math.round(per[k].tips * PAY_SERVER_TIP_SHARE); serverShare += per[k].tips; }
     });
+    /* 직접 입력이 없으면 주방 = 전체 − 서버 몫 (센트 반올림 차이 없이 합계가 정확히 맞게) */
+    var pool = (tipTotalCents == null && !appTips) ? Math.max(0, totalTips - serverShare)
+      : Math.round(base * (1 - PAY_SERVER_TIP_SHARE));
     var kitchenHours = 0;
     Object.keys(per).forEach(function (k) { kitchenHours += per[k].kh || 0; });
     var klist = Object.keys(per).map(function (k) { return per[k]; })
