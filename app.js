@@ -334,6 +334,7 @@
       coThTips: '팁',
       coDayTips: '그날 팁 합계',
       payNoteTitle: '다음 급여에 추가되는 시간',
+      psAdjAdded: '추가 시간 반영됨: ',
       coThCounted: '실제',
       coThExpected: '예상',
       coThDiff: '차이',
@@ -713,6 +714,7 @@
       coThTips: 'Tips',
       coDayTips: 'Tip total for the day',
       payNoteTitle: 'Extra hours on your next paycheck',
+      psAdjAdded: 'Extra hours added: ',
       coThCounted: 'Counted',
       coThExpected: 'Expected',
       coThDiff: 'Diff',
@@ -4146,9 +4148,15 @@
     var start = payrollCache.start, end = payrollCache.end;
     var got = await Promise.all([
       loadPayProfiles(),
-      mgrRpcSafe('admin_payroll_runs', { p_from: start.slice(0, 4) + '-01-01', p_to: end })
+      mgrRpcSafe('admin_payroll_runs', { p_from: start.slice(0, 4) + '-01-01', p_to: end }),
+      mgrRpcSafe('admin_pay_adjustments', { p_start: start, p_end: end })
     ]);
     var runs = got[1] || [];
+    /* 다음 급여에 더해 줄 시간 (pay_adjustments, v47): 이 기간과 정확히 같은 기간으로 등록된 것만 시급 × 시간으로 더함 */
+    var adjMin = {}, adjList = [];
+    (got[2] || []).forEach(function (a) {
+      if (a.period_start === start && a.period_end === end) adjMin[a.employee_id] = (adjMin[a.employee_id] || 0) + a.minutes;
+    });
     var byEmp = {}, linked = {}, linkedNames = {};
     c.rows.forEach(function (p) { byEmp[p.id] = p; });
     /* 같은 사람이 서버·주방 직원으로 따로 등록된 경우(오너) 팁은 같은 이름의 기록을 모두 합친다 */
@@ -4169,7 +4177,11 @@
         if (le) linkedNames[nameKey(le.name)] = true;
       }
       var salaried = pf.salary_cents != null;
-      if (!salaried && !(p && p.hours > 0)) return;  /* 시급제인데 이번 기간 근무 없음 */
+      var adj = (!salaried && pf.employee_id && adjMin[pf.employee_id]) || 0;
+      if (!salaried && !p && adj && le && le.hourly_rate_cents) {
+        p = { name: le.name, hours: 0, wage: 0, rate: le.hourly_rate_cents, booster: 0, holiday: 0, tips: 0, kshare: 0 };
+      }
+      if (!salaried && !(p && (p.hours > 0 || adj))) return;  /* 시급제인데 이번 기간 근무 없음 */
       var wage = salaried ? pf.salary_cents / 100 : p.wage / 100;
       var bonus = salaried ? 0 : (p.booster + p.holiday) / 100;
       var stubHours = salaried ? null : p.hours;
@@ -4179,6 +4191,11 @@
         stubHours = reg;
         wage = r2(reg * p.rate / 100);
         bonus = r2(bonus + p.wage / 100 - wage);
+      }
+      if (adj) {
+        stubHours += adj / 60;
+        wage = r2(wage + (adj / 60) * p.rate / 100);
+        adjList.push(pf.name + ' +' + payHhmm(adj / 60));
       }
       var vac = r2(wage * PAY_RULES.vacRate);
       var prior = payPriorYtd(pf, runs, start);
@@ -4199,7 +4216,7 @@
     });
     var missing = c.rows.filter(function (p) { return p.hours > 0 && !linked[p.id] && !linkedNames[nameKey(p.name)]; })
       .map(function (p) { return p.name; });
-    payStubData = { start: start, end: end, rows: rows, missing: missing, late: late };
+    payStubData = { start: start, end: end, rows: rows, missing: missing, late: late, adj: adjList };
     return payStubData;
   }
 
@@ -4220,6 +4237,7 @@
     var warn = '';
     if (d.missing.length) warn += '<p class="ps-warn">⚠ <b>' + esc(t('psNoProfile')) + '</b> · ' + esc(t('psNoProfileDesc')) + esc(d.missing.join(', ')) + '</p>';
     if (d.late.length) warn += '<p class="ps-warn">⚠ ' + esc(t('psYtdLate')) + esc(d.late.join(', ')) + '</p>';
+    if (d.adj && d.adj.length) warn += '<p class="view-desc">📌 ' + esc(t('psAdjAdded')) + esc(d.adj.join(', ')) + '</p>';
     /* 근무시간 확인이 안 됐거나 '틀림'인 직원 (막지는 않고 알림만) */
     var hc = hoursConfCache;
     if (hc && hc.start === d.start && hc.end === d.end && payrollCache.computed) {
