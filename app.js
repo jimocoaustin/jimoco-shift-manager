@@ -333,6 +333,7 @@
       coThOpening: '시작캐쉬',
       coThTips: '팁',
       coDayTips: '그날 팁 합계',
+      payNoteTitle: '다음 급여에 추가되는 시간',
       coThCounted: '실제',
       coThExpected: '예상',
       coThDiff: '차이',
@@ -711,6 +712,7 @@
       coThOpening: 'Opening',
       coThTips: 'Tips',
       coDayTips: 'Tip total for the day',
+      payNoteTitle: 'Extra hours on your next paycheck',
       coThCounted: 'Counted',
       coThExpected: 'Expected',
       coThDiff: 'Diff',
@@ -1581,11 +1583,27 @@
     return v ? ' <span class="type-tag">' + esc(shiftTypeLabel(v)) + '</span>' : '';
   }
 
+  /* 다음 급여에 더해 줄 시간 안내 (pay_adjustments, v46 — Jay Kim 2026-11-19, Ethan) */
+  async function loadPayNote(emp) {
+    var box = $('shiftPayNote');
+    box.classList.add('hidden');
+    box.innerHTML = '';
+    var pin = verifiedPinEmpId === emp.id ? verifiedPin : '';
+    var list = await rpcSafe('emp_pay_adjustments', { p_emp: emp.id, p_pin: pin });
+    if (!list || !list.length || currentShiftEmp !== emp) return;
+    box.innerHTML = list.map(function (a) {
+      return '<p><strong>📌 ' + esc(t('payNoteTitle')) + ' (' + esc(a.period_start) + ' ~ ' + esc(a.period_end) + '): ' +
+        payHhmm(a.minutes / 60) + '</strong></p>' + (a.note ? '<p>' + esc(a.note) + '</p>' : '');
+    }).join('');
+    box.classList.remove('hidden');
+  }
+
   function openShiftForm(emp) {
     currentShiftEmp = emp;
     editingShiftId = null;
     setShiftType(null);
     $('shiftEmpName').textContent = emp.name;
+    loadPayNote(emp);
     $('shiftDate').value = todayStr();
     $('shiftIn').value = nowHM();
     $('shiftOut').value = '';

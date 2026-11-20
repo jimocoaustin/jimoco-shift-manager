@@ -270,6 +270,8 @@ table.pay th, table.pay td { padding: 12px 14px; text-align: right; font-size: 1
 table.pay th:first-child, table.pay td:first-child { text-align: left; }
 table.pay th { background: #fafafc; font-weight: 700; }
 table.pay tr.total td { font-weight: 700; background: #f5f5f7; }
+.pay-note { background: #fff8e6; border: 1px solid #f3d38a; border-radius: 12px; padding: 10px 14px; margin: 0 0 12px; font-size: 14px; color: #5c4400; }
+.pay-note p { margin: 4px 0; }
 table.pay tr.co-day-total td { font-weight: 700; background: #f0f6ff; color: #1a56db; padding-top: 6px; padding-bottom: 6px; }
 table.pay tr.tip-section td { font-weight: 700; background: #e8f0fe; color: #1a56db; padding: 6px 8px; }
 
