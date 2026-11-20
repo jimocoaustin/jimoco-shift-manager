@@ -332,6 +332,7 @@
       coThCash: '현금매출',
       coThOpening: '시작캐쉬',
       coThTips: '팁',
+      coDayTips: '그날 팁 합계',
       coThCounted: '실제',
       coThExpected: '예상',
       coThDiff: '차이',
@@ -709,6 +710,7 @@
       coThCash: 'Cash sales',
       coThOpening: 'Opening',
       coThTips: 'Tips',
+      coDayTips: 'Tip total for the day',
       coThCounted: 'Counted',
       coThExpected: 'Expected',
       coThDiff: 'Diff',
@@ -3313,6 +3315,9 @@
       return;
     }
     var tSales = 0, tCash = 0, tTips = 0, tPurch = 0, tWd = 0, mism = 0;
+    /* 날짜별 총 팁 (Jay Kim 2026-11-19): 같은 날짜 마감이 끝나는 곳에 합계 줄 */
+    var dayTips = {};
+    rows.forEach(function (r) { dayTips[r.work_date] = (dayTips[r.work_date] || 0) + (r.tips_cents || 0); });
     var html = '<table class="pay"><tr><th>' + esc(t('coThDate')) + '</th><th>' + esc(t('thEmployee')) +
       '</th><th>' + esc(t('coThTotalSales')) + '</th><th>' + esc(t('coThCash')) + '</th><th>' +
       esc(t('coThPurchases')) + '</th><th>' +
@@ -3320,7 +3325,7 @@
       esc(t('coThOpening')) + '</th><th>' +
       esc(t('coThTips')) + '</th><th>' + esc(t('coThExpected')) + '</th><th>' + esc(t('coThCounted')) +
       '</th><th>' + esc(t('coThDiff')) + '</th><th></th></tr>';
-    rows.forEach(function (r) {
+    rows.forEach(function (r, i) {
       tSales += r.total_sales_cents || 0;
       tCash += r.cash_sales_cents || 0;
       tTips += r.tips_cents || 0;
@@ -3341,6 +3346,11 @@
         '</td><td>' + diffHtml(r.diff_cents) + '</td>' +
         '<td class="row-actions"><button class="btn btn-chip" data-edit-co="' + r.id + '">' + esc(t('edit')) +
         '</button> <button class="btn btn-chip btn-danger" data-del-co="' + r.id + '">' + esc(t('del')) + '</button></td></tr>';
+      var next = rows[i + 1];
+      if (!next || next.work_date !== r.work_date) {
+        html += '<tr class="co-day-total"><td colspan="7">' + esc(r.work_date) + ' · ' + esc(t('coDayTips')) +
+          '</td><td>$' + dollars(dayTips[r.work_date]) + '</td><td colspan="4"></td></tr>';
+      }
     });
     html += '</table>';
     $('coList').innerHTML = html;
