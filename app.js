@@ -263,10 +263,10 @@
       noShifts: '근무 기록이 없습니다.',
       total: '합계',
       tipPoolTitle: '주방 팁 풀',
-      tipPoolTotalTips: '서버 팁 합계 ($)',
+      tipPoolTotalTips: '마감 팁 합계 ($)',
       tipPoolAppTips: '배달앱 팁 ($)',
-      poolServerTips: '서버 팁 합계',
-      poolKitchenFormula: '주방 팁 (서버팁 ÷7 × 3)',
+      poolServerTips: '마감 팁 합계 (서버 70% · 주방 30%)',
+      poolKitchenFormula: '주방 팁 (30%)',
       poolGrandTotal: '총팁',
       tipPoolNote: '(주방 근무시간 비율로 배분)',
       thEmployee: '직원',
@@ -643,10 +643,10 @@
       noShifts: 'No shift records.',
       total: 'Total',
       tipPoolTitle: 'Kitchen tip pool',
-      tipPoolTotalTips: 'Server tips total ($)',
+      tipPoolTotalTips: 'Closeout tips total ($)',
       tipPoolAppTips: 'Delivery app tips ($)',
-      poolServerTips: 'Server tips total',
-      poolKitchenFormula: 'Kitchen tips (server tips ÷7 × 3)',
+      poolServerTips: 'Closeout tips total (servers 70% · kitchen 30%)',
+      poolKitchenFormula: 'Kitchen tips (30%)',
       poolGrandTotal: 'Total tips',
       tipPoolNote: '(distributed by kitchen hours worked)',
       thEmployee: 'Employee',
@@ -1879,6 +1879,7 @@
     employees.forEach(function (e) { calData.names[e.id] = e.name; calData.rates[e.id] = e.hourly_rate_cents; calData.roles[e.id] = e.role; });
     renderCalendar();
   }
+  var PAY_SERVER_TIP_SHARE = 0.7; /* 서버 몫 70%, 주방 풀 30% (Jay Kim 2026-11-19) */
   /* 그날 팁은 데이터가 바뀔 때(loadCalendar)까지 날짜당 한 번만 계산 */
   var calTipCache = {};
   function calDayTipsOnce(ds) { return calTipCache[ds] || (calTipCache[ds] = calDayTips(ds)); }
@@ -1906,14 +1907,18 @@
     return byEmp;
   }
 
-  /* 그날 팁 계산: 서버팁(본인 팁 합계) + 주방 풀(서버팁 ÷7×3 = 30%)을 주방 근무시간 비율로 분배 */
+  /* 그날 팁 계산: 마감 팁 = 전체 팁. 서버는 본인 팁의 70%, 주방 풀 = 전체의 30%를 주방 근무시간 비율로 분배
+     (Jay Kim 2026-11-19: 시트 방식 — 예전 '서버 100% + 주방 3/7 추가'는 과지급) */
   function calDayTips(dateStr) {
     var byEmp = calTipsByEmp(dateStr);
-    var server = 0;
+    var gross = 0, server = 0;
     Object.keys(byEmp).forEach(function (eid) {
-      if (calData.roles[eid] === 'server') server += byEmp[eid];
+      if (calData.roles[eid] !== 'server') return;
+      gross += byEmp[eid];
+      byEmp[eid] = Math.round(byEmp[eid] * PAY_SERVER_TIP_SHARE);
+      server += byEmp[eid];
     });
-    var pool = Math.round(server * 3 / 7);
+    var pool = gross - server;
     var kh = {}, ktot = 0;
     calData.shifts.forEach(function (s) {
       if (s.work_date !== dateStr) return;
@@ -3071,8 +3076,12 @@
     var totalTips = (tipTotalCents != null) ? tipTotalCents : serverTips;
     var appTips = tipAppCents || 0;
     var base = Math.max(0, totalTips - appTips);
-    /* 주방 풀 = 서버팁 ÷7×3 (서버팁이 전체 팁의 70% — Jo의 시트 방식) */
-    var pool = Math.round(base * 3 / 7);
+    /* 마감 팁 = 전체 팁: 서버는 본인 팁의 70%, 주방 풀 = 전체의 30% (Jay Kim 2026-11-19, 시트 방식)
+       예전 '서버 100% + 주방 ÷7×3 추가'는 과지급이었음 */
+    var pool = Math.round(base * (1 - PAY_SERVER_TIP_SHARE));
+    Object.keys(per).forEach(function (k) {
+      if (per[k].role === 'server') per[k].tips = Math.round(per[k].tips * PAY_SERVER_TIP_SHARE);
+    });
     var kitchenHours = 0;
     Object.keys(per).forEach(function (k) { kitchenHours += per[k].kh || 0; });
     var klist = Object.keys(per).map(function (k) { return per[k]; })
@@ -3104,7 +3113,7 @@
       esc(t('poolServerTips')) + ': $' + dollars(c.totalTips) +
       (c.appTips > 0 ? ' − $' + dollars(c.appTips) + ' = <strong>$' + dollars(c.base) + '</strong>' : '') + '<br>' +
       esc(t('poolKitchenFormula')) + ': <strong>$' + dollars(c.pool) + '</strong> ' + esc(t('tipPoolNote')) + '<br>' +
-      esc(t('poolGrandTotal')) + ': <strong>$' + dollars(c.base + c.pool) + '</strong>';
+      esc(t('poolGrandTotal')) + ': <strong>$' + dollars(c.base) + '</strong>';
     el.innerHTML = html;
   }
 
